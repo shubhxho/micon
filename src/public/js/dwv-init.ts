@@ -6,7 +6,7 @@ import { App as DwvApp, ViewConfig, ToolConfig } from "dwv";
 export class DwvController {
   private dwvApp: DwvApp;
   private worker: Worker;
-  private onVolumeReady: ((data: Float32Array, sx: number, sy: number, sz: number) => void) | null = null;
+  private onVolumeReady: ((data: Float32Array, sx: number, sy: number, sz: number, meta?: any) => void) | null = null;
   private onProgress: ((pct: number) => void) | null = null;
   private onWindowLevelChange: ((center: number, width: number) => void) | null = null;
 
@@ -41,7 +41,13 @@ export class DwvController {
           new Float32Array(data.data),
           data.sizeX,
           data.sizeY,
-          data.sizeZ
+          data.sizeZ,
+          {
+            min: data.min,
+            max: data.max,
+            processingTime: data.processingTime,
+            usedWasm: data.usedWasm,
+          }
         );
       }
     };
@@ -166,7 +172,7 @@ export class DwvController {
     }
   }
 
-  onVolume(cb: (data: Float32Array, sx: number, sy: number, sz: number) => void) {
+  onVolume(cb: (data: Float32Array, sx: number, sy: number, sz: number, meta?: any) => void) {
     this.onVolumeReady = cb;
   }
 
