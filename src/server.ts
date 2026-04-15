@@ -10,6 +10,16 @@ const app = new Hono();
 
 app.use("*", cors());
 
+// WASM files (explicit route with correct MIME type)
+app.get("/public/wasm/:file", async (c) => {
+  const filename = c.req.param("file");
+  const file = Bun.file(`./src/public/wasm/${filename}`);
+  if (!(await file.exists())) return c.notFound();
+  return new Response(file, {
+    headers: { "Content-Type": "application/wasm" },
+  });
+});
+
 // Static files — JS and CSS from src/public
 app.use("/public/*", serveStatic({ root: "./src" }));
 
