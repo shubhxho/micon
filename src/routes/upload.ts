@@ -200,7 +200,7 @@ print(json.dumps(result))
   await Bun.write(scriptPath, script);
 
   try {
-    const proc = Bun.spawn(["python3", scriptPath, dirPath], {
+    const proc = Bun.spawn(["uv", "run", "--with", "pydicom", "python3", scriptPath, dirPath], {
       stdout: "pipe",
       stderr: "pipe",
     });
