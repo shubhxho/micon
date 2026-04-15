@@ -25,8 +25,10 @@
     <!-- ═══════════════ Header ═══════════════ -->
     <header class="app-header">
       <h1>NEUROVIZ</h1>
-      <span class="version">v1.0</span>
+      <span class="version">v2.0</span>
+      <span class="wasm-badge" x-show="wasmActive">WASM</span>
       <div class="flex-1"></div>
+      <div class="fps-counter" x-text="fps + ' FPS'"></div>
       <div id="dwv-status" class="text-[11px] text-zinc-500">Ready</div>
       <div class="flex items-center gap-1">
         <div id="dwv-progress-text" class="text-[10px] text-zinc-600 w-8 text-right"></div>
@@ -78,10 +80,9 @@
           <div class="text-[10px] text-cyan-400 animate-pulse-glow mt-2">Processing...</div>
         </div>
 
-        <!-- Re-upload button (shown after data is loaded) -->
-        <button class="btn w-full mt-3 justify-center" x-show="volumeLoaded"
-                x-on:click="location.reload()">
-          Load New Data
+        <!-- Load sample data button -->
+        <button class="btn w-full mt-3 justify-center" x-on:click="loadSampleData()">
+          Load Sample Data
         </button>
       </div>
 
@@ -90,6 +91,25 @@
         <div class="panel-section-title">Metadata</div>
         <div id="metadata-panel" class="text-xs text-zinc-500">
           No data loaded
+        </div>
+      </div>
+
+      <!-- Processing Info -->
+      <div class="panel-section" x-show="processingInfo">
+        <div class="panel-section-title">Processing</div>
+        <div class="text-xs space-y-1">
+          <div class="flex justify-between">
+            <span class="text-zinc-500">Engine</span>
+            <span class="text-cyan-400" x-text="wasmActive ? 'WebAssembly' : 'JavaScript'"></span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-zinc-500">Time</span>
+            <span class="text-zinc-400" x-text="processingTime"></span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-zinc-500">Voxel Range</span>
+            <span class="text-zinc-400" x-text="voxelRange"></span>
+          </div>
         </div>
       </div>
 
@@ -106,7 +126,7 @@
         <div class="text-center">
           <div class="text-4xl opacity-20 mb-3">&#x1F9E0;</div>
           <div class="text-zinc-600 text-sm">Load DICOM data to visualize</div>
-          <div class="text-zinc-700 text-[10px] mt-1">Volumetric ray-marching renderer</div>
+          <div class="text-zinc-700 text-[10px] mt-1">GPU ray-marching with WASM volume processing</div>
         </div>
       </div>
     </main>
@@ -130,6 +150,8 @@
               <option value="hot">Hot</option>
               <option value="plasma">Plasma</option>
               <option value="viridis">Viridis</option>
+              <option value="inferno">Inferno</option>
+              <option value="coolwarm">Cool-Warm</option>
               <option value="gray">Gray</option>
               <option value="pet">PET</option>
             </select>
@@ -189,6 +211,91 @@
             </div>
             <input type="range" min="1" max="100" x-bind:value="windowWidth * 100"
                    x-on:input="windowWidth = $event.target.value / 100; brain3d?.updateWindowLevel(windowCenter, windowWidth)" />
+          </div>
+        </div>
+      </div>
+
+      <!-- Lighting Controls -->
+      <div class="panel-section">
+        <div class="panel-section-title">Lighting</div>
+        <div class="space-y-2">
+          <div>
+            <div class="flex justify-between">
+              <label class="text-[10px] text-zinc-500 uppercase tracking-wider">Intensity</label>
+              <span class="text-[10px] text-zinc-600" x-text="lightIntensity.toFixed(1)"></span>
+            </div>
+            <input type="range" min="0" max="200" x-bind:value="lightIntensity * 100"
+                   x-on:input="lightIntensity = $event.target.value / 100; brain3d?.setLightIntensity(lightIntensity)" />
+          </div>
+          <div>
+            <div class="flex justify-between">
+              <label class="text-[10px] text-zinc-500 uppercase tracking-wider">Ambient</label>
+              <span class="text-[10px] text-zinc-600" x-text="ambientIntensity.toFixed(2)"></span>
+            </div>
+            <input type="range" min="0" max="100" x-bind:value="ambientIntensity * 100"
+                   x-on:input="ambientIntensity = $event.target.value / 100; brain3d?.setAmbientIntensity(ambientIntensity)" />
+          </div>
+          <div>
+            <div class="flex justify-between">
+              <label class="text-[10px] text-zinc-500 uppercase tracking-wider">Light Angle</label>
+              <span class="text-[10px] text-zinc-600" x-text="lightAngle + '°'"></span>
+            </div>
+            <input type="range" min="0" max="360" x-bind:value="lightAngle"
+                   x-on:input="lightAngle = parseInt($event.target.value); updateLightDir()" />
+          </div>
+        </div>
+      </div>
+
+      <!-- Effects -->
+      <div class="panel-section">
+        <div class="panel-section-title">Effects</div>
+        <div class="space-y-2">
+          <!-- Bloom -->
+          <div class="flex items-center justify-between">
+            <label class="text-[10px] text-zinc-500 uppercase tracking-wider">Bloom</label>
+            <label class="toggle">
+              <input type="checkbox" x-bind:checked="bloomEnabled"
+                     x-on:change="bloomEnabled = $event.target.checked; brain3d?.setBloomEnabled(bloomEnabled)" />
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+          <div x-show="bloomEnabled">
+            <div class="flex justify-between">
+              <label class="text-[10px] text-zinc-500 uppercase tracking-wider">Bloom Intensity</label>
+              <span class="text-[10px] text-zinc-600" x-text="bloomIntensity.toFixed(1)"></span>
+            </div>
+            <input type="range" min="0" max="200" x-bind:value="bloomIntensity * 100"
+                   x-on:input="bloomIntensity = $event.target.value / 100; brain3d?.setBloomIntensity(bloomIntensity)" />
+          </div>
+
+          <!-- Particles -->
+          <div class="flex items-center justify-between">
+            <label class="text-[10px] text-zinc-500 uppercase tracking-wider">Neural Particles</label>
+            <label class="toggle">
+              <input type="checkbox" x-bind:checked="particlesEnabled"
+                     x-on:change="particlesEnabled = $event.target.checked; brain3d?.setParticlesEnabled(particlesEnabled)" />
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+
+          <!-- Synapses -->
+          <div class="flex items-center justify-between">
+            <label class="text-[10px] text-zinc-500 uppercase tracking-wider">Synapse Paths</label>
+            <label class="toggle">
+              <input type="checkbox" x-bind:checked="synapsesEnabled"
+                     x-on:change="synapsesEnabled = $event.target.checked; brain3d?.setSynapsesEnabled(synapsesEnabled)" />
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+
+          <!-- Auto-rotate -->
+          <div class="flex items-center justify-between">
+            <label class="text-[10px] text-zinc-500 uppercase tracking-wider">Auto Rotate</label>
+            <label class="toggle">
+              <input type="checkbox" x-bind:checked="autoRotate"
+                     x-on:change="autoRotate = $event.target.checked; brain3d?.setAutoRotate(autoRotate)" />
+              <span class="toggle-slider"></span>
+            </label>
           </div>
         </div>
       </div>
@@ -305,6 +412,7 @@
         fileCountText: '',
         renderInfo: '',
         activeTool: 'Scroll',
+        fps: 0,
 
         // Rendering params
         threshold: 0.1,
@@ -313,10 +421,27 @@
         windowCenter: 0.5,
         windowWidth: 1.0,
 
+        // Lighting params
+        lightIntensity: 1.2,
+        ambientIntensity: 0.2,
+        lightAngle: 30,
+
+        // Effects
+        bloomEnabled: true,
+        bloomIntensity: 0.6,
+        particlesEnabled: true,
+        synapsesEnabled: true,
+        autoRotate: false,
+
+        // WASM info
+        wasmActive: false,
+        processingInfo: false,
+        processingTime: '',
+        voxelRange: '',
+
         pendingFiles: null,
 
         init() {
-          // Wait for ES modules to load
           const check = setInterval(() => {
             if (window.Brain3D && window.DwvController) {
               clearInterval(check);
@@ -334,14 +459,21 @@
           this.dwvCtrl = new window.DwvController();
 
           // Wire DWV → Three.js
-          this.dwvCtrl.onVolume((data, sx, sy, sz) => {
+          this.dwvCtrl.onVolume((data, sx, sy, sz, meta) => {
             this.brain3d.loadVolume(data, sx, sy, sz);
             this.volumeLoaded = true;
             this.renderInfo = `${sx}×${sy}×${sz} voxels`;
+
+            // Update processing info
+            if (meta) {
+              this.wasmActive = meta.usedWasm || false;
+              this.processingInfo = true;
+              this.processingTime = (meta.processingTime || 0).toFixed(1) + 'ms';
+              this.voxelRange = `${meta.min} → ${meta.max}`;
+            }
           });
 
           this.dwvCtrl.onWLChange((center, width) => {
-            // Normalize to 0-1 range
             this.brain3d.updateWindowLevel(center / 65535, width / 65535);
           });
 
@@ -352,6 +484,13 @@
           window.addEventListener('volume-loaded', (e) => {
             this.volumeLoaded = true;
           });
+
+          // FPS counter
+          setInterval(() => {
+            if (this.brain3d) {
+              this.fps = this.brain3d.getFps();
+            }
+          }, 500);
         },
 
         _connectSSE() {
@@ -381,11 +520,7 @@
 
           this.fileCountText = `${dcmFiles.length} files selected`;
           this.pendingFiles = dcmFiles;
-
-          // Upload via HTMX form
           this._uploadFiles(dcmFiles);
-
-          // Also load into DWV directly for 2D views and volume extraction
           this.dwvCtrl?.loadFromFiles(dcmFiles);
         },
 
@@ -396,7 +531,6 @@
 
           this.fileCountText = `${dcmFiles.length} files selected`;
           this.pendingFiles = dcmFiles;
-
           this._uploadFiles(dcmFiles);
           this.dwvCtrl?.loadFromFiles(dcmFiles);
         },
@@ -425,9 +559,49 @@
           xhr.send(formData);
         },
 
+        async loadSampleData() {
+          this.uploading = true;
+          this.uploadPct = 10;
+          this.uploadMsg = 'Loading sample DICOM data...';
+          this.fileCountText = 'Loading sample...';
+
+          const sessionId = this.sessionId;
+
+          try {
+            const resp = await fetch(`/load-sample?sessionId=${sessionId}`);
+            const data = await resp.json();
+
+            if (data.files && data.files.length > 0) {
+              this.fileCountText = `${data.files.length} sample files`;
+              this.uploadPct = 40;
+              this.uploadMsg = 'Loading into DWV...';
+
+              const urls = data.files.map(f => `/files/${sessionId}/${f}`);
+              await this.dwvCtrl?.loadFromUrls(urls);
+
+              const metaResp = await fetch(`/upload-sample?sessionId=${sessionId}`);
+              const metaHtml = await metaResp.text();
+              document.getElementById('metadata-panel').innerHTML = metaHtml;
+            }
+          } catch (e) {
+            console.error('Failed to load sample data:', e);
+            this.uploadMsg = 'Error loading sample data';
+          }
+
+          this.uploading = false;
+        },
+
         setDwvTool(name) {
           this.activeTool = name;
           this.dwvCtrl?.setTool(name);
+        },
+
+        updateLightDir() {
+          const rad = this.lightAngle * Math.PI / 180;
+          const x = Math.cos(rad) * 0.7;
+          const y = 0.8;
+          const z = Math.sin(rad) * 0.7;
+          this.brain3d?.setLightDirection(x, y, z);
         }
       };
     }
