@@ -846,7 +846,7 @@ def render_protocol_table(series_info: list[dict]) -> None:
 
 # ── Claude ───────────────────────────────────────────────────────────────────
 
-def ask_llm(payload: dict, montage_paths: list[Path], model: str = "gpt-5.4") -> str:
+def ask_llm(payload: dict, montage_paths: list[Path], model: str = "gpt-5.4-nano") -> str:
     """Send extracted data + montage images to OpenAI for expert analysis."""
     client = openai.OpenAI()
 
@@ -897,7 +897,7 @@ Provide a detailed structured analysis:
 @app.command()
 def main(
     folder: Annotated[Path, typer.Argument(help="Folder containing .dcm files")],
-    analyze: Annotated[bool, typer.Option("--analyze", help="Send to gpt-5.4 for expert analysis")] = False,
+    analyze: Annotated[bool, typer.Option("--analyze", help="Send to gpt-5.4-nano for expert analysis")] = False,
     export_nii: Annotated[bool, typer.Option("--export-nii", help="Export each series to NIfTI")] = False,
     out_dir: Annotated[Path, typer.Option("--out-dir", help="Output directory")] = Path("output"),
 ):
@@ -1152,7 +1152,7 @@ def main(
             console.print("\n[yellow]⚠ OPENAI_API_KEY not set — skipping AI analysis[/yellow]")
             console.print("[dim]  Set it with: export OPENAI_API_KEY=sk-...[/dim]")
         else:
-            console.print("\n[cyan]Sending to gpt-5.4 for expert analysis…[/cyan]\n")
+            console.print("\n[cyan]Sending to gpt-5.4-nano for expert analysis…[/cyan]\n")
             sample_tags = {}
             for r in all_records:
                 if r.get("_has_pixel_data"):
@@ -1167,7 +1167,7 @@ def main(
             }
             try:
                 analysis = ask_llm(payload, all_montage_paths)
-                console.print(Panel(analysis, title="[bold]gpt-5.4 Analysis[/bold]",
+                console.print(Panel(analysis, title="[bold]gpt-5.4-nano Analysis[/bold]",
                                     border_style="green", padding=(1, 2)))
                 (out_dir / "ai_analysis.md").write_text(f"# DICOM Brain Study Analysis\n\n{analysis}\n")
                 console.print(f"[green]✓[/green] Analysis saved → {out_dir / 'ai_analysis.md'}")
