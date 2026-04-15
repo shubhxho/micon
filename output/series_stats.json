@@ -1,0 +1,2449 @@
+{
+  "patient": {
+    "patient_id": "MR JULY 09-26",
+    "patient_name": "AARTI JERANG 27Y/F",
+    "patient_sex": "F",
+    "patient_birth_date": "19990101",
+    "patient_weight": "80",
+    "study_date": "20250709",
+    "study_description": "BRAIN",
+    "institution": "Pulse Hitech Imaging",
+    "manufacturer": "Philips",
+    "model": "Achieva",
+    "field_strength": "",
+    "software_versions": "['5.4.1', '5.4.1.3']",
+    "station_name": "PHILIPS-4DHIGDC"
+  },
+  "series": [
+    {
+      "series_uid": "1.3.46.670589.11.72330.5.0.12080.2025070920392124912",
+      "series_number": 0,
+      "series_description": "DEFAULT PS SERIES",
+      "modality": "PR",
+      "sop_class": "Grayscale Softcopy PS",
+      "sop_class_uid": "1.2.840.10008.5.1.4.1.1.11.1",
+      "file_count": 1,
+      "has_pixels": false,
+      "note": "Presentation state \u2014 skipped"
+    },
+    {
+      "series_uid": "1.3.46.670589.11.72330.5.0.12080.2025070920400689914",
+      "series_number": 0,
+      "series_description": "DEFAULT PS SERIES",
+      "modality": "PR",
+      "sop_class": "Grayscale Softcopy PS",
+      "sop_class_uid": "1.2.840.10008.5.1.4.1.1.11.1",
+      "file_count": 1,
+      "has_pixels": false,
+      "note": "Presentation state \u2014 skipped"
+    },
+    {
+      "series_uid": "1.3.46.670589.11.72330.5.0.12080.2025070920421523916",
+      "series_number": 0,
+      "series_description": "DEFAULT PS SERIES",
+      "modality": "PR",
+      "sop_class": "Grayscale Softcopy PS",
+      "sop_class_uid": "1.2.840.10008.5.1.4.1.1.11.1",
+      "file_count": 1,
+      "has_pixels": false,
+      "note": "Presentation state \u2014 skipped"
+    },
+    {
+      "series_uid": "1.3.46.670589.11.72330.5.0.12080.2025070920430357918",
+      "series_number": 0,
+      "series_description": "DEFAULT PS SERIES",
+      "modality": "PR",
+      "sop_class": "Grayscale Softcopy PS",
+      "sop_class_uid": "1.2.840.10008.5.1.4.1.1.11.1",
+      "file_count": 1,
+      "has_pixels": false,
+      "note": "Presentation state \u2014 skipped"
+    },
+    {
+      "series_uid": "1.3.46.670589.11.72330.5.0.12080.2025070920450872920",
+      "series_number": 0,
+      "series_description": "DEFAULT PS SERIES",
+      "modality": "PR",
+      "sop_class": "Grayscale Softcopy PS",
+      "sop_class_uid": "1.2.840.10008.5.1.4.1.1.11.1",
+      "file_count": 1,
+      "has_pixels": false,
+      "note": "Presentation state \u2014 skipped"
+    },
+    {
+      "series_uid": "1.3.46.670589.11.72330.5.0.12080.2025070920473330922",
+      "series_number": 0,
+      "series_description": "DEFAULT PS SERIES",
+      "modality": "PR",
+      "sop_class": "Grayscale Softcopy PS",
+      "sop_class_uid": "1.2.840.10008.5.1.4.1.1.11.1",
+      "file_count": 1,
+      "has_pixels": false,
+      "note": "Presentation state \u2014 skipped"
+    },
+    {
+      "series_uid": "1.3.46.670589.11.72330.5.0.12080.2025070920490006924",
+      "series_number": 0,
+      "series_description": "DEFAULT PS SERIES",
+      "modality": "PR",
+      "sop_class": "Grayscale Softcopy PS",
+      "sop_class_uid": "1.2.840.10008.5.1.4.1.1.11.1",
+      "file_count": 1,
+      "has_pixels": false,
+      "note": "Presentation state \u2014 skipped"
+    },
+    {
+      "series_uid": "1.3.46.670589.11.72330.5.0.12080.2025070920500657926",
+      "series_number": 0,
+      "series_description": "DEFAULT PS SERIES",
+      "modality": "PR",
+      "sop_class": "Grayscale Softcopy PS",
+      "sop_class_uid": "1.2.840.10008.5.1.4.1.1.11.1",
+      "file_count": 1,
+      "has_pixels": false,
+      "note": "Presentation state \u2014 skipped"
+    },
+    {
+      "series_uid": "1.3.46.670589.11.72330.5.0.12080.2025070920513204928",
+      "series_number": 0,
+      "series_description": "DEFAULT PS SERIES",
+      "modality": "PR",
+      "sop_class": "Grayscale Softcopy PS",
+      "sop_class_uid": "1.2.840.10008.5.1.4.1.1.11.1",
+      "file_count": 1,
+      "has_pixels": false,
+      "note": "Presentation state \u2014 skipped"
+    },
+    {
+      "series_uid": "1.3.46.670589.11.72330.5.0.12080.2025070920525246930",
+      "series_number": 0,
+      "series_description": "DEFAULT PS SERIES",
+      "modality": "PR",
+      "sop_class": "Grayscale Softcopy PS",
+      "sop_class_uid": "1.2.840.10008.5.1.4.1.1.11.1",
+      "file_count": 1,
+      "has_pixels": false,
+      "note": "Presentation state \u2014 skipped"
+    },
+    {
+      "series_uid": "1.3.46.670589.11.72330.5.0.7304.2025070920392121863",
+      "series_number": 101,
+      "series_description": "Survey",
+      "modality": "MR",
+      "sop_class": "Raw Data Storage",
+      "sop_class_uid": "1.2.840.10008.5.1.4.1.1.66",
+      "file_count": 1,
+      "has_pixels": true,
+      "sequence_params": {
+        "tr": null,
+        "te": null,
+        "ti": 0.0,
+        "fa": null,
+        "slice_thickness": null,
+        "spacing_between_slices": null,
+        "rows": 256.0,
+        "columns": 256.0,
+        "field_strength": null,
+        "pixel_spacing": "",
+        "b_value": null
+      },
+      "sequence_classification": {
+        "sequence_type": "Survey/Localizer",
+        "confidence": "high",
+        "reasoning": [
+          "Series name contains 'SURVEY'"
+        ],
+        "parameters": {
+          "TR_ms": null,
+          "TE_ms": null,
+          "TI_ms": 0.0,
+          "flip_angle_deg": null,
+          "b_value": null
+        }
+      }
+    },
+    {
+      "series_uid": "1.3.46.670589.11.72330.5.0.7304.2025070920400686870",
+      "series_number": 201,
+      "series_description": "DWI",
+      "modality": "MR",
+      "sop_class": "Raw Data Storage",
+      "sop_class_uid": "1.2.840.10008.5.1.4.1.1.66",
+      "file_count": 2,
+      "has_pixels": true,
+      "sequence_params": {
+        "tr": null,
+        "te": null,
+        "ti": 0.0,
+        "fa": null,
+        "slice_thickness": null,
+        "spacing_between_slices": null,
+        "rows": 256.0,
+        "columns": 256.0,
+        "field_strength": 1.5,
+        "pixel_spacing": "",
+        "b_value": null
+      },
+      "sequence_classification": {
+        "sequence_type": "DWI",
+        "confidence": "high",
+        "reasoning": [
+          "Series name contains 'DWI'"
+        ],
+        "parameters": {
+          "TR_ms": null,
+          "TE_ms": null,
+          "TI_ms": 0.0,
+          "flip_angle_deg": null,
+          "b_value": null
+        }
+      },
+      "volume_stats": {
+        "volume_shape": [
+          120,
+          256,
+          256
+        ],
+        "volume_voxel_count": 7864320,
+        "spacing_mm": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "origin_mm": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "direction_cosines": [],
+        "voxel_volume_mm3": 1.0,
+        "total_volume_mm3": 7864320.0,
+        "total_volume_cc": 7864.32,
+        "fov_mm": [
+          120.0,
+          256.0,
+          256.0
+        ],
+        "volume_min": 0.0,
+        "volume_max": 3842.0,
+        "volume_mean": 50.92217915852864,
+        "volume_std": 110.1517868279299,
+        "volume_median": 7.0,
+        "volume_p1": 0.0,
+        "volume_p5": 0.0,
+        "volume_p25": 2.0,
+        "volume_p75": 30.0,
+        "volume_p95": 234.0,
+        "volume_p99": 510.0,
+        "volume_iqr": 28.0,
+        "volume_dynamic_range": 3842.0,
+        "volume_snr_estimate": 0.46229099102844434,
+        "volume_nonzero_pct": 88.6575698852539,
+        "volume_tissue_pct": 77.8189214070638,
+        "volume_entropy": 2.3987219075043114,
+        "volume_skewness": 4.25873282010102,
+        "volume_kurtosis": 31.60951216577999,
+        "slice_snr_mean": 0.5960053547498144,
+        "slice_snr_std": 0.0992767973761939,
+        "slice_snr_min": 0.30239549993009623,
+        "slice_snr_max": 0.7297180282884619,
+        "slice_intensity_uniformity": 0.347716095901174
+      }
+    },
+    {
+      "series_uid": "1.3.46.670589.11.72330.5.0.15908.2025070920421502000",
+      "series_number": 202,
+      "series_description": "Reg - DWI",
+      "modality": "MR",
+      "sop_class": "Enhanced MR Image Storage",
+      "sop_class_uid": "1.2.840.10008.5.1.4.1.1.4.1",
+      "file_count": 1,
+      "has_pixels": true,
+      "sequence_params": {
+        "tr": null,
+        "te": null,
+        "ti": 0.0,
+        "fa": null,
+        "slice_thickness": null,
+        "spacing_between_slices": null,
+        "rows": 256.0,
+        "columns": 256.0,
+        "field_strength": 1.5,
+        "pixel_spacing": "",
+        "b_value": null
+      },
+      "sequence_classification": {
+        "sequence_type": "Registered DWI",
+        "confidence": "high",
+        "reasoning": [
+          "Series name contains 'DWI'",
+          "Motion-corrected/registered diffusion series"
+        ],
+        "parameters": {
+          "TR_ms": null,
+          "TE_ms": null,
+          "TI_ms": 0.0,
+          "flip_angle_deg": null,
+          "b_value": null
+        }
+      },
+      "volume_stats": {
+        "volume_shape": [
+          120,
+          256,
+          256
+        ],
+        "volume_voxel_count": 7864320,
+        "spacing_mm": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "origin_mm": [
+          -117.07481716341,
+          -128.77148164011,
+          -25.651486498481,
+          0.0
+        ],
+        "direction_cosines": [
+          0.9993106789617182,
+          -0.03229908188790018,
+          -0.01830126285993318,
+          0.0,
+          0.03504399907727702,
+          0.9834193928110052,
+          0.1779275582137439,
+          0.0,
+          0.012250920036530253,
+          -0.17844625844335354,
+          0.9838733901299629,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "voxel_volume_mm3": 1.0,
+        "total_volume_mm3": 7864320.0,
+        "total_volume_cc": 7864.32,
+        "fov_mm": [
+          120.0,
+          256.0,
+          256.0
+        ],
+        "volume_min": 0.0,
+        "volume_max": 5772.8512820512715,
+        "volume_mean": 77.26193568498647,
+        "volume_std": 165.94045468868453,
+        "volume_median": 10.517948717948698,
+        "volume_p1": 0.0,
+        "volume_p5": 0.0,
+        "volume_p25": 1.5025641025641,
+        "volume_p75": 46.579487179487096,
+        "volume_p95": 351.5999999999994,
+        "volume_p99": 764.8051282051268,
+        "volume_iqr": 45.076923076922995,
+        "volume_dynamic_range": 5772.8512820512715,
+        "volume_snr_estimate": 0.46560035866079014,
+        "volume_nonzero_pct": 82.81878153483073,
+        "volume_tissue_pct": 82.81878153483073,
+        "volume_entropy": 2.423262438174797,
+        "volume_skewness": 4.208301328171592,
+        "volume_kurtosis": 31.095855118454395,
+        "slice_snr_mean": 0.5965228006140826,
+        "slice_snr_std": 0.10163452740364051,
+        "slice_snr_min": 0.298009333417629,
+        "slice_snr_max": 0.7279568577273997,
+        "slice_intensity_uniformity": 0.3600360075677749
+      }
+    },
+    {
+      "series_uid": "1.3.46.670589.11.72330.5.0.15884.2025070920422702000",
+      "series_number": 203,
+      "series_description": "isoB1000",
+      "modality": "MR",
+      "sop_class": "Enhanced MR Image Storage",
+      "sop_class_uid": "1.2.840.10008.5.1.4.1.1.4.1",
+      "file_count": 1,
+      "has_pixels": true,
+      "sequence_params": {
+        "tr": null,
+        "te": null,
+        "ti": 0.0,
+        "fa": null,
+        "slice_thickness": null,
+        "spacing_between_slices": null,
+        "rows": 256.0,
+        "columns": 256.0,
+        "field_strength": 1.5,
+        "pixel_spacing": "",
+        "b_value": null
+      },
+      "sequence_classification": {
+        "sequence_type": "Isotropic DWI",
+        "confidence": "low",
+        "reasoning": [
+          "Isotropic trace-weighted diffusion image"
+        ],
+        "parameters": {
+          "TR_ms": null,
+          "TE_ms": null,
+          "TI_ms": 0.0,
+          "flip_angle_deg": null,
+          "b_value": null
+        }
+      },
+      "volume_stats": {
+        "volume_shape": [
+          24,
+          256,
+          256
+        ],
+        "volume_voxel_count": 1572864,
+        "spacing_mm": [
+          0.8984375,
+          0.8984375,
+          5.900000030107485
+        ],
+        "origin_mm": [
+          -117.07481716341,
+          -128.77148164011,
+          -25.651486498481,
+          0.0
+        ],
+        "direction_cosines": [
+          0.9993106789617182,
+          -0.03229908188790018,
+          -0.01830126285993318,
+          0.0,
+          0.03504399907727702,
+          0.9834193928110052,
+          0.1779275582137439,
+          0.0,
+          0.012250920036530253,
+          -0.17844625844335354,
+          0.9838733901299629,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "voxel_volume_mm3": 4.762420678599334,
+        "total_volume_mm3": 7490640.038224462,
+        "total_volume_cc": 7490.640038224463,
+        "fov_mm": [
+          141.60000072257964,
+          230.0,
+          230.0
+        ],
+        "volume_min": 0.0,
+        "volume_max": 1317.7487179487157,
+        "volume_mean": 49.01284938388392,
+        "volume_std": 106.49714427141417,
+        "volume_median": 0.0,
+        "volume_p1": 0.0,
+        "volume_p5": 0.0,
+        "volume_p25": 0.0,
+        "volume_p75": 0.0,
+        "volume_p95": 302.01538461538405,
+        "volume_p99": 354.6051282051276,
+        "volume_iqr": 0.0,
+        "volume_dynamic_range": 1317.7487179487157,
+        "volume_snr_estimate": 0.4602268845702091,
+        "volume_nonzero_pct": 20.238558451334633,
+        "volume_tissue_pct": 20.238558451334633,
+        "volume_entropy": 1.8925913427191234,
+        "volume_skewness": 1.9534820662945593,
+        "volume_kurtosis": 2.554735027881362,
+        "slice_snr_mean": 0.455622326335656,
+        "slice_snr_std": 0.15204500308069582,
+        "slice_snr_min": 0.17363536673474367,
+        "slice_snr_max": 0.6388433882121107,
+        "slice_intensity_uniformity": 0.43449971942122556
+      }
+    },
+    {
+      "series_uid": "1.3.46.670589.11.72330.5.0.16392.2025070920422840000",
+      "series_number": 204,
+      "series_description": "ddADC*",
+      "modality": "MR",
+      "sop_class": "Enhanced MR Image Storage",
+      "sop_class_uid": "1.2.840.10008.5.1.4.1.1.4.1",
+      "file_count": 1,
+      "has_pixels": true,
+      "sequence_params": {
+        "tr": null,
+        "te": null,
+        "ti": 0.0,
+        "fa": null,
+        "slice_thickness": null,
+        "spacing_between_slices": null,
+        "rows": 256.0,
+        "columns": 256.0,
+        "field_strength": 1.5,
+        "pixel_spacing": "",
+        "b_value": null
+      },
+      "sequence_classification": {
+        "sequence_type": "ADC Map",
+        "confidence": "high",
+        "reasoning": [
+          "Series name contains 'ADC'",
+          "Apparent Diffusion Coefficient map (derived)"
+        ],
+        "parameters": {
+          "TR_ms": null,
+          "TE_ms": null,
+          "TI_ms": 0.0,
+          "flip_angle_deg": null,
+          "b_value": null
+        }
+      },
+      "volume_stats": {
+        "volume_shape": [
+          24,
+          256,
+          256
+        ],
+        "volume_voxel_count": 1572864,
+        "spacing_mm": [
+          0.8984375,
+          0.8984375,
+          5.900000030107485
+        ],
+        "origin_mm": [
+          -117.07481716341,
+          -128.77148164011,
+          -25.651486498481,
+          0.0
+        ],
+        "direction_cosines": [
+          0.9993106789617182,
+          -0.03229908188790018,
+          -0.01830126285993318,
+          0.0,
+          0.03504399907727702,
+          0.9834193928110052,
+          0.1779275582137439,
+          0.0,
+          0.012250920036530253,
+          -0.17844625844335354,
+          0.9838733901299629,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "voxel_volume_mm3": 4.762420678599334,
+        "total_volume_mm3": 7490640.038224462,
+        "total_volume_cc": 7490.640038224463,
+        "fov_mm": [
+          141.60000072257964,
+          230.0,
+          230.0
+        ],
+        "volume_min": 0.0,
+        "volume_max": 4.06877486963088,
+        "volume_mean": 0.1956066012148713,
+        "volume_std": 0.451691295783776,
+        "volume_median": 0.0,
+        "volume_p1": 0.0,
+        "volume_p5": 0.0,
+        "volume_p25": 0.0,
+        "volume_p75": 0.0,
+        "volume_p95": 1.08046922831808,
+        "volume_p99": 2.05140269825352,
+        "volume_iqr": 0.0,
+        "volume_dynamic_range": 4.06877486963088,
+        "volume_snr_estimate": 0.4330527729622994,
+        "volume_nonzero_pct": 20.029195149739586,
+        "volume_tissue_pct": 20.029195149739586,
+        "volume_entropy": 1.9902953129245258,
+        "volume_skewness": 2.861751455642239,
+        "volume_kurtosis": 10.058508460926943,
+        "slice_snr_mean": 0.43501268476841304,
+        "slice_snr_std": 0.12768122304841903,
+        "slice_snr_min": 0.1895315888359558,
+        "slice_snr_max": 0.5802500700910381,
+        "slice_intensity_uniformity": 0.6524785910033978
+      }
+    },
+    {
+      "series_uid": "1.3.46.670589.11.72330.5.0.15608.2025070920423006000",
+      "series_number": 205,
+      "series_description": "dReg - DWI",
+      "modality": "MR",
+      "sop_class": "Enhanced MR Image Storage",
+      "sop_class_uid": "1.2.840.10008.5.1.4.1.1.4.1",
+      "file_count": 1,
+      "has_pixels": true,
+      "sequence_params": {
+        "tr": null,
+        "te": null,
+        "ti": 0.0,
+        "fa": null,
+        "slice_thickness": null,
+        "spacing_between_slices": null,
+        "rows": 256.0,
+        "columns": 256.0,
+        "field_strength": 1.5,
+        "pixel_spacing": "",
+        "b_value": null
+      },
+      "sequence_classification": {
+        "sequence_type": "Registered DWI",
+        "confidence": "high",
+        "reasoning": [
+          "Series name contains 'DWI'",
+          "Motion-corrected/registered diffusion series"
+        ],
+        "parameters": {
+          "TR_ms": null,
+          "TE_ms": null,
+          "TI_ms": 0.0,
+          "flip_angle_deg": null,
+          "b_value": null
+        }
+      },
+      "volume_stats": {
+        "volume_shape": [
+          24,
+          256,
+          256
+        ],
+        "volume_voxel_count": 1572864,
+        "spacing_mm": [
+          0.8984375,
+          0.8984375,
+          5.900000030107485
+        ],
+        "origin_mm": [
+          -117.07481716341,
+          -128.77148164011,
+          -25.651486498481,
+          0.0
+        ],
+        "direction_cosines": [
+          0.9993106789617182,
+          -0.03229908188790018,
+          -0.01830126285993318,
+          0.0,
+          0.03504399907727702,
+          0.9834193928110052,
+          0.1779275582137439,
+          0.0,
+          0.012250920036530253,
+          -0.17844625844335354,
+          0.9838733901299629,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "voxel_volume_mm3": 4.762420678599334,
+        "total_volume_mm3": 7490640.038224462,
+        "total_volume_cc": 7490.640038224463,
+        "fov_mm": [
+          141.60000072257964,
+          230.0,
+          230.0
+        ],
+        "volume_min": -2.708050251007,
+        "volume_max": 4.0621676380955,
+        "volume_mean": 0.2311739215671368,
+        "volume_std": 0.5097146404825782,
+        "volume_median": -0.0009865598995002366,
+        "volume_p1": -0.7600560889120002,
+        "volume_p5": -0.15962356259200022,
+        "volume_p25": -0.0026923341220002365,
+        "volume_p75": 0.4902764161804997,
+        "volume_p95": 1.1623514598454998,
+        "volume_p99": 2.0681175719929996,
+        "volume_iqr": 0.4929687503025,
+        "volume_dynamic_range": 6.7702178891025,
+        "volume_snr_estimate": 0.4535350756517313,
+        "volume_nonzero_pct": 100.0,
+        "volume_tissue_pct": 74.68814849853516,
+        "volume_entropy": 3.5272543069150872,
+        "volume_skewness": 1.7174201598549268,
+        "volume_kurtosis": 5.729362248795306,
+        "slice_snr_mean": 0.4565374264395074,
+        "slice_snr_std": 0.11343374767483012,
+        "slice_snr_min": 0.21448935691851445,
+        "slice_snr_max": 0.5945013660610996,
+        "slice_intensity_uniformity": 0.7181151729611933
+      }
+    },
+    {
+      "series_uid": "1.3.46.670589.11.72330.5.0.15608.2025070920423008001",
+      "series_number": 206,
+      "series_description": "isoReg - DWI",
+      "modality": "MR",
+      "sop_class": "Enhanced MR Image Storage",
+      "sop_class_uid": "1.2.840.10008.5.1.4.1.1.4.1",
+      "file_count": 1,
+      "has_pixels": true,
+      "sequence_params": {
+        "tr": null,
+        "te": null,
+        "ti": 0.0,
+        "fa": null,
+        "slice_thickness": null,
+        "spacing_between_slices": null,
+        "rows": 256.0,
+        "columns": 256.0,
+        "field_strength": 1.5,
+        "pixel_spacing": "",
+        "b_value": null
+      },
+      "sequence_classification": {
+        "sequence_type": "Registered DWI",
+        "confidence": "high",
+        "reasoning": [
+          "Series name contains 'DWI'",
+          "Motion-corrected/registered diffusion series"
+        ],
+        "parameters": {
+          "TR_ms": null,
+          "TE_ms": null,
+          "TI_ms": 0.0,
+          "flip_angle_deg": null,
+          "b_value": null
+        }
+      },
+      "volume_stats": {
+        "volume_shape": [
+          24,
+          256,
+          256
+        ],
+        "volume_voxel_count": 1572864,
+        "spacing_mm": [
+          0.8984375,
+          0.8984375,
+          5.900000030107485
+        ],
+        "origin_mm": [
+          -117.07481716341,
+          -128.77148164011,
+          -25.651486498481,
+          0.0
+        ],
+        "direction_cosines": [
+          0.9993106789617182,
+          -0.03229908188790018,
+          -0.01830126285993318,
+          0.0,
+          0.03504399907727702,
+          0.9834193928110052,
+          0.1779275582137439,
+          0.0,
+          0.012250920036530253,
+          -0.17844625844335354,
+          0.9838733901299629,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "voxel_volume_mm3": 4.762420678599334,
+        "total_volume_mm3": 7490640.038224462,
+        "total_volume_cc": 7490.640038224463,
+        "fov_mm": [
+          141.60000072257964,
+          230.0,
+          230.0
+        ],
+        "volume_min": 0.0,
+        "volume_max": 1317.7487179487157,
+        "volume_mean": 56.143935938777986,
+        "volume_std": 104.30804141573068,
+        "volume_median": 0.0,
+        "volume_p1": 0.0,
+        "volume_p5": 0.0,
+        "volume_p25": 0.0,
+        "volume_p75": 43.574358974358894,
+        "volume_p95": 302.01538461538405,
+        "volume_p99": 354.6051282051276,
+        "volume_iqr": 43.574358974358894,
+        "volume_dynamic_range": 1317.7487179487157,
+        "volume_snr_estimate": 0.5382512665227712,
+        "volume_nonzero_pct": 39.683787027994796,
+        "volume_tissue_pct": 39.683787027994796,
+        "volume_entropy": 3.0572924786681352,
+        "volume_skewness": 1.8929852228672277,
+        "volume_kurtosis": 2.481108049207366,
+        "slice_snr_mean": 0.569576059592451,
+        "slice_snr_std": 0.09286291858459927,
+        "slice_snr_min": 0.38105512197494684,
+        "slice_snr_max": 0.692142968246409,
+        "slice_intensity_uniformity": 0.5411539329446517
+      }
+    },
+    {
+      "series_uid": "1.3.46.670589.11.72330.5.0.7304.2025070920421521992",
+      "series_number": 301,
+      "series_description": "GRE-AXIAL",
+      "modality": "MR",
+      "sop_class": "Raw Data Storage",
+      "sop_class_uid": "1.2.840.10008.5.1.4.1.1.66",
+      "file_count": 2,
+      "has_pixels": true,
+      "sequence_params": {
+        "tr": null,
+        "te": null,
+        "ti": 0.0,
+        "fa": null,
+        "slice_thickness": null,
+        "spacing_between_slices": null,
+        "rows": 256.0,
+        "columns": 256.0,
+        "field_strength": 1.5,
+        "pixel_spacing": "",
+        "b_value": null
+      },
+      "sequence_classification": {
+        "sequence_type": "GRE (Gradient Echo)",
+        "confidence": "high",
+        "reasoning": [
+          "Series name contains 'GRE'"
+        ],
+        "parameters": {
+          "TR_ms": null,
+          "TE_ms": null,
+          "TI_ms": 0.0,
+          "flip_angle_deg": null,
+          "b_value": null
+        }
+      },
+      "volume_stats": {
+        "volume_shape": [
+          24,
+          256,
+          256
+        ],
+        "volume_voxel_count": 1572864,
+        "spacing_mm": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "origin_mm": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "direction_cosines": [],
+        "voxel_volume_mm3": 1.0,
+        "total_volume_mm3": 1572864.0,
+        "total_volume_cc": 1572.864,
+        "fov_mm": [
+          24.0,
+          256.0,
+          256.0
+        ],
+        "volume_min": 0.0,
+        "volume_max": 931.0,
+        "volume_mean": 82.80283991495769,
+        "volume_std": 145.78646880598976,
+        "volume_median": 2.0,
+        "volume_p1": 0.0,
+        "volume_p5": 0.0,
+        "volume_p25": 0.0,
+        "volume_p75": 83.0,
+        "volume_p95": 410.0,
+        "volume_p99": 466.0,
+        "volume_iqr": 83.0,
+        "volume_dynamic_range": 931.0,
+        "volume_snr_estimate": 0.567973420476882,
+        "volume_nonzero_pct": 57.81110127766927,
+        "volume_tissue_pct": 57.81110127766927,
+        "volume_entropy": 3.767562091375325,
+        "volume_skewness": 1.566104714006011,
+        "volume_kurtosis": 0.8371756096223244,
+        "slice_snr_mean": 0.5824989432212216,
+        "slice_snr_std": 0.10504726564373626,
+        "slice_snr_min": 0.3307749131102674,
+        "slice_snr_max": 0.7120514187381233,
+        "slice_intensity_uniformity": 0.5872548602005245
+      }
+    },
+    {
+      "series_uid": "1.3.46.670589.11.72330.5.0.7304.2025070920430355018",
+      "series_number": 401,
+      "series_description": "FLAIR AXIAL",
+      "modality": "MR",
+      "sop_class": "Raw Data Storage",
+      "sop_class_uid": "1.2.840.10008.5.1.4.1.1.66",
+      "file_count": 2,
+      "has_pixels": true,
+      "sequence_params": {
+        "tr": null,
+        "te": null,
+        "ti": 2800.0,
+        "fa": null,
+        "slice_thickness": null,
+        "spacing_between_slices": null,
+        "rows": 512.0,
+        "columns": 512.0,
+        "field_strength": 1.5,
+        "pixel_spacing": "",
+        "b_value": null
+      },
+      "sequence_classification": {
+        "sequence_type": "FLAIR",
+        "confidence": "high",
+        "reasoning": [
+          "Series name contains 'FLAIR'"
+        ],
+        "parameters": {
+          "TR_ms": null,
+          "TE_ms": null,
+          "TI_ms": 2800.0,
+          "flip_angle_deg": null,
+          "b_value": null
+        }
+      },
+      "volume_stats": {
+        "volume_shape": [
+          24,
+          512,
+          512
+        ],
+        "volume_voxel_count": 6291456,
+        "spacing_mm": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "origin_mm": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "direction_cosines": [],
+        "voxel_volume_mm3": 1.0,
+        "total_volume_mm3": 6291456.0,
+        "total_volume_cc": 6291.456,
+        "fov_mm": [
+          24.0,
+          512.0,
+          512.0
+        ],
+        "volume_min": 0.0,
+        "volume_max": 878.0,
+        "volume_mean": 66.63155714670818,
+        "volume_std": 110.25407075322263,
+        "volume_median": 2.0,
+        "volume_p1": 0.0,
+        "volume_p5": 0.0,
+        "volume_p25": 0.0,
+        "volume_p75": 137.0,
+        "volume_p95": 262.0,
+        "volume_p99": 477.0,
+        "volume_iqr": 137.0,
+        "volume_dynamic_range": 878.0,
+        "volume_snr_estimate": 0.6043455455853547,
+        "volume_nonzero_pct": 59.006357192993164,
+        "volume_tissue_pct": 59.006357192993164,
+        "volume_entropy": 3.7199151982396934,
+        "volume_skewness": 1.7974543144503432,
+        "volume_kurtosis": 3.15025713387514,
+        "slice_snr_mean": 0.6099966087614459,
+        "slice_snr_std": 0.07523012984617859,
+        "slice_snr_min": 0.40900094453430835,
+        "slice_snr_max": 0.6901795687601096,
+        "slice_intensity_uniformity": 0.813752881887328
+      }
+    },
+    {
+      "series_uid": "1.3.46.670589.11.72330.5.0.7304.2025070920450870043",
+      "series_number": 501,
+      "series_description": "T2W AXIAL",
+      "modality": "MR",
+      "sop_class": "Raw Data Storage",
+      "sop_class_uid": "1.2.840.10008.5.1.4.1.1.66",
+      "file_count": 2,
+      "has_pixels": true,
+      "sequence_params": {
+        "tr": null,
+        "te": null,
+        "ti": 0.0,
+        "fa": null,
+        "slice_thickness": null,
+        "spacing_between_slices": null,
+        "rows": 512.0,
+        "columns": 512.0,
+        "field_strength": 1.5,
+        "pixel_spacing": "",
+        "b_value": null
+      },
+      "sequence_classification": {
+        "sequence_type": "T2-weighted",
+        "confidence": "high",
+        "reasoning": [
+          "Series name contains 'T2W'"
+        ],
+        "parameters": {
+          "TR_ms": null,
+          "TE_ms": null,
+          "TI_ms": 0.0,
+          "flip_angle_deg": null,
+          "b_value": null
+        }
+      },
+      "volume_stats": {
+        "volume_shape": [
+          24,
+          512,
+          512
+        ],
+        "volume_voxel_count": 6291456,
+        "spacing_mm": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "origin_mm": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "direction_cosines": [],
+        "voxel_volume_mm3": 1.0,
+        "total_volume_mm3": 6291456.0,
+        "total_volume_cc": 6291.456,
+        "fov_mm": [
+          24.0,
+          512.0,
+          512.0
+        ],
+        "volume_min": 0.0,
+        "volume_max": 968.0,
+        "volume_mean": 86.03971068064372,
+        "volume_std": 141.66250111201862,
+        "volume_median": 1.0,
+        "volume_p1": 0.0,
+        "volume_p5": 0.0,
+        "volume_p25": 0.0,
+        "volume_p75": 175.0,
+        "volume_p95": 370.0,
+        "volume_p99": 541.0,
+        "volume_iqr": 175.0,
+        "volume_dynamic_range": 968.0,
+        "volume_snr_estimate": 0.6073569886024491,
+        "volume_nonzero_pct": 56.503963470458984,
+        "volume_tissue_pct": 56.503963470458984,
+        "volume_entropy": 3.822432381422479,
+        "volume_skewness": 1.643869898941608,
+        "volume_kurtosis": 2.198722960643849,
+        "slice_snr_mean": 0.6094226738368248,
+        "slice_snr_std": 0.08000747063433476,
+        "slice_snr_min": 0.3977651518026022,
+        "slice_snr_max": 0.6935915135217826,
+        "slice_intensity_uniformity": 0.7995544556640444
+      }
+    },
+    {
+      "series_uid": "1.3.46.670589.11.72330.5.0.7304.2025070920473313069",
+      "series_number": 601,
+      "series_description": "T1W AXIAL",
+      "modality": "MR",
+      "sop_class": "Raw Data Storage",
+      "sop_class_uid": "1.2.840.10008.5.1.4.1.1.66",
+      "file_count": 2,
+      "has_pixels": true,
+      "sequence_params": {
+        "tr": null,
+        "te": null,
+        "ti": 0.0,
+        "fa": null,
+        "slice_thickness": null,
+        "spacing_between_slices": null,
+        "rows": 288.0,
+        "columns": 288.0,
+        "field_strength": 1.5,
+        "pixel_spacing": "",
+        "b_value": null
+      },
+      "sequence_classification": {
+        "sequence_type": "T1-weighted",
+        "confidence": "high",
+        "reasoning": [
+          "Series name contains 'T1W'"
+        ],
+        "parameters": {
+          "TR_ms": null,
+          "TE_ms": null,
+          "TI_ms": 0.0,
+          "flip_angle_deg": null,
+          "b_value": null
+        }
+      },
+      "volume_stats": {
+        "volume_shape": [
+          24,
+          288,
+          288
+        ],
+        "volume_voxel_count": 1990656,
+        "spacing_mm": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "origin_mm": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "direction_cosines": [],
+        "voxel_volume_mm3": 1.0,
+        "total_volume_mm3": 1990656.0,
+        "total_volume_cc": 1990.656,
+        "fov_mm": [
+          24.0,
+          288.0,
+          288.0
+        ],
+        "volume_min": 0.0,
+        "volume_max": 1872.0,
+        "volume_mean": 167.73401531957305,
+        "volume_std": 275.42139439838735,
+        "volume_median": 4.0,
+        "volume_p1": 0.0,
+        "volume_p5": 0.0,
+        "volume_p25": 0.0,
+        "volume_p75": 339.0,
+        "volume_p95": 618.0,
+        "volume_p99": 1199.0,
+        "volume_iqr": 339.0,
+        "volume_dynamic_range": 1872.0,
+        "volume_snr_estimate": 0.6090086613530938,
+        "volume_nonzero_pct": 70.87980042759774,
+        "volume_tissue_pct": 70.87980042759774,
+        "volume_entropy": 3.782244963918823,
+        "volume_skewness": 1.813318182917037,
+        "volume_kurtosis": 3.2913800844218786,
+        "slice_snr_mean": 0.6120159319972877,
+        "slice_snr_std": 0.08500770342983187,
+        "slice_snr_min": 0.3921928855874239,
+        "slice_snr_max": 0.7158592508998477,
+        "slice_intensity_uniformity": 0.8161070948535993
+      }
+    },
+    {
+      "series_uid": "1.3.46.670589.11.72330.5.0.7304.2025070920490004096",
+      "series_number": 701,
+      "series_description": "T2W SAG",
+      "modality": "MR",
+      "sop_class": "Raw Data Storage",
+      "sop_class_uid": "1.2.840.10008.5.1.4.1.1.66",
+      "file_count": 2,
+      "has_pixels": true,
+      "sequence_params": {
+        "tr": null,
+        "te": null,
+        "ti": 0.0,
+        "fa": null,
+        "slice_thickness": null,
+        "spacing_between_slices": null,
+        "rows": 512.0,
+        "columns": 512.0,
+        "field_strength": 1.5,
+        "pixel_spacing": "",
+        "b_value": null
+      },
+      "sequence_classification": {
+        "sequence_type": "T2-weighted",
+        "confidence": "high",
+        "reasoning": [
+          "Series name contains 'T2W'"
+        ],
+        "parameters": {
+          "TR_ms": null,
+          "TE_ms": null,
+          "TI_ms": 0.0,
+          "flip_angle_deg": null,
+          "b_value": null
+        }
+      },
+      "volume_stats": {
+        "volume_shape": [
+          21,
+          512,
+          512
+        ],
+        "volume_voxel_count": 5505024,
+        "spacing_mm": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "origin_mm": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "direction_cosines": [],
+        "voxel_volume_mm3": 1.0,
+        "total_volume_mm3": 5505024.0,
+        "total_volume_cc": 5505.024,
+        "fov_mm": [
+          21.0,
+          512.0,
+          512.0
+        ],
+        "volume_min": 0.0,
+        "volume_max": 957.0,
+        "volume_mean": 120.75436437697638,
+        "volume_std": 145.5722238090281,
+        "volume_median": 25.0,
+        "volume_p1": 0.0,
+        "volume_p5": 0.0,
+        "volume_p25": 0.0,
+        "volume_p75": 241.0,
+        "volume_p95": 390.0,
+        "volume_p99": 519.0,
+        "volume_iqr": 241.0,
+        "volume_dynamic_range": 957.0,
+        "volume_snr_estimate": 0.8295151395493919,
+        "volume_nonzero_pct": 73.81055922735304,
+        "volume_tissue_pct": 73.81055922735304,
+        "volume_entropy": 5.002379046203674,
+        "volume_skewness": 0.9692694458237758,
+        "volume_kurtosis": 0.08474366720484472,
+        "slice_snr_mean": 0.833909558317114,
+        "slice_snr_std": 0.08847146016762587,
+        "slice_snr_min": 0.6117034253019067,
+        "slice_snr_max": 0.9325956488531659,
+        "slice_intensity_uniformity": 0.8694893653898313
+      }
+    },
+    {
+      "series_uid": "1.3.46.670589.11.72330.5.0.7304.2025070920500654119",
+      "series_number": 801,
+      "series_description": "T2W COR",
+      "modality": "MR",
+      "sop_class": "Raw Data Storage",
+      "sop_class_uid": "1.2.840.10008.5.1.4.1.1.66",
+      "file_count": 2,
+      "has_pixels": true,
+      "sequence_params": {
+        "tr": null,
+        "te": null,
+        "ti": 0.0,
+        "fa": null,
+        "slice_thickness": null,
+        "spacing_between_slices": null,
+        "rows": 512.0,
+        "columns": 512.0,
+        "field_strength": 1.5,
+        "pixel_spacing": "",
+        "b_value": null
+      },
+      "sequence_classification": {
+        "sequence_type": "T2-weighted",
+        "confidence": "high",
+        "reasoning": [
+          "Series name contains 'T2W'"
+        ],
+        "parameters": {
+          "TR_ms": null,
+          "TE_ms": null,
+          "TI_ms": 0.0,
+          "flip_angle_deg": null,
+          "b_value": null
+        }
+      },
+      "volume_stats": {
+        "volume_shape": [
+          24,
+          512,
+          512
+        ],
+        "volume_voxel_count": 6291456,
+        "spacing_mm": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "origin_mm": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "direction_cosines": [],
+        "voxel_volume_mm3": 1.0,
+        "total_volume_mm3": 6291456.0,
+        "total_volume_cc": 6291.456,
+        "fov_mm": [
+          24.0,
+          512.0,
+          512.0
+        ],
+        "volume_min": 0.0,
+        "volume_max": 869.0,
+        "volume_mean": 82.45782852172852,
+        "volume_std": 122.62027543627472,
+        "volume_median": 3.0,
+        "volume_p1": 0.0,
+        "volume_p5": 0.0,
+        "volume_p25": 0.0,
+        "volume_p75": 172.0,
+        "volume_p95": 328.0,
+        "volume_p99": 453.0,
+        "volume_iqr": 172.0,
+        "volume_dynamic_range": 869.0,
+        "volume_snr_estimate": 0.672464872190869,
+        "volume_nonzero_pct": 74.06915028889975,
+        "volume_tissue_pct": 74.06915028889975,
+        "volume_entropy": 4.294503627661786,
+        "volume_skewness": 1.4894815340415342,
+        "volume_kurtosis": 1.802345288073913,
+        "slice_snr_mean": 0.6784981222713217,
+        "slice_snr_std": 0.09179663558616016,
+        "slice_snr_min": 0.425857573766478,
+        "slice_snr_max": 0.7696370224398792,
+        "slice_intensity_uniformity": 0.7985433845085469
+      }
+    },
+    {
+      "series_uid": "1.3.46.670589.11.72330.5.0.7304.2025070920513188145",
+      "series_number": 901,
+      "series_description": "DWI-CORONAL",
+      "modality": "MR",
+      "sop_class": "Raw Data Storage",
+      "sop_class_uid": "1.2.840.10008.5.1.4.1.1.66",
+      "file_count": 2,
+      "has_pixels": true,
+      "sequence_params": {
+        "tr": null,
+        "te": null,
+        "ti": 0.0,
+        "fa": null,
+        "slice_thickness": null,
+        "spacing_between_slices": null,
+        "rows": 224.0,
+        "columns": 224.0,
+        "field_strength": 1.5,
+        "pixel_spacing": "",
+        "b_value": null
+      },
+      "sequence_classification": {
+        "sequence_type": "DWI",
+        "confidence": "high",
+        "reasoning": [
+          "Series name contains 'DWI'"
+        ],
+        "parameters": {
+          "TR_ms": null,
+          "TE_ms": null,
+          "TI_ms": 0.0,
+          "flip_angle_deg": null,
+          "b_value": null
+        }
+      },
+      "volume_stats": {
+        "volume_shape": [
+          140,
+          224,
+          224
+        ],
+        "volume_voxel_count": 7024640,
+        "spacing_mm": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "origin_mm": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "direction_cosines": [],
+        "voxel_volume_mm3": 1.0,
+        "total_volume_mm3": 7024640.0,
+        "total_volume_cc": 7024.64,
+        "fov_mm": [
+          140.0,
+          224.0,
+          224.0
+        ],
+        "volume_min": 0.0,
+        "volume_max": 1444.0,
+        "volume_mean": 31.540463283527696,
+        "volume_std": 60.4839933503882,
+        "volume_median": 4.0,
+        "volume_p1": 0.0,
+        "volume_p5": 0.0,
+        "volume_p25": 1.0,
+        "volume_p75": 26.0,
+        "volume_p95": 139.0,
+        "volume_p99": 283.0,
+        "volume_iqr": 25.0,
+        "volume_dynamic_range": 1444.0,
+        "volume_snr_estimate": 0.5214679291981196,
+        "volume_nonzero_pct": 77.26983873906705,
+        "volume_tissue_pct": 77.26983873906705,
+        "volume_entropy": 3.1633761570796346,
+        "volume_skewness": 3.2182964486565346,
+        "volume_kurtosis": 14.755638127849807,
+        "slice_snr_mean": 0.602869233204169,
+        "slice_snr_std": 0.08011117949764503,
+        "slice_snr_min": 0.3627259581840289,
+        "slice_snr_max": 0.7035048381556632,
+        "slice_intensity_uniformity": 0.49382986092261383
+      }
+    },
+    {
+      "series_uid": "1.3.46.670589.11.72330.5.0.16432.2025070920523302000",
+      "series_number": 902,
+      "series_description": "Reg - DWI",
+      "modality": "MR",
+      "sop_class": "Enhanced MR Image Storage",
+      "sop_class_uid": "1.2.840.10008.5.1.4.1.1.4.1",
+      "file_count": 1,
+      "has_pixels": true,
+      "sequence_params": {
+        "tr": null,
+        "te": null,
+        "ti": 0.0,
+        "fa": null,
+        "slice_thickness": null,
+        "spacing_between_slices": null,
+        "rows": 224.0,
+        "columns": 224.0,
+        "field_strength": 1.5,
+        "pixel_spacing": "",
+        "b_value": null
+      },
+      "sequence_classification": {
+        "sequence_type": "Registered DWI",
+        "confidence": "high",
+        "reasoning": [
+          "Series name contains 'DWI'",
+          "Motion-corrected/registered diffusion series"
+        ],
+        "parameters": {
+          "TR_ms": null,
+          "TE_ms": null,
+          "TI_ms": 0.0,
+          "flip_angle_deg": null,
+          "b_value": null
+        }
+      },
+      "volume_stats": {
+        "volume_shape": [
+          140,
+          224,
+          224
+        ],
+        "volume_voxel_count": 7024640,
+        "spacing_mm": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "origin_mm": [
+          -119.32565235074,
+          -73.176292824587,
+          131.737017973558,
+          0.0
+        ],
+        "direction_cosines": [
+          0.996702765162828,
+          0.026330591535671456,
+          -0.07674827598163964,
+          0.0,
+          0.07627524989453284,
+          0.018523469162724474,
+          0.9969147242084971,
+          0.0,
+          0.027670998722468674,
+          -0.9994816561796213,
+          0.016454020485641648,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "voxel_volume_mm3": 1.0,
+        "total_volume_mm3": 7024640.0,
+        "total_volume_cc": 7024.64,
+        "fov_mm": [
+          140.0,
+          224.0,
+          224.0
+        ],
+        "volume_min": 0.0,
+        "volume_max": 4361.142857142845,
+        "volume_mean": 95.33118991761218,
+        "volume_std": 183.2375081848671,
+        "volume_median": 12.11428571428568,
+        "volume_p1": 0.0,
+        "volume_p5": 0.0,
+        "volume_p25": 0.0,
+        "volume_p75": 78.74285714285692,
+        "volume_p95": 420.9714285714274,
+        "volume_p99": 854.0571428571404,
+        "volume_iqr": 78.74285714285692,
+        "volume_dynamic_range": 4361.142857142845,
+        "volume_snr_estimate": 0.5202602367915468,
+        "volume_nonzero_pct": 69.43877551020408,
+        "volume_tissue_pct": 69.43877551020408,
+        "volume_entropy": 3.1693622400536676,
+        "volume_skewness": 3.196770120294412,
+        "volume_kurtosis": 14.610210279903978,
+        "slice_snr_mean": 0.6007657916052769,
+        "slice_snr_std": 0.08106557746713766,
+        "slice_snr_min": 0.3549511898798921,
+        "slice_snr_max": 0.7026073262930899,
+        "slice_intensity_uniformity": 0.5001962274171923
+      }
+    },
+    {
+      "series_uid": "1.3.46.670589.11.72330.5.0.4908.2025070920524303000",
+      "series_number": 903,
+      "series_description": "isoB-1000",
+      "modality": "MR",
+      "sop_class": "Enhanced MR Image Storage",
+      "sop_class_uid": "1.2.840.10008.5.1.4.1.1.4.1",
+      "file_count": 1,
+      "has_pixels": true,
+      "sequence_params": {
+        "tr": null,
+        "te": null,
+        "ti": 0.0,
+        "fa": null,
+        "slice_thickness": null,
+        "spacing_between_slices": null,
+        "rows": 224.0,
+        "columns": 224.0,
+        "field_strength": 1.5,
+        "pixel_spacing": "",
+        "b_value": null
+      },
+      "sequence_classification": {
+        "sequence_type": "Isotropic DWI",
+        "confidence": "low",
+        "reasoning": [
+          "Isotropic trace-weighted diffusion image"
+        ],
+        "parameters": {
+          "TR_ms": null,
+          "TE_ms": null,
+          "TI_ms": 0.0,
+          "flip_angle_deg": null,
+          "b_value": null
+        }
+      },
+      "volume_stats": {
+        "volume_shape": [
+          28,
+          224,
+          224
+        ],
+        "volume_voxel_count": 1404928,
+        "spacing_mm": [
+          1.02678573131561,
+          1.02678573131561,
+          4.800000192396122
+        ],
+        "origin_mm": [
+          -119.32565235074,
+          -73.176292824587,
+          131.737017973558,
+          0.0
+        ],
+        "direction_cosines": [
+          0.996702765162828,
+          0.026330591535671456,
+          -0.07674827598163964,
+          0.0,
+          0.07627524989453284,
+          0.018523469162724474,
+          0.9969147242084971,
+          0.0,
+          0.027670998722468674,
+          -0.9994816561796213,
+          0.016454020485641648,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "voxel_volume_mm3": 5.060587105401096,
+        "total_volume_mm3": 7109760.520816951,
+        "total_volume_cc": 7109.760520816951,
+        "fov_mm": [
+          134.40000538709143,
+          230.0000038146966,
+          230.0000038146966
+        ],
+        "volume_min": 0.0,
+        "volume_max": 1589.9999999999955,
+        "volume_mean": 59.04081791278358,
+        "volume_std": 125.38481005412359,
+        "volume_median": 0.0,
+        "volume_p1": 0.0,
+        "volume_p5": 0.0,
+        "volume_p25": 0.0,
+        "volume_p75": 0.0,
+        "volume_p95": 357.37142857142754,
+        "volume_p99": 411.8857142857131,
+        "volume_iqr": 0.0,
+        "volume_dynamic_range": 1589.9999999999955,
+        "volume_snr_estimate": 0.4708769540458775,
+        "volume_nonzero_pct": 20.95310222303207,
+        "volume_tissue_pct": 20.95310222303207,
+        "volume_entropy": 1.9411724270274866,
+        "volume_skewness": 1.8975778250025779,
+        "volume_kurtosis": 2.3426098561435182,
+        "slice_snr_mean": 0.46864502564291916,
+        "slice_snr_std": 0.08467488753031815,
+        "slice_snr_min": 0.2644791333158778,
+        "slice_snr_max": 0.581281256433118,
+        "slice_intensity_uniformity": 0.7022913341122625
+      }
+    },
+    {
+      "series_uid": "1.3.46.670589.11.72330.5.0.17160.2025070920524448000",
+      "series_number": 904,
+      "series_description": "dADC",
+      "modality": "MR",
+      "sop_class": "Enhanced MR Image Storage",
+      "sop_class_uid": "1.2.840.10008.5.1.4.1.1.4.1",
+      "file_count": 1,
+      "has_pixels": true,
+      "sequence_params": {
+        "tr": null,
+        "te": null,
+        "ti": 0.0,
+        "fa": null,
+        "slice_thickness": null,
+        "spacing_between_slices": null,
+        "rows": 224.0,
+        "columns": 224.0,
+        "field_strength": 1.5,
+        "pixel_spacing": "",
+        "b_value": null
+      },
+      "sequence_classification": {
+        "sequence_type": "ADC Map",
+        "confidence": "high",
+        "reasoning": [
+          "Series name contains 'ADC'",
+          "Apparent Diffusion Coefficient map (derived)"
+        ],
+        "parameters": {
+          "TR_ms": null,
+          "TE_ms": null,
+          "TI_ms": 0.0,
+          "flip_angle_deg": null,
+          "b_value": null
+        }
+      },
+      "volume_stats": {
+        "volume_shape": [
+          28,
+          224,
+          224
+        ],
+        "volume_voxel_count": 1404928,
+        "spacing_mm": [
+          1.02678573131561,
+          1.02678573131561,
+          4.800000192396122
+        ],
+        "origin_mm": [
+          -119.32565235074,
+          -73.176292824587,
+          131.737017973558,
+          0.0
+        ],
+        "direction_cosines": [
+          0.996702765162828,
+          0.026330591535671456,
+          -0.07674827598163964,
+          0.0,
+          0.07627524989453284,
+          0.018523469162724474,
+          0.9969147242084971,
+          0.0,
+          0.027670998722468674,
+          -0.9994816561796213,
+          0.016454020485641648,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "voxel_volume_mm3": 5.060587105401096,
+        "total_volume_mm3": 7109760.520816951,
+        "total_volume_cc": 7109.760520816951,
+        "fov_mm": [
+          134.40000538709143,
+          230.0000038146966,
+          230.0000038146966
+        ],
+        "volume_min": -2.5649492740631,
+        "volume_max": 3.2531737773411997,
+        "volume_mean": 0.19642448333682408,
+        "volume_std": 0.4323296215209871,
+        "volume_median": -0.0004286128214002576,
+        "volume_p1": -0.0018493998913402575,
+        "volume_p5": -0.0004286128214002576,
+        "volume_p25": -0.0004286128214002576,
+        "volume_p75": -0.0004286128214002576,
+        "volume_p95": 1.0637409025636597,
+        "volume_p99": 1.8806934677791596,
+        "volume_iqr": 0.0,
+        "volume_dynamic_range": 5.818123051404299,
+        "volume_snr_estimate": 0.4543385861630179,
+        "volume_nonzero_pct": 100.0,
+        "volume_tissue_pct": 21.303725173104958,
+        "volume_entropy": 1.9490006199400653,
+        "volume_skewness": 2.5023727092373,
+        "volume_kurtosis": 7.26711413730691,
+        "slice_snr_mean": 0.45418382673975394,
+        "slice_snr_std": 0.07339911248821537,
+        "slice_snr_min": 0.26207310582381843,
+        "slice_snr_max": 0.5528435365837366,
+        "slice_intensity_uniformity": 0.702618694822734
+      }
+    },
+    {
+      "series_uid": "1.3.46.670589.11.72330.5.0.7304.2025070920525244289",
+      "series_number": 1001,
+      "series_description": "B_FFE",
+      "modality": "MR",
+      "sop_class": "Raw Data Storage",
+      "sop_class_uid": "1.2.840.10008.5.1.4.1.1.66",
+      "file_count": 2,
+      "has_pixels": true,
+      "sequence_params": {
+        "tr": null,
+        "te": null,
+        "ti": 0.0,
+        "fa": null,
+        "slice_thickness": null,
+        "spacing_between_slices": null,
+        "rows": 320.0,
+        "columns": 320.0,
+        "field_strength": 1.5,
+        "pixel_spacing": "",
+        "b_value": null
+      },
+      "sequence_classification": {
+        "sequence_type": "Balanced FFE (bSSFP)",
+        "confidence": "high",
+        "reasoning": [
+          "Series name contains 'B_FFE'"
+        ],
+        "parameters": {
+          "TR_ms": null,
+          "TE_ms": null,
+          "TI_ms": 0.0,
+          "flip_angle_deg": null,
+          "b_value": null
+        }
+      },
+      "volume_stats": {
+        "volume_shape": [
+          64,
+          320,
+          320
+        ],
+        "volume_voxel_count": 6553600,
+        "spacing_mm": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "origin_mm": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "direction_cosines": [],
+        "voxel_volume_mm3": 1.0,
+        "total_volume_mm3": 6553600.0,
+        "total_volume_cc": 6553.6,
+        "fov_mm": [
+          64.0,
+          320.0,
+          320.0
+        ],
+        "volume_min": 0.0,
+        "volume_max": 1087.0,
+        "volume_mean": 63.37141967773437,
+        "volume_std": 80.29471362088603,
+        "volume_median": 36.0,
+        "volume_p1": 0.0,
+        "volume_p5": 0.0,
+        "volume_p25": 8.0,
+        "volume_p75": 82.0,
+        "volume_p95": 250.0,
+        "volume_p99": 370.0,
+        "volume_iqr": 74.0,
+        "volume_dynamic_range": 1087.0,
+        "volume_snr_estimate": 0.7892352563545992,
+        "volume_nonzero_pct": 92.92549133300781,
+        "volume_tissue_pct": 83.95272827148438,
+        "volume_entropy": 5.137223290569851,
+        "volume_skewness": 2.0860340604267265,
+        "volume_kurtosis": 4.656147523888342,
+        "slice_snr_mean": 0.8012028264874824,
+        "slice_snr_std": 0.06483310777742293,
+        "slice_snr_min": 0.7311739445164186,
+        "slice_snr_max": 1.0338809657635761,
+        "slice_intensity_uniformity": 0.8863422934398706
+      }
+    }
+  ],
+  "conformance_issues": [
+    {
+      "filename": "IM-0001-0001-0001.dcm",
+      "missing_tags": [
+        "MagneticFieldStrength",
+        "RepetitionTime",
+        "EchoTime",
+        "FlipAngle",
+        "SliceThickness",
+        "SpacingBetweenSlices",
+        "PixelSpacing",
+        "Rows",
+        "Columns",
+        "BitsAllocated",
+        "ImageOrientationPatient",
+        "ImagePositionPatient",
+        "PhotometricInterpretation"
+      ],
+      "missing_count": 13,
+      "completeness_pct": 50.0
+    },
+    {
+      "filename": "IM-0001-0001-0002.dcm",
+      "missing_tags": [
+        "MagneticFieldStrength",
+        "RepetitionTime",
+        "EchoTime",
+        "FlipAngle",
+        "SliceThickness",
+        "SpacingBetweenSlices",
+        "PixelSpacing",
+        "Rows",
+        "Columns",
+        "BitsAllocated",
+        "ImageOrientationPatient",
+        "ImagePositionPatient",
+        "PhotometricInterpretation"
+      ],
+      "missing_count": 13,
+      "completeness_pct": 50.0
+    },
+    {
+      "filename": "IM-0001-0001-0003.dcm",
+      "missing_tags": [
+        "MagneticFieldStrength",
+        "RepetitionTime",
+        "EchoTime",
+        "FlipAngle",
+        "SliceThickness",
+        "SpacingBetweenSlices",
+        "PixelSpacing",
+        "Rows",
+        "Columns",
+        "BitsAllocated",
+        "ImageOrientationPatient",
+        "ImagePositionPatient",
+        "PhotometricInterpretation"
+      ],
+      "missing_count": 13,
+      "completeness_pct": 50.0
+    },
+    {
+      "filename": "IM-0001-0001-0004.dcm",
+      "missing_tags": [
+        "MagneticFieldStrength",
+        "RepetitionTime",
+        "EchoTime",
+        "FlipAngle",
+        "SliceThickness",
+        "SpacingBetweenSlices",
+        "PixelSpacing",
+        "Rows",
+        "Columns",
+        "BitsAllocated",
+        "ImageOrientationPatient",
+        "ImagePositionPatient",
+        "PhotometricInterpretation"
+      ],
+      "missing_count": 13,
+      "completeness_pct": 50.0
+    },
+    {
+      "filename": "IM-0001-0001-0005.dcm",
+      "missing_tags": [
+        "MagneticFieldStrength",
+        "RepetitionTime",
+        "EchoTime",
+        "FlipAngle",
+        "SliceThickness",
+        "SpacingBetweenSlices",
+        "PixelSpacing",
+        "Rows",
+        "Columns",
+        "BitsAllocated",
+        "ImageOrientationPatient",
+        "ImagePositionPatient",
+        "PhotometricInterpretation"
+      ],
+      "missing_count": 13,
+      "completeness_pct": 50.0
+    },
+    {
+      "filename": "IM-0001-0001-0006.dcm",
+      "missing_tags": [
+        "MagneticFieldStrength",
+        "RepetitionTime",
+        "EchoTime",
+        "FlipAngle",
+        "SliceThickness",
+        "SpacingBetweenSlices",
+        "PixelSpacing",
+        "Rows",
+        "Columns",
+        "BitsAllocated",
+        "ImageOrientationPatient",
+        "ImagePositionPatient",
+        "PhotometricInterpretation"
+      ],
+      "missing_count": 13,
+      "completeness_pct": 50.0
+    },
+    {
+      "filename": "IM-0001-0001-0007.dcm",
+      "missing_tags": [
+        "MagneticFieldStrength",
+        "RepetitionTime",
+        "EchoTime",
+        "FlipAngle",
+        "SliceThickness",
+        "SpacingBetweenSlices",
+        "PixelSpacing",
+        "Rows",
+        "Columns",
+        "BitsAllocated",
+        "ImageOrientationPatient",
+        "ImagePositionPatient",
+        "PhotometricInterpretation"
+      ],
+      "missing_count": 13,
+      "completeness_pct": 50.0
+    },
+    {
+      "filename": "IM-0001-0001-0008.dcm",
+      "missing_tags": [
+        "MagneticFieldStrength",
+        "RepetitionTime",
+        "EchoTime",
+        "FlipAngle",
+        "SliceThickness",
+        "SpacingBetweenSlices",
+        "PixelSpacing",
+        "Rows",
+        "Columns",
+        "BitsAllocated",
+        "ImageOrientationPatient",
+        "ImagePositionPatient",
+        "PhotometricInterpretation"
+      ],
+      "missing_count": 13,
+      "completeness_pct": 50.0
+    },
+    {
+      "filename": "IM-0001-0001-0009.dcm",
+      "missing_tags": [
+        "MagneticFieldStrength",
+        "RepetitionTime",
+        "EchoTime",
+        "FlipAngle",
+        "SliceThickness",
+        "SpacingBetweenSlices",
+        "PixelSpacing",
+        "Rows",
+        "Columns",
+        "BitsAllocated",
+        "ImageOrientationPatient",
+        "ImagePositionPatient",
+        "PhotometricInterpretation"
+      ],
+      "missing_count": 13,
+      "completeness_pct": 50.0
+    },
+    {
+      "filename": "IM-0001-0001-0010.dcm",
+      "missing_tags": [
+        "MagneticFieldStrength",
+        "RepetitionTime",
+        "EchoTime",
+        "FlipAngle",
+        "SliceThickness",
+        "SpacingBetweenSlices",
+        "PixelSpacing",
+        "Rows",
+        "Columns",
+        "BitsAllocated",
+        "ImageOrientationPatient",
+        "ImagePositionPatient",
+        "PhotometricInterpretation"
+      ],
+      "missing_count": 13,
+      "completeness_pct": 50.0
+    },
+    {
+      "filename": "IM-0002-0001.dcm",
+      "missing_tags": [
+        "MagneticFieldStrength",
+        "RepetitionTime",
+        "EchoTime",
+        "FlipAngle",
+        "SliceThickness",
+        "SpacingBetweenSlices",
+        "PixelSpacing",
+        "BitsAllocated",
+        "ImageOrientationPatient",
+        "ImagePositionPatient",
+        "PhotometricInterpretation"
+      ],
+      "missing_count": 11,
+      "completeness_pct": 57.7
+    },
+    {
+      "filename": "IM-0003-0001-0001.dcm",
+      "missing_tags": [
+        "MagneticFieldStrength",
+        "RepetitionTime",
+        "EchoTime",
+        "FlipAngle",
+        "SliceThickness",
+        "SpacingBetweenSlices",
+        "PixelSpacing",
+        "BitsAllocated",
+        "ImageOrientationPatient",
+        "ImagePositionPatient",
+        "PhotometricInterpretation"
+      ],
+      "missing_count": 11,
+      "completeness_pct": 57.7
+    },
+    {
+      "filename": "IM-0003-0001-0002.dcm",
+      "missing_tags": [
+        "RepetitionTime",
+        "EchoTime",
+        "FlipAngle",
+        "SliceThickness",
+        "SpacingBetweenSlices",
+        "PixelSpacing",
+        "ImageOrientationPatient",
+        "ImagePositionPatient"
+      ],
+      "missing_count": 8,
+      "completeness_pct": 69.2
+    },
+    {
+      "filename": "IM-0004-0001.dcm",
+      "missing_tags": [
+        "RepetitionTime",
+        "EchoTime",
+        "FlipAngle",
+        "SliceThickness",
+        "SpacingBetweenSlices",
+        "PixelSpacing",
+        "ImageOrientationPatient",
+        "ImagePositionPatient"
+      ],
+      "missing_count": 8,
+      "completeness_pct": 69.2
+    },
+    {
+      "filename": "IM-0005-0001.dcm",
+      "missing_tags": [
+        "RepetitionTime",
+        "EchoTime",
+        "FlipAngle",
+        "SliceThickness",
+        "SpacingBetweenSlices",
+        "PixelSpacing",
+        "ImageOrientationPatient",
+        "ImagePositionPatient"
+      ],
+      "missing_count": 8,
+      "completeness_pct": 69.2
+    },
+    {
+      "filename": "IM-0006-0001.dcm",
+      "missing_tags": [
+        "RepetitionTime",
+        "EchoTime",
+        "FlipAngle",
+        "SliceThickness",
+        "SpacingBetweenSlices",
+        "PixelSpacing",
+        "ImageOrientationPatient",
+        "ImagePositionPatient"
+      ],
+      "missing_count": 8,
+      "completeness_pct": 69.2
+    },
+    {
+      "filename": "IM-0007-0001.dcm",
+      "missing_tags": [
+        "RepetitionTime",
+        "EchoTime",
+        "FlipAngle",
+        "SliceThickness",
+        "SpacingBetweenSlices",
+        "PixelSpacing",
+        "ImageOrientationPatient",
+        "ImagePositionPatient"
+      ],
+      "missing_count": 8,
+      "completeness_pct": 69.2
+    },
+    {
+      "filename": "IM-0008-0001.dcm",
+      "missing_tags": [
+        "RepetitionTime",
+        "EchoTime",
+        "FlipAngle",
+        "SliceThickness",
+        "SpacingBetweenSlices",
+        "PixelSpacing",
+        "ImageOrientationPatient",
+        "ImagePositionPatient"
+      ],
+      "missing_count": 8,
+      "completeness_pct": 69.2
+    },
+    {
+      "filename": "IM-0009-0001-0001.dcm",
+      "missing_tags": [
+        "MagneticFieldStrength",
+        "RepetitionTime",
+        "EchoTime",
+        "FlipAngle",
+        "SliceThickness",
+        "SpacingBetweenSlices",
+        "PixelSpacing",
+        "BitsAllocated",
+        "ImageOrientationPatient",
+        "ImagePositionPatient",
+        "PhotometricInterpretation"
+      ],
+      "missing_count": 11,
+      "completeness_pct": 57.7
+    },
+    {
+      "filename": "IM-0009-0001-0002.dcm",
+      "missing_tags": [
+        "RepetitionTime",
+        "EchoTime",
+        "FlipAngle",
+        "SliceThickness",
+        "SpacingBetweenSlices",
+        "PixelSpacing",
+        "ImageOrientationPatient",
+        "ImagePositionPatient"
+      ],
+      "missing_count": 8,
+      "completeness_pct": 69.2
+    },
+    {
+      "filename": "IM-0010-0001-0001.dcm",
+      "missing_tags": [
+        "MagneticFieldStrength",
+        "RepetitionTime",
+        "EchoTime",
+        "FlipAngle",
+        "SliceThickness",
+        "SpacingBetweenSlices",
+        "PixelSpacing",
+        "BitsAllocated",
+        "ImageOrientationPatient",
+        "ImagePositionPatient",
+        "PhotometricInterpretation"
+      ],
+      "missing_count": 11,
+      "completeness_pct": 57.7
+    },
+    {
+      "filename": "IM-0010-0001-0002.dcm",
+      "missing_tags": [
+        "RepetitionTime",
+        "EchoTime",
+        "FlipAngle",
+        "SliceThickness",
+        "SpacingBetweenSlices",
+        "PixelSpacing",
+        "ImageOrientationPatient",
+        "ImagePositionPatient"
+      ],
+      "missing_count": 8,
+      "completeness_pct": 69.2
+    },
+    {
+      "filename": "IM-0011-0001-0001.dcm",
+      "missing_tags": [
+        "MagneticFieldStrength",
+        "RepetitionTime",
+        "EchoTime",
+        "FlipAngle",
+        "SliceThickness",
+        "SpacingBetweenSlices",
+        "PixelSpacing",
+        "BitsAllocated",
+        "ImageOrientationPatient",
+        "ImagePositionPatient",
+        "PhotometricInterpretation"
+      ],
+      "missing_count": 11,
+      "completeness_pct": 57.7
+    },
+    {
+      "filename": "IM-0011-0001-0002.dcm",
+      "missing_tags": [
+        "RepetitionTime",
+        "EchoTime",
+        "FlipAngle",
+        "SliceThickness",
+        "SpacingBetweenSlices",
+        "PixelSpacing",
+        "ImageOrientationPatient",
+        "ImagePositionPatient"
+      ],
+      "missing_count": 8,
+      "completeness_pct": 69.2
+    },
+    {
+      "filename": "IM-0012-0001-0001.dcm",
+      "missing_tags": [
+        "MagneticFieldStrength",
+        "RepetitionTime",
+        "EchoTime",
+        "FlipAngle",
+        "SliceThickness",
+        "SpacingBetweenSlices",
+        "PixelSpacing",
+        "BitsAllocated",
+        "ImageOrientationPatient",
+        "ImagePositionPatient",
+        "PhotometricInterpretation"
+      ],
+      "missing_count": 11,
+      "completeness_pct": 57.7
+    },
+    {
+      "filename": "IM-0012-0001-0002.dcm",
+      "missing_tags": [
+        "RepetitionTime",
+        "EchoTime",
+        "FlipAngle",
+        "SliceThickness",
+        "SpacingBetweenSlices",
+        "PixelSpacing",
+        "ImageOrientationPatient",
+        "ImagePositionPatient"
+      ],
+      "missing_count": 8,
+      "completeness_pct": 69.2
+    },
+    {
+      "filename": "IM-0013-0001-0001.dcm",
+      "missing_tags": [
+        "MagneticFieldStrength",
+        "RepetitionTime",
+        "EchoTime",
+        "FlipAngle",
+        "SliceThickness",
+        "SpacingBetweenSlices",
+        "PixelSpacing",
+        "BitsAllocated",
+        "ImageOrientationPatient",
+        "ImagePositionPatient",
+        "PhotometricInterpretation"
+      ],
+      "missing_count": 11,
+      "completeness_pct": 57.7
+    },
+    {
+      "filename": "IM-0013-0001-0002.dcm",
+      "missing_tags": [
+        "RepetitionTime",
+        "EchoTime",
+        "FlipAngle",
+        "SliceThickness",
+        "SpacingBetweenSlices",
+        "PixelSpacing",
+        "ImageOrientationPatient",
+        "ImagePositionPatient"
+      ],
+      "missing_count": 8,
+      "completeness_pct": 69.2
+    },
+    {
+      "filename": "IM-0014-0001-0001.dcm",
+      "missing_tags": [
+        "MagneticFieldStrength",
+        "RepetitionTime",
+        "EchoTime",
+        "FlipAngle",
+        "SliceThickness",
+        "SpacingBetweenSlices",
+        "PixelSpacing",
+        "BitsAllocated",
+        "ImageOrientationPatient",
+        "ImagePositionPatient",
+        "PhotometricInterpretation"
+      ],
+      "missing_count": 11,
+      "completeness_pct": 57.7
+    },
+    {
+      "filename": "IM-0014-0001-0002.dcm",
+      "missing_tags": [
+        "RepetitionTime",
+        "EchoTime",
+        "FlipAngle",
+        "SliceThickness",
+        "SpacingBetweenSlices",
+        "PixelSpacing",
+        "ImageOrientationPatient",
+        "ImagePositionPatient"
+      ],
+      "missing_count": 8,
+      "completeness_pct": 69.2
+    },
+    {
+      "filename": "IM-0015-0001-0001.dcm",
+      "missing_tags": [
+        "MagneticFieldStrength",
+        "RepetitionTime",
+        "EchoTime",
+        "FlipAngle",
+        "SliceThickness",
+        "SpacingBetweenSlices",
+        "PixelSpacing",
+        "BitsAllocated",
+        "ImageOrientationPatient",
+        "ImagePositionPatient",
+        "PhotometricInterpretation"
+      ],
+      "missing_count": 11,
+      "completeness_pct": 57.7
+    },
+    {
+      "filename": "IM-0015-0001-0002.dcm",
+      "missing_tags": [
+        "RepetitionTime",
+        "EchoTime",
+        "FlipAngle",
+        "SliceThickness",
+        "SpacingBetweenSlices",
+        "PixelSpacing",
+        "ImageOrientationPatient",
+        "ImagePositionPatient"
+      ],
+      "missing_count": 8,
+      "completeness_pct": 69.2
+    },
+    {
+      "filename": "IM-0016-0001.dcm",
+      "missing_tags": [
+        "RepetitionTime",
+        "EchoTime",
+        "FlipAngle",
+        "SliceThickness",
+        "SpacingBetweenSlices",
+        "PixelSpacing",
+        "ImageOrientationPatient",
+        "ImagePositionPatient"
+      ],
+      "missing_count": 8,
+      "completeness_pct": 69.2
+    },
+    {
+      "filename": "IM-0017-0001.dcm",
+      "missing_tags": [
+        "RepetitionTime",
+        "EchoTime",
+        "FlipAngle",
+        "SliceThickness",
+        "SpacingBetweenSlices",
+        "PixelSpacing",
+        "ImageOrientationPatient",
+        "ImagePositionPatient"
+      ],
+      "missing_count": 8,
+      "completeness_pct": 69.2
+    },
+    {
+      "filename": "IM-0018-0001.dcm",
+      "missing_tags": [
+        "RepetitionTime",
+        "EchoTime",
+        "FlipAngle",
+        "SliceThickness",
+        "SpacingBetweenSlices",
+        "PixelSpacing",
+        "ImageOrientationPatient",
+        "ImagePositionPatient"
+      ],
+      "missing_count": 8,
+      "completeness_pct": 69.2
+    },
+    {
+      "filename": "IM-0019-0001-0001.dcm",
+      "missing_tags": [
+        "MagneticFieldStrength",
+        "RepetitionTime",
+        "EchoTime",
+        "FlipAngle",
+        "SliceThickness",
+        "SpacingBetweenSlices",
+        "PixelSpacing",
+        "BitsAllocated",
+        "ImageOrientationPatient",
+        "ImagePositionPatient",
+        "PhotometricInterpretation"
+      ],
+      "missing_count": 11,
+      "completeness_pct": 57.7
+    },
+    {
+      "filename": "IM-0019-0001-0002.dcm",
+      "missing_tags": [
+        "RepetitionTime",
+        "EchoTime",
+        "FlipAngle",
+        "SliceThickness",
+        "SpacingBetweenSlices",
+        "PixelSpacing",
+        "ImageOrientationPatient",
+        "ImagePositionPatient"
+      ],
+      "missing_count": 8,
+      "completeness_pct": 69.2
+    }
+  ]
+}
