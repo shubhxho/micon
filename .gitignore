@@ -49,6 +49,7 @@ clean_output/
 report.html
 sample_extraction.json
 brain_study.parquet
+dicom_metadata.csv
 
 # Generated PDFs (regenerated via generate_pdf.py)
 *.pdf
