@@ -1,7 +1,29 @@
 [project]
 name = "micom"
-version = "0.1.0"
-description = "Add your description here"
+version = "5.0.0"
+description = "DICOM medical imaging extraction, analysis, HIPAA redaction, and Hugging Face dataset publishing"
 readme = "README.md"
+license = {text = "MIT"}
 requires-python = ">=3.12"
-dependencies = []
+dependencies = [
+    "pydicom>=3.0",
+    "SimpleITK>=2.4",
+    "nibabel>=5.3",
+    "polars>=1.17",
+    "numpy>=2.1",
+    "rich>=13.9",
+    "typer>=0.15",
+    "openai>=1.50",
+    "matplotlib>=3.10",
+    "scipy>=1.14",
+    "pillow>=11.0",
+    "python-dotenv>=1.0",
+    "mlx>=0.22",
+    "modal>=0.73",
+    "huggingface_hub>=0.25",
+    "cupy-cuda12x>=13.0; platform_machine == 'x86_64'",
+    "pydeface>=2.0.2",
+    "pytesseract>=0.3.13",
+    "cryptography>=47.0.0",
+    "webdataset>=1.0.2",
+]
