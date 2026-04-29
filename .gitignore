@@ -1,20 +1,58 @@
-# Python-generated files
+# Python
 __pycache__/
 *.py[oc]
 build/
 dist/
 wheels/
 *.egg-info
+.ruff_cache/
+.pytest_cache/
+.mypy_cache/
 
 # Virtual environments
-.venv
+.venv/
+venv/
 
-# Node
+# Node / JS
 node_modules/
 
 # Built client bundles
 src/public/js/*.js
 src/public/js/*.js.map
 
-# macOS
+# Secrets
+.env
+.env.*
+!.env.example
+
+# OS
 .DS_Store
+
+# Editors
+.idea/
+.vscode/
+
+# Datasets and large binaries
+*.parquet
+*.dcm
+*.tar
+*.tar.gz
+*.zip
+mcap-files/
+chunk_*/
+chunk_*.tar
+19990101_Brain/
+
+# Pipeline artifacts
+output/
+clean_output/
+report.html
+sample_extraction.json
+brain_study.parquet
+
+# Generated PDFs (regenerated via generate_pdf.py)
+*.pdf
+
+# Project-local data
+micom
+dataset
