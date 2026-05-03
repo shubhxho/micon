@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import multiprocessing
+import multiprocessing.shared_memory
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
