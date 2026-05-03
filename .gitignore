@@ -60,3 +60,10 @@ dataset
 
 # Claude Code runtime
 .claude/
+
+# claude-flow / RuFlo runtime state
+.swarm/
+.claude-flow/data/
+.claude-flow/logs/
+.claude-flow/sessions/
+ruvector.db
