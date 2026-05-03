@@ -629,7 +629,46 @@ def _build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Enable debug logging.",
     )
+    p.add_argument(
+        "--with-zarr",
+        action="store_true",
+        default=False,
+        help=(
+            "After BIDS conversion, also export each subject's NIfTI files "
+            "to OME-Zarr multiscale format alongside the BIDS output. "
+            "Requires zarr and ome-zarr to be installed."
+        ),
+    )
     return p
+
+
+def _export_zarr_alongside(bids_root: Path) -> None:
+    """Export every sub-* directory in bids_root to OME-Zarr alongside BIDS.
+
+    The Zarr output is written to ``bids_root/zarr/`` so it lives next to
+    the BIDS tree.  Requires zarr and ome-zarr to be installed.
+    """
+    try:
+        from src.zarr_export.converter import study_to_omezarr  # lazy
+    except ImportError:
+        logger.warning("--with-zarr: zarr/ome-zarr not installed; skipping Zarr export.")
+        return
+
+    zarr_root = bids_root / "zarr"
+    zarr_root.mkdir(parents=True, exist_ok=True)
+    print(f"\nExporting OME-Zarr alongside BIDS -> {zarr_root}")
+
+    subject_dirs = sorted(
+        d for d in bids_root.iterdir()
+        if d.is_dir() and d.name.startswith("sub-")
+    )
+    for sub_dir in subject_dirs:
+        print(f"  zarr: {sub_dir.name} ...")
+        stats = study_to_omezarr(sub_dir, zarr_root)
+        print(
+            f"    -> {stats['study_zarr']}  "
+            f"({stats['series_converted']} series, {stats['series_failed']} failed)"
+        )
 
 
 def main() -> None:
@@ -656,6 +695,9 @@ def main() -> None:
             f"\nDone. Converted {result['total_studies']} studies, "
             f"{result['total_series']} series total."
         )
+
+    if getattr(args, "with_zarr", False):
+        _export_zarr_alongside(args.bids_out)
 
 
 if __name__ == "__main__":
