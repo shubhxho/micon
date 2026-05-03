@@ -75,7 +75,7 @@ def export_all_slices(
     windows: list[str] | None = None,
     max_size: int = 512,
     n_workers: int = 4,
-    backend: Literal["png", "zarr", "both"] = "png",
+    backend: Literal["png", "zarr", "both", "lance", "all"] = "png",
 ) -> dict:
     """Export every slice of a volume as individual PNGs and/or a Zarr store.
 
@@ -88,21 +88,29 @@ def export_all_slices(
         n_workers: parallel PNG encoding threads
         backend: "png" (default) writes per-slice PNGs; "zarr" writes a
             chunked Zarr store at <out_dir>/slices/<series_name>.slices.zarr;
-            "both" produces both outputs.
+            "both" produces both outputs; "lance" writes a Lance columnar
+            dataset at <out_dir>/slices/<series_name>.slices.lance;
+            "all" produces PNG + Zarr + Lance.
 
     Returns: {"total_slices": N, "total_bytes": N, "files": [...]}
     """
     base_dir = Path(out_dir)
     result: dict = {}
 
-    if backend in ("png", "both"):
+    if backend in ("png", "both", "all"):
         result = _export_png(vol, series_name, base_dir, windows, max_size, n_workers)
 
-    if backend in ("zarr", "both"):
+    if backend in ("zarr", "both", "all"):
         from src.zarr_export.slice_store import slices_to_zarr
         zarr_path = base_dir / "slices" / f"{series_name}.slices.zarr"
         zarr_result = slices_to_zarr(vol, zarr_path, series_label=series_name)
         result["zarr"] = zarr_result
+
+    if backend in ("lance", "all"):
+        from src.lance_export.slice_dataset import slices_to_lance
+        lance_path = base_dir / "slices" / f"{series_name}.slices.lance"
+        lance_result = slices_to_lance(vol, lance_path, series_label=series_name)
+        result["lance"] = lance_result
 
     return result
 
