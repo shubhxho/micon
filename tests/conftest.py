@@ -8,14 +8,10 @@ from pathlib import Path
 
 import pytest
 
-# Make the repo root importable (for `from src.X import ...` style) and also
-# make the src/ directory itself importable (for bare `import stage_sentinels`).
+# Make the repo root importable so `from src.pipeline.X import Y` etc. works.
 _REPO_ROOT = str(Path(__file__).parent.parent)
-_SRC_DIR = str(Path(__file__).parent.parent / "src")
 if _REPO_ROOT not in sys.path:
     sys.path.insert(0, _REPO_ROOT)
-if _SRC_DIR not in sys.path:
-    sys.path.insert(0, _SRC_DIR)
 
 # ---------------------------------------------------------------------------
 # Marker declarations

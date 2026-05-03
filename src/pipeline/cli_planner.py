@@ -2,7 +2,7 @@
 
 Usage::
 
-    python -m src.cli_planner --root /path/to/output_dir
+    python -m src.pipeline.cli_planner --root /path/to/output_dir
 
 Exits 0 on success, 1 if output_dir does not exist.
 """
@@ -17,7 +17,7 @@ from rich import box
 from rich.console import Console
 from rich.table import Table
 
-from src.dry_run import plan
+from src.pipeline.plan import plan
 
 
 def _build_table(data: dict) -> Table:
@@ -77,7 +77,7 @@ def _build_table(data: dict) -> Table:
 
 def main() -> None:
     parser = argparse.ArgumentParser(
-        prog="python -m src.cli_planner",
+        prog="python -m src.pipeline.cli_planner",
         description="Dry-run plan: how much work and cost would the next run incur?",
     )
     parser.add_argument(

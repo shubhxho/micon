@@ -388,8 +388,8 @@ def resume(
     import sys
 
     sys.path.insert(0, "/root")
-    from src.stage_sentinels import is_done, mark_finished, mark_started, summarize
-    from src.structured_log import log, log_error
+    from src.pipeline.sentinels import is_done, mark_finished, mark_started, summarize
+    from src.pipeline.log import log, log_error
 
     volume.reload()
     t0 = time.time()

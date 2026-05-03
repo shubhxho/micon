@@ -16,10 +16,10 @@ import pytest
 from hypothesis import given, settings
 from hypothesis import strategies as st
 
-# Import from src.dry_run (which is the standalone copy used in tests without
+# Import from src.pipeline.plan (which is the standalone copy used in tests without
 # Modal). resume_pipeline.py defines an identical _safe_name but imports modal
 # at module level, making it unsuitable for unit tests.
-from src.dry_run import _safe_name
+from src.pipeline.plan import _safe_name
 
 # The expected output character class: word chars (\w) plus hyphens.
 _ALLOWED_RE = re.compile(r"^[\w\-]*$")

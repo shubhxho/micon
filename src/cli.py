@@ -80,8 +80,8 @@ def plan(
     """Print a cost + wall-time dry-run plan for the pipeline."""
     from rich.console import Console
 
-    from src.cli_planner import _build_table
-    from src.dry_run import plan as _plan
+    from src.pipeline.cli_planner import _build_table
+    from src.pipeline.plan import plan as _plan
 
     output_dir = Path(root)
     console = Console()

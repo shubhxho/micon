@@ -15,7 +15,7 @@ import pytest
 from hypothesis import HealthCheck, given, settings
 from hypothesis import strategies as st
 
-from stage_sentinels import (
+from src.pipeline.sentinels import (
     is_done,
     mark_finished,
     mark_started,

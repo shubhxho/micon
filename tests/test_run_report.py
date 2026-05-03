@@ -1,4 +1,4 @@
-"""Pure pytest tests for src.run_report and src.dry_run.
+"""Pure pytest tests for src.pipeline.run_report and src.pipeline.plan.
 
 These tests exercise the public API and JSON round-trip without any Modal
 imports, external services, or heavy dependencies.  All 28 original
@@ -13,8 +13,8 @@ from pathlib import Path
 
 import pytest
 
-from src.dry_run import _is_derivative, _safe_name, plan
-from src.run_report import RunReport
+from src.pipeline.plan import _is_derivative, _safe_name, plan
+from src.pipeline.run_report import RunReport
 
 # ---------------------------------------------------------------------------
 # RunReport -- initialisation
