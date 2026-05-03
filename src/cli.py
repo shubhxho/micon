@@ -106,7 +106,7 @@ def manifest(
     out: str = typer.Option(..., "--out", help="Output directory for parquet files."),
 ) -> None:
     """Generate manifest.parquet and study_manifest.parquet from pipeline output."""
-    from src.build_manifest import write_manifests
+    from src.manifest.builder import write_manifests
 
     counts = write_manifests(Path(root), Path(out))
     typer.echo(f"Wrote {counts['series_rows']} series rows -> {Path(out) / 'manifest.parquet'}")

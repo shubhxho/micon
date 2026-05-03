@@ -7,7 +7,7 @@ aggregates those rows into a study-level summary.  Writes manifest.parquet and
 study_manifest.parquet to a specified output directory.
 
 Usage:
-    python -m src.build_manifest --root <path> --out <path>
+    python -m src.manifest.builder --root <path> --out <path>
 """
 
 from __future__ import annotations

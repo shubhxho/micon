@@ -132,7 +132,7 @@ def upload(
         print("Generating manifests from volume contents...")
         print(f"{'=' * 60}")
         try:
-            from src.build_manifest import write_manifests
+            from src.manifest.builder import write_manifests
 
             manifest_counts = write_manifests(output_dir, output_dir)
             print(f"  manifest.parquet       -> {manifest_counts['series_rows']} series rows")
