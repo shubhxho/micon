@@ -1,16 +1,41 @@
-"""Tests for the unified speall Typer CLI (src/cli.py).
+"""Tests for the unified speall Cyclopts CLI (src/cli.py).
 
 Run with:
-    uv run --with typer --with rich --with pytest pytest tests/test_cli.py -v
+    uv run pytest tests/test_cli.py -v
+
+Note: Previously used typer.testing.CliRunner. Migrated to direct invocation
+with captured output (capsys/capfd) after migrating src/cli.py from Typer to
+Cyclopts. Cyclopts raises SystemExit on --help (exit 0) and on errors.
 """
 
 from __future__ import annotations
 
-from typer.testing import CliRunner
+import io
+import sys
+
+import pytest
+from rich.console import Console
 
 from src.cli import app
 
-runner = CliRunner()
+
+def _invoke(args: list[str]) -> tuple[str, int]:
+    """Invoke the cyclopts app and return (stdout_text, exit_code).
+
+    Cyclopts raises SystemExit for --help and for sys.exit() calls.
+    We capture all Rich console output by injecting a StringIO console.
+    Plain print() calls are captured via capsys in individual tests,
+    but for help output we redirect the app's console.
+    """
+    buf = io.StringIO()
+    console = Console(file=buf, highlight=False, markup=False, width=120)
+    exit_code = 0
+    try:
+        app(args, console=console)
+    except SystemExit as e:
+        exit_code = int(e.code) if e.code is not None else 0
+    return buf.getvalue(), exit_code
+
 
 # ---------------------------------------------------------------------------
 # Top-level help
@@ -18,13 +43,12 @@ runner = CliRunner()
 
 
 def test_help_exits_zero():
-    result = runner.invoke(app, ["--help"])
-    assert result.exit_code == 0
+    _, code = _invoke(["--help"])
+    assert code == 0
 
 
 def test_help_lists_all_commands():
-    result = runner.invoke(app, ["--help"])
-    output = result.output
+    output, _ = _invoke(["--help"])
     expected_commands = [
         "dev",
         "annotate",
@@ -46,14 +70,22 @@ def test_help_lists_all_commands():
 # ---------------------------------------------------------------------------
 
 
-def test_version_exits_zero():
-    result = runner.invoke(app, ["version"])
-    assert result.exit_code == 0
+def test_version_exits_zero(capsys):
+    exit_code = 0
+    try:
+        app(["version"])
+    except SystemExit as e:
+        exit_code = int(e.code) if e.code is not None else 0
+    assert exit_code == 0
 
 
-def test_version_output_contains_speall():
-    result = runner.invoke(app, ["version"])
-    assert "speall" in result.output
+def test_version_output_contains_speall(capsys):
+    try:
+        app(["version"])
+    except SystemExit:
+        pass
+    captured = capsys.readouterr()
+    assert "speall" in captured.out
 
 
 # ---------------------------------------------------------------------------
@@ -61,14 +93,17 @@ def test_version_output_contains_speall():
 # ---------------------------------------------------------------------------
 
 
-def test_sweep_exits_nonzero():
-    result = runner.invoke(app, ["sweep"])
-    assert result.exit_code != 0
+def test_sweep_exits_nonzero(capsys):
+    with pytest.raises(SystemExit) as exc_info:
+        app(["sweep"])
+    assert exc_info.value.code != 0
 
 
-def test_sweep_deprecation_message():
-    result = runner.invoke(app, ["sweep"])
-    assert "no longer part of the workflow" in result.output
+def test_sweep_deprecation_message(capsys):
+    with pytest.raises(SystemExit):
+        app(["sweep"])
+    captured = capsys.readouterr()
+    assert "no longer part of the workflow" in captured.out
 
 
 # ---------------------------------------------------------------------------
@@ -77,35 +112,35 @@ def test_sweep_deprecation_message():
 
 
 def test_resume_help_exits_zero():
-    result = runner.invoke(app, ["resume", "--help"])
-    assert result.exit_code == 0
+    _, code = _invoke(["resume", "--help"])
+    assert code == 0
 
 
 def test_resume_help_shows_repo_option():
-    result = runner.invoke(app, ["resume", "--help"])
-    assert "--repo" in result.output
+    output, _ = _invoke(["resume", "--help"])
+    assert "--repo" in output
 
 
 def test_upload_help_exits_zero():
-    result = runner.invoke(app, ["upload", "--help"])
-    assert result.exit_code == 0
+    _, code = _invoke(["upload", "--help"])
+    assert code == 0
 
 
 def test_upload_help_shows_options():
-    result = runner.invoke(app, ["upload", "--help"])
-    assert "--repo" in result.output
-    assert "--skip-manifest" in result.output
-    assert "--squash" in result.output
+    output, _ = _invoke(["upload", "--help"])
+    assert "--repo" in output
+    assert "--skip-manifest" in output
+    assert "--squash" in output
 
 
 def test_backfill_help_exits_zero():
-    result = runner.invoke(app, ["backfill", "--help"])
-    assert result.exit_code == 0
+    _, code = _invoke(["backfill", "--help"])
+    assert code == 0
 
 
 def test_backfill_help_shows_repo_dir():
-    result = runner.invoke(app, ["backfill", "--help"])
-    assert "--repo-dir" in result.output
+    output, _ = _invoke(["backfill", "--help"])
+    assert "--repo-dir" in output
 
 
 # ---------------------------------------------------------------------------
@@ -114,44 +149,44 @@ def test_backfill_help_shows_repo_dir():
 
 
 def test_dev_help_exits_zero():
-    result = runner.invoke(app, ["dev", "--help"])
-    assert result.exit_code == 0
+    _, code = _invoke(["dev", "--help"])
+    assert code == 0
 
 
 def test_dev_help_shows_options():
-    result = runner.invoke(app, ["dev", "--help"])
-    assert "--study" in result.output
-    assert "--skip-quality" in result.output
-    assert "--skip-pack" in result.output
+    output, _ = _invoke(["dev", "--help"])
+    assert "--study" in output
+    assert "--skip-quality" in output
+    assert "--skip-pack" in output
 
 
 def test_annotate_help_exits_zero():
-    result = runner.invoke(app, ["annotate", "--help"])
-    assert result.exit_code == 0
+    _, code = _invoke(["annotate", "--help"])
+    assert code == 0
 
 
 def test_annotate_help_shows_options():
-    result = runner.invoke(app, ["annotate", "--help"])
-    assert "--montage" in result.output
-    assert "--label" in result.output
+    output, _ = _invoke(["annotate", "--help"])
+    assert "--montage" in output
+    assert "--label" in output
 
 
 def test_plan_help_exits_zero():
-    result = runner.invoke(app, ["plan", "--help"])
-    assert result.exit_code == 0
+    _, code = _invoke(["plan", "--help"])
+    assert code == 0
 
 
 def test_manifest_help_exits_zero():
-    result = runner.invoke(app, ["manifest", "--help"])
-    assert result.exit_code == 0
+    _, code = _invoke(["manifest", "--help"])
+    assert code == 0
 
 
 def test_manifest_help_shows_options():
-    result = runner.invoke(app, ["manifest", "--help"])
-    assert "--root" in result.output
-    assert "--out" in result.output
+    output, _ = _invoke(["manifest", "--help"])
+    assert "--root" in output
+    assert "--out" in output
 
 
 def test_pdf_help_exits_zero():
-    result = runner.invoke(app, ["pdf", "--help"])
-    assert result.exit_code == 0
+    _, code = _invoke(["pdf", "--help"])
+    assert code == 0
