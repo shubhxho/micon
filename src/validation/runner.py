@@ -21,6 +21,7 @@ from pathlib import Path
 @dataclass
 class ValidationResult:
     """Per-study validation result."""
+
     study_name: str
     passed: bool = False
     timestamp: str = ""
@@ -67,12 +68,14 @@ def validate_study(
             f"PHI scanner: {phi_report.dirty_files} files with {phi_report.total_matches} matches "
             f"({', '.join(f'{k}:{v}' for k, v in phi_report.matches_by_pattern.items())})"
         )
-    print(f"    {'PASS' if phi_dict['passed'] else 'FAIL'}: "
-          f"{phi_report.clean_files} clean, {phi_report.dirty_files} dirty, "
-          f"{phi_report.total_matches} matches")
+    print(
+        f"    {'PASS' if phi_dict['passed'] else 'FAIL'}: "
+        f"{phi_report.clean_files} clean, {phi_report.dirty_files} dirty, "
+        f"{phi_report.total_matches} matches"
+    )
 
     # ── 2. Private tag scanner ──────────────────────────────────────────
-    print(f"  [2/4] Private tag scanner...")
+    print("  [2/4] Private tag scanner...")
     from .private_tags import scan_private_tags
 
     pt_report = scan_private_tags(file_paths, n_workers=n_workers)
@@ -89,15 +92,17 @@ def validate_study(
             f"Private tags: {pt_report.dirty_files} files with "
             f"{pt_report.total_private_tags} remaining private tags"
         )
-    print(f"    {'PASS' if pt_report.passed else 'FAIL'}: "
-          f"{pt_report.clean_files} clean, {pt_report.dirty_files} dirty")
+    print(
+        f"    {'PASS' if pt_report.passed else 'FAIL'}: "
+        f"{pt_report.clean_files} clean, {pt_report.dirty_files} dirty"
+    )
 
     # ── 3. Pixel PHI (OCR) ──────────────────────────────────────────────
     if skip_pixel_ocr:
-        print(f"  [3/4] Pixel PHI scanner: SKIPPED (--skip-pixel-ocr)")
+        print("  [3/4] Pixel PHI scanner: SKIPPED (--skip-pixel-ocr)")
         result.validators["pixel_phi"] = {"passed": True, "skipped": True}
     else:
-        print(f"  [3/4] Pixel PHI scanner (OCR on corners)...")
+        print("  [3/4] Pixel PHI scanner (OCR on corners)...")
         try:
             from .pixel_phi import scan_pixel_phi
 
@@ -115,17 +120,23 @@ def validate_study(
                     f"Pixel PHI: {px_report.files_with_text} files with burned-in text "
                     f"({len(px_report.findings)} detections)"
                 )
-            print(f"    {'PASS' if px_passed else 'FAIL'}: "
-                  f"{px_report.files_scanned} scanned, {px_report.files_with_text} with text")
+            print(
+                f"    {'PASS' if px_passed else 'FAIL'}: "
+                f"{px_report.files_scanned} scanned, {px_report.files_with_text} with text"
+            )
         except ImportError:
-            print(f"    SKIPPED: pytesseract not available")
-            result.validators["pixel_phi"] = {"passed": True, "skipped": True, "reason": "pytesseract not installed"}
+            print("    SKIPPED: pytesseract not available")
+            result.validators["pixel_phi"] = {
+                "passed": True,
+                "skipped": True,
+                "reason": "pytesseract not installed",
+            }
 
     # ── 4. DICOM conformance ────────────────────────────────────────────
     # After de-id, intentionally blanked tags (PatientName, PatientID, etc.)
     # will show as "missing" in conformance. This is expected — skip this check
     # for de-identified datasets and just verify the file is readable.
-    print(f"  [4/4] DICOM readability check...")
+    print("  [4/4] DICOM readability check...")
     import pydicom
 
     sample = file_paths[:100]
@@ -148,8 +159,7 @@ def validate_study(
 
     if not conf_passed:
         result.failures.append(f"Conformance: {read_fail}/{len(sample)} files unreadable")
-    print(f"    {'PASS' if conf_passed else 'FAIL'}: "
-          f"{read_ok} readable, {read_fail} unreadable")
+    print(f"    {'PASS' if conf_passed else 'FAIL'}: {read_ok} readable, {read_fail} unreadable")
 
     # ── Aggregate ───────────────────────────────────────────────────────
     result.passed = len(result.failures) == 0
@@ -163,15 +173,20 @@ def validate_study(
 
     # Write report
     report_path = out_dir / "validation_report.json"
-    report_path.write_text(json.dumps({
-        "study": result.study_name,
-        "passed": result.passed,
-        "buyer_ready": result.passed,
-        "timestamp": result.timestamp,
-        "duration_s": result.duration_s,
-        "validators": result.validators,
-        "failures": result.failures,
-    }, indent=2))
+    report_path.write_text(
+        json.dumps(
+            {
+                "study": result.study_name,
+                "passed": result.passed,
+                "buyer_ready": result.passed,
+                "timestamp": result.timestamp,
+                "duration_s": result.duration_s,
+                "validators": result.validators,
+                "failures": result.failures,
+            },
+            indent=2,
+        )
+    )
     print(f"  Report → {report_path}")
 
     return result

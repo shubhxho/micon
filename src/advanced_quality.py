@@ -16,8 +16,9 @@ All functions are pure numpy/scipy — no ML dependencies, fast, deterministic.
 
 from __future__ import annotations
 
-import numpy as np
 from concurrent.futures import ThreadPoolExecutor
+
+import numpy as np
 
 
 def compute_cnr(vol: np.ndarray) -> dict:
@@ -68,11 +69,15 @@ def compute_cnr(vol: np.ndarray) -> dict:
         "background_std": round(std_b, 1),
         "threshold": round(threshold, 1),
         "interpretation": (
-            "excellent" if cnr > 15 else
-            "good" if cnr > 10 else
-            "adequate" if cnr > 5 else
-            "poor" if cnr > 2 else
-            "very poor"
+            "excellent"
+            if cnr > 15
+            else "good"
+            if cnr > 10
+            else "adequate"
+            if cnr > 5
+            else "poor"
+            if cnr > 2
+            else "very poor"
         ),
     }
 
@@ -92,15 +97,17 @@ def compute_noise_floor(vol: np.ndarray) -> dict:
     while slc.ndim > 2:
         slc = slc[0]
 
-    h, w = slc.shape
+    h, _w = slc.shape
     corner_size = max(h // 10, 5)
 
-    corners = np.concatenate([
-        slc[:corner_size, :corner_size].ravel(),
-        slc[:corner_size, -corner_size:].ravel(),
-        slc[-corner_size:, :corner_size].ravel(),
-        slc[-corner_size:, -corner_size:].ravel(),
-    ])
+    corners = np.concatenate(
+        [
+            slc[:corner_size, :corner_size].ravel(),
+            slc[:corner_size, -corner_size:].ravel(),
+            slc[-corner_size:, :corner_size].ravel(),
+            slc[-corner_size:, -corner_size:].ravel(),
+        ]
+    )
 
     # Remove exact zeros (padding)
     nonzero_corners = corners[corners > 0]
@@ -126,10 +133,13 @@ def compute_noise_floor(vol: np.ndarray) -> dict:
         "rician_sigma": round(rician_sigma, 3),
         "noise_model": "rician",
         "interpretation": (
-            "very low noise" if noise_std < 5 else
-            "low noise" if noise_std < 15 else
-            "moderate noise" if noise_std < 30 else
-            "high noise"
+            "very low noise"
+            if noise_std < 5
+            else "low noise"
+            if noise_std < 15
+            else "moderate noise"
+            if noise_std < 30
+            else "high noise"
         ),
     }
 
@@ -160,7 +170,7 @@ def compute_bias_field_severity(vol: np.ndarray) -> dict:
     local_means = []
     for i in range(grid_size):
         for j in range(grid_size):
-            patch = slc[i * gh:(i + 1) * gh, j * gw:(j + 1) * gw]
+            patch = slc[i * gh : (i + 1) * gh, j * gw : (j + 1) * gw]
             nonzero = patch[patch > 0]
             if len(nonzero) > 10:
                 local_means.append(float(nonzero.mean()))
@@ -177,10 +187,13 @@ def compute_bias_field_severity(vol: np.ndarray) -> dict:
         "local_means_avg": round(float(means.mean()), 1),
         "n_patches": len(local_means),
         "interpretation": (
-            "minimal (no correction needed)" if cov < 0.05 else
-            "mild (N4 optional)" if cov < 0.10 else
-            "moderate (N4 recommended)" if cov < 0.20 else
-            "severe (N4 required)"
+            "minimal (no correction needed)"
+            if cov < 0.05
+            else "mild (N4 optional)"
+            if cov < 0.10
+            else "moderate (N4 recommended)"
+            if cov < 0.20
+            else "severe (N4 required)"
         ),
         "n4_recommended": cov > 0.10,
     }
@@ -209,8 +222,11 @@ def compute_edge_sharpness(vol: np.ndarray) -> dict:
             slc = slc[0]
         # Laplacian via convolution
         laplacian = (
-            np.roll(slc, 1, 0) + np.roll(slc, -1, 0) +
-            np.roll(slc, 1, 1) + np.roll(slc, -1, 1) - 4 * slc
+            np.roll(slc, 1, 0)
+            + np.roll(slc, -1, 0)
+            + np.roll(slc, 1, 1)
+            + np.roll(slc, -1, 1)
+            - 4 * slc
         )
         variances.append(float(laplacian.var()))
 
@@ -220,10 +236,13 @@ def compute_edge_sharpness(vol: np.ndarray) -> dict:
         "laplacian_variance": round(float(avg_var), 2),
         "per_slice_variance": [round(v, 2) for v in variances],
         "interpretation": (
-            "very sharp" if avg_var > 500 else
-            "sharp" if avg_var > 100 else
-            "moderate" if avg_var > 30 else
-            "soft/blurry"
+            "very sharp"
+            if avg_var > 500
+            else "sharp"
+            if avg_var > 100
+            else "moderate"
+            if avg_var > 30
+            else "soft/blurry"
         ),
     }
 
@@ -251,8 +270,14 @@ def compute_histogram_separation(vol: np.ndarray) -> dict:
     threshold = smoothed.max() * 0.05
     peaks = []
     for i in range(1, len(smoothed) - 1):
-        if smoothed[i] > smoothed[i - 1] and smoothed[i] > smoothed[i + 1] and smoothed[i] > threshold:
-            peaks.append({"index": i, "intensity": round(float(centers[i]), 1), "count": int(hist[i])})
+        if (
+            smoothed[i] > smoothed[i - 1]
+            and smoothed[i] > smoothed[i + 1]
+            and smoothed[i] > threshold
+        ):
+            peaks.append(
+                {"index": i, "intensity": round(float(centers[i]), 1), "count": int(hist[i])}
+            )
 
     # Separation: distance between peaks relative to histogram width
     separation = 0
@@ -268,15 +293,20 @@ def compute_histogram_separation(vol: np.ndarray) -> dict:
         "peaks": peaks[:5],
         "min_peak_separation": round(separation, 4),
         "interpretation": (
-            "excellent tissue separation" if len(peaks) >= 3 and separation > 0.1 else
-            "good separation" if len(peaks) >= 2 and separation > 0.05 else
-            "moderate separation" if len(peaks) >= 2 else
-            "poor separation — tissue classes overlap"
+            "excellent tissue separation"
+            if len(peaks) >= 3 and separation > 0.1
+            else "good separation"
+            if len(peaks) >= 2 and separation > 0.05
+            else "moderate separation"
+            if len(peaks) >= 2
+            else "poor separation — tissue classes overlap"
         ),
         "segmentation_difficulty": (
-            "easy" if len(peaks) >= 3 and separation > 0.1 else
-            "medium" if len(peaks) >= 2 else
-            "hard"
+            "easy"
+            if len(peaks) >= 3 and separation > 0.1
+            else "medium"
+            if len(peaks) >= 2
+            else "hard"
         ),
     }
 
@@ -317,10 +347,13 @@ def compute_inter_slice_consistency(vol: np.ndarray) -> dict:
         "std_correlation": round(std_corr, 4),
         "n_pairs_checked": len(correlations),
         "interpretation": (
-            "excellent consistency" if mean_corr > 0.95 else
-            "good consistency" if mean_corr > 0.85 else
-            "moderate (check for motion)" if mean_corr > 0.70 else
-            "poor (likely motion/errors)"
+            "excellent consistency"
+            if mean_corr > 0.95
+            else "good consistency"
+            if mean_corr > 0.85
+            else "moderate (check for motion)"
+            if mean_corr > 0.70
+            else "poor (likely motion/errors)"
         ),
         "suitable_for_3d_training": mean_corr > 0.85,
     }
@@ -374,11 +407,15 @@ def full_quality_assessment(vol: np.ndarray, series_desc: str = "") -> dict:
     result["ml_training_score"] = {
         "score": round(ml_score, 1),
         "grade": (
-            "A" if ml_score >= 80 else
-            "B" if ml_score >= 65 else
-            "C" if ml_score >= 50 else
-            "D" if ml_score >= 35 else
-            "F"
+            "A"
+            if ml_score >= 80
+            else "B"
+            if ml_score >= 65
+            else "C"
+            if ml_score >= 50
+            else "D"
+            if ml_score >= 35
+            else "F"
         ),
         "breakdown": {
             "cnr": round(scores[0], 1),
@@ -389,10 +426,13 @@ def full_quality_assessment(vol: np.ndarray, series_desc: str = "") -> dict:
             "consistency": round(scores[5], 1),
         },
         "commercial_tier": (
-            "premium" if ml_score >= 80 else
-            "standard" if ml_score >= 60 else
-            "discount" if ml_score >= 40 else
-            "exclude"
+            "premium"
+            if ml_score >= 80
+            else "standard"
+            if ml_score >= 60
+            else "discount"
+            if ml_score >= 40
+            else "exclude"
         ),
     }
 

@@ -43,10 +43,7 @@ def create_sample_bundle(
     output_dir.mkdir(parents=True, exist_ok=True)
 
     # Find all study directories (contain .dcm files)
-    study_dirs = sorted([
-        d for d in source_dir.iterdir()
-        if d.is_dir() and any(d.rglob("*.dcm"))
-    ])
+    study_dirs = sorted([d for d in source_dir.iterdir() if d.is_dir() and any(d.rglob("*.dcm"))])
 
     if not study_dirs:
         # Single study — treat source_dir as the study

@@ -15,7 +15,7 @@ from __future__ import annotations
 import time
 from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from pathlib import Path
 
 # ── HIPAA Safe Harbor: 18 identifier categories (45 CFR §164.514(b)(2)) ────
@@ -25,31 +25,55 @@ from pathlib import Path
 
 HIPAA_18_IDENTIFIERS = {
     "names": {
-        "tags": ["PatientName", "OtherPatientNames", "PatientBirthName",
-                 "PatientMotherBirthName", "ReferringPhysicianName",
-                 "PerformingPhysicianName", "NameOfPhysiciansReadingStudy",
-                 "OperatorsName", "PhysiciansOfRecord", "ResponsiblePerson"],
+        "tags": [
+            "PatientName",
+            "OtherPatientNames",
+            "PatientBirthName",
+            "PatientMotherBirthName",
+            "ReferringPhysicianName",
+            "PerformingPhysicianName",
+            "NameOfPhysiciansReadingStudy",
+            "OperatorsName",
+            "PhysiciansOfRecord",
+            "ResponsiblePerson",
+        ],
         "category": "1. Names",
         "description": "Names of patient, physicians, operators, responsible persons",
     },
     "geographic": {
-        "tags": ["PatientAddress", "InstitutionAddress", "InstitutionName",
-                 "InstitutionalDepartmentName", "StationName",
-                 "DistributionAddress", "DistributionName",
-                 "OrderEntererLocation", "Country"],
+        "tags": [
+            "PatientAddress",
+            "InstitutionAddress",
+            "InstitutionName",
+            "InstitutionalDepartmentName",
+            "StationName",
+            "DistributionAddress",
+            "DistributionName",
+            "OrderEntererLocation",
+            "Country",
+        ],
         "category": "2. Geographic data",
         "description": "All geographic subdivisions smaller than state (address, city, zip, etc.)",
     },
     "dates": {
-        "tags": ["PatientBirthDate", "StudyDate", "SeriesDate",
-                 "AcquisitionDate", "ContentDate", "InstanceCreationDate",
-                 "PatientAge"],
+        "tags": [
+            "PatientBirthDate",
+            "StudyDate",
+            "SeriesDate",
+            "AcquisitionDate",
+            "ContentDate",
+            "InstanceCreationDate",
+            "PatientAge",
+        ],
         "category": "3. Dates",
         "description": "All dates related to an individual (birth, admission, discharge, death, etc.)",
     },
     "phone": {
-        "tags": ["PatientTelephoneNumbers", "OrderCallbackPhoneNumber",
-                 "OrderCallbackTelecomInformation"],
+        "tags": [
+            "PatientTelephoneNumbers",
+            "OrderCallbackPhoneNumber",
+            "OrderCallbackTelecomInformation",
+        ],
         "category": "4. Phone numbers",
         "description": "Telephone numbers",
     },
@@ -69,8 +93,7 @@ HIPAA_18_IDENTIFIERS = {
         "description": "Social Security numbers (may appear in PatientID)",
     },
     "mrn": {
-        "tags": ["PatientID", "OtherPatientIDs", "MedicalRecordLocator",
-                 "AccessionNumber"],
+        "tags": ["PatientID", "OtherPatientIDs", "MedicalRecordLocator", "AccessionNumber"],
         "category": "8. Medical record numbers",
         "description": "Medical record numbers and accession numbers",
     },
@@ -120,11 +143,18 @@ HIPAA_18_IDENTIFIERS = {
         "description": "Full face photographic images and comparable images",
     },
     "unique_ids": {
-        "tags": ["StudyInstanceUID", "SeriesInstanceUID", "SOPInstanceUID",
-                 "FrameOfReferenceUID", "MediaStorageSOPInstanceUID",
-                 "ClinicalTrialSponsorName", "ClinicalTrialProtocolID",
-                 "ClinicalTrialSubjectID", "ClinicalTrialSiteID",
-                 "ClinicalTrialSiteName"],
+        "tags": [
+            "StudyInstanceUID",
+            "SeriesInstanceUID",
+            "SOPInstanceUID",
+            "FrameOfReferenceUID",
+            "MediaStorageSOPInstanceUID",
+            "ClinicalTrialSponsorName",
+            "ClinicalTrialProtocolID",
+            "ClinicalTrialSubjectID",
+            "ClinicalTrialSiteID",
+            "ClinicalTrialSiteName",
+        ],
         "category": "18. Any other unique identifying number/code",
         "description": "UIDs, clinical trial IDs, and any other unique identifier",
     },
@@ -132,15 +162,14 @@ HIPAA_18_IDENTIFIERS = {
 
 # Flat set of all PHI tag keywords for O(1) lookup
 ALL_PHI_TAGS: frozenset[str] = frozenset(
-    tag
-    for cat in HIPAA_18_IDENTIFIERS.values()
-    for tag in cat["tags"]
+    tag for cat in HIPAA_18_IDENTIFIERS.values() for tag in cat["tags"]
 )
 
 
 @dataclass
 class PHIFinding:
     """A single PHI element found in a DICOM file."""
+
     filename: str
     filepath: str
     tag_keyword: str
@@ -153,6 +182,7 @@ class PHIFinding:
 @dataclass
 class FileAuditRecord:
     """Audit trail for a single file scan."""
+
     filepath: str
     filename: str
     scan_timestamp: float
@@ -165,6 +195,7 @@ class FileAuditRecord:
 @dataclass
 class HIPAAComplianceReport:
     """Full HIPAA compliance report for a study."""
+
     study_name: str
     scan_timestamp: str
     total_files: int
@@ -184,9 +215,10 @@ class HIPAAComplianceReport:
 
 # ── Per-file PHI scan ──────────────────────────────────────────────────────
 
+
 def _tag_to_category(tag_keyword: str) -> str:
     """Map a DICOM tag keyword to its HIPAA identifier category. O(1)."""
-    for cat_key, cat_info in HIPAA_18_IDENTIFIERS.items():
+    for _cat_key, cat_info in HIPAA_18_IDENTIFIERS.items():
         if tag_keyword in cat_info["tags"]:
             return cat_info["category"]
     return "Unknown"
@@ -210,14 +242,17 @@ def scan_file_phi(filepath: str) -> tuple[list[PHIFinding], FileAuditRecord]:
         ds = pydicom.dcmread(filepath, stop_before_pixels=True, force=True)
     except Exception:
         return findings, FileAuditRecord(
-            filepath=filepath, filename=filename,
+            filepath=filepath,
+            filename=filename,
             scan_timestamp=time.time(),
-            phi_tags_found=0, phi_tags_empty=0,
-            phi_categories_present=[], risk_level="none",
+            phi_tags_found=0,
+            phi_tags_empty=0,
+            phi_categories_present=[],
+            risk_level="none",
         )
 
     # Check every PHI tag
-    for cat_key, cat_info in HIPAA_18_IDENTIFIERS.items():
+    for _cat_key, cat_info in HIPAA_18_IDENTIFIERS.items():
         for tag_kw in cat_info["tags"]:
             val = getattr(ds, tag_kw, None)
             if val is None:
@@ -232,15 +267,17 @@ def scan_file_phi(filepath: str) -> tuple[list[PHIFinding], FileAuditRecord]:
             else:
                 phi_empty += 1
 
-            findings.append(PHIFinding(
-                filename=filename,
-                filepath=filepath,
-                tag_keyword=tag_kw,
-                hipaa_category=cat_info["category"],
-                value_present=is_present,
-                value_length=len(val_str),
-                value_preview=val_str[:50] if is_present else "",
-            ))
+            findings.append(
+                PHIFinding(
+                    filename=filename,
+                    filepath=filepath,
+                    tag_keyword=tag_kw,
+                    hipaa_category=cat_info["category"],
+                    value_present=is_present,
+                    value_length=len(val_str),
+                    value_preview=val_str[:50] if is_present else "",
+                )
+            )
 
     # Also check file_meta for UIDs
     if hasattr(ds, "file_meta"):
@@ -252,18 +289,24 @@ def scan_file_phi(filepath: str) -> tuple[list[PHIFinding], FileAuditRecord]:
                 if val_str:
                     phi_found += 1
                     categories_found.add("18. Any other unique identifying number/code")
-                    findings.append(PHIFinding(
-                        filename=filename, filepath=filepath,
-                        tag_keyword=tag_kw,
-                        hipaa_category="18. Any other unique identifying number/code",
-                        value_present=True, value_length=len(val_str),
-                        value_preview=val_str[:50],
-                    ))
+                    findings.append(
+                        PHIFinding(
+                            filename=filename,
+                            filepath=filepath,
+                            tag_keyword=tag_kw,
+                            hipaa_category="18. Any other unique identifying number/code",
+                            value_present=True,
+                            value_length=len(val_str),
+                            value_preview=val_str[:50],
+                        )
+                    )
 
     # Risk level based on what categories of PHI are present
     sensitive_categories = {
-        "1. Names", "7. Social Security numbers",
-        "4. Phone numbers", "6. Email addresses",
+        "1. Names",
+        "7. Social Security numbers",
+        "4. Phone numbers",
+        "6. Email addresses",
         "2. Geographic data",
     }
     found_sensitive = categories_found & sensitive_categories
@@ -277,9 +320,11 @@ def scan_file_phi(filepath: str) -> tuple[list[PHIFinding], FileAuditRecord]:
         risk = "none"
 
     audit = FileAuditRecord(
-        filepath=filepath, filename=filename,
+        filepath=filepath,
+        filename=filename,
         scan_timestamp=time.time(),
-        phi_tags_found=phi_found, phi_tags_empty=phi_empty,
+        phi_tags_found=phi_found,
+        phi_tags_empty=phi_empty,
         phi_categories_present=sorted(categories_found),
         risk_level=risk,
     )
@@ -288,6 +333,7 @@ def scan_file_phi(filepath: str) -> tuple[list[PHIFinding], FileAuditRecord]:
 
 
 # ── Study-level HIPAA compliance scan ──────────────────────────────────────
+
 
 def run_hipaa_scan(
     file_paths: list[str],
@@ -321,8 +367,10 @@ def run_hipaa_scan(
                 phi_found = sum(1 for f in findings if f.value_present)
                 cats = {f.hipaa_category for f in findings if f.value_present}
                 sensitive = cats & {
-                    "1. Names", "7. Social Security numbers",
-                    "4. Phone numbers", "6. Email addresses",
+                    "1. Names",
+                    "7. Social Security numbers",
+                    "4. Phone numbers",
+                    "6. Email addresses",
                     "2. Geographic data",
                 }
                 if len(sensitive) >= 3:

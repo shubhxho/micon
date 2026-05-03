@@ -20,9 +20,8 @@ VOLUME_NAME = "micom-data"
 MOUNT_POINT = PurePosixPath("/vol")
 OUTPUT_DIR = MOUNT_POINT / "output"
 
-image = (
-    modal.Image.debian_slim(python_version="3.12")
-    .pip_install("huggingface_hub>=0.25", "polars>=1.17")
+image = modal.Image.debian_slim(python_version="3.12").pip_install(
+    "huggingface_hub>=0.25", "polars>=1.17"
 )
 
 app = modal.App("micom-hf-upload", image=image)
@@ -49,7 +48,7 @@ def upload_to_hf(study: str, repo_id: str = "", private: bool = False):
     out_dir = Path(str(OUTPUT_DIR)) / study
     if not out_dir.exists():
         print(f"Error: {out_dir} not found on volume")
-        print(f"Available studies:")
+        print("Available studies:")
         try:
             for entry in volume.listdir("output"):
                 print(f"  {PurePosixPath(entry.path).name}")
@@ -85,18 +84,23 @@ def upload_to_hf(study: str, repo_id: str = "", private: bool = False):
 
     print(f"Study: {study}")
     print(f"  {len(all_files)} files, {total_bytes / 1024**3:.1f} GB")
-    print(f"  Types: {', '.join(f'{ext}:{n}' for ext, n in sorted(by_ext.items(), key=lambda x: -x[1])[:10])}")
+    print(
+        f"  Types: {', '.join(f'{ext}:{n}' for ext, n in sorted(by_ext.items(), key=lambda x: -x[1])[:10])}"
+    )
 
     # Auth — uses HF_TOKEN env var (set via Modal secret or env)
     token = os.environ.get("HF_TOKEN", "")
     if not token:
         try:
             from huggingface_hub import HfFolder
+
             token = HfFolder.get_token() or ""
         except Exception:
             pass
     if not token:
-        return {"error": "No HF_TOKEN. Create Modal secret: modal secret create hf-secret HF_TOKEN=hf_..."}
+        return {
+            "error": "No HF_TOKEN. Create Modal secret: modal secret create hf-secret HF_TOKEN=hf_..."
+        }
 
     api = HfApi(token=token)
 
@@ -118,8 +122,9 @@ def upload_to_hf(study: str, repo_id: str = "", private: bool = False):
     # Copy to /tmp first — volume may be full and HF needs to write cache files
     import shutil
     import tempfile
+
     staging = Path(tempfile.mkdtemp())
-    print(f"  Copying to /tmp staging area...")
+    print("  Copying to /tmp staging area...")
     for f in all_files:
         rel = f.relative_to(out_dir)
         dest = staging / rel
@@ -130,7 +135,7 @@ def upload_to_hf(study: str, repo_id: str = "", private: bool = False):
     # Set HF cache to /tmp too
     os.environ["HF_HOME"] = str(staging / ".hf_cache")
 
-    print(f"  Uploading via upload_large_folder (batched commits, no timeout)...")
+    print("  Uploading via upload_large_folder (batched commits, no timeout)...")
     api.upload_large_folder(
         folder_path=str(staging),
         repo_id=repo_id,
@@ -147,7 +152,12 @@ def upload_to_hf(study: str, repo_id: str = "", private: bool = False):
     print(f"\nDone in {elapsed:.0f}s ({rate:.1f} MB/s)")
     print(f"Dataset: {url}")
 
-    return {"url": url, "files": len(all_files), "size_gb": round(total_bytes / 1024**3, 1), "time_s": round(elapsed)}
+    return {
+        "url": url,
+        "files": len(all_files),
+        "size_gb": round(total_bytes / 1024**3, 1),
+        "time_s": round(elapsed),
+    }
 
 
 @app.local_entrypoint()
@@ -162,8 +172,8 @@ def main(
     Check progress at the Modal dashboard URL printed above.
     """
     call = upload_to_hf.spawn(study, repo_id=repo, private=private)
-    print(f"Upload spawned — runs on Modal even if you disconnect.")
-    print(f"Check progress at: https://modal.com/apps/shubhxho/main")
+    print("Upload spawned — runs on Modal even if you disconnect.")
+    print("Check progress at: https://modal.com/apps/shubhxho/main")
     print(f"Call ID: {call.object_id}")
 
     # Wait for result if we're still connected

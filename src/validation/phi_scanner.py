@@ -26,81 +26,125 @@ import pydicom
 
 _PATTERNS: list[tuple[str, re.Pattern]] = [
     # ── US identifiers (HIPAA) ──
-    ("ssn", re.compile(r'\b\d{3}-\d{2}-\d{4}\b')),
-    ("phone_us", re.compile(r'\b\d{3}[-.\s]\d{3}[-.\s]\d{4}\b')),
-
+    ("ssn", re.compile(r"\b\d{3}-\d{2}-\d{4}\b")),
+    ("phone_us", re.compile(r"\b\d{3}[-.\s]\d{3}[-.\s]\d{4}\b")),
     # ── Indian government IDs (DPDPA + Aadhaar Act §29) ──
-    ("aadhaar", re.compile(r'\b\d{4}[\s-]?\d{4}[\s-]?\d{4}\b')),
-    ("pan", re.compile(r'\b[A-Z]{5}\d{4}[A-Z]\b')),
-    ("voter_id", re.compile(r'\b[A-Z]{3}\d{7}\b')),
-    ("driving_license", re.compile(r'\b[A-Z]{2}[-/]\d{10,13}\b')),
-    ("passport", re.compile(r'\b[A-Z]\d{7}\b')),
-    ("uhid", re.compile(r'\b(?:UHID|MRN|HRN|HOSP)[-:/]?\s*\d{4,12}\b', re.IGNORECASE)),
-
+    ("aadhaar", re.compile(r"\b\d{4}[\s-]?\d{4}[\s-]?\d{4}\b")),
+    ("pan", re.compile(r"\b[A-Z]{5}\d{4}[A-Z]\b")),
+    ("voter_id", re.compile(r"\b[A-Z]{3}\d{7}\b")),
+    ("driving_license", re.compile(r"\b[A-Z]{2}[-/]\d{10,13}\b")),
+    ("passport", re.compile(r"\b[A-Z]\d{7}\b")),
+    ("uhid", re.compile(r"\b(?:UHID|MRN|HRN|HOSP)[-:/]?\s*\d{4,12}\b", re.IGNORECASE)),
     # ── Indian phone numbers ──
-    ("phone_india", re.compile(r'(?<!\d)(?:\+91[\s-]?|0)\d{10}(?!\d)')),
-    ("phone_landline", re.compile(r'\b0\d{2,4}[-\s]?\d{6,8}\b')),
-
+    ("phone_india", re.compile(r"(?<!\d)(?:\+91[\s-]?|0)\d{10}(?!\d)")),
+    ("phone_landline", re.compile(r"\b0\d{2,4}[-\s]?\d{6,8}\b")),
     # ── Names (Indian + general) ──
-    ("name_indian", re.compile(
-        r'\b(?:Shri|Smt|Kumari?|Sri|Thiru|Selvi|Dr|Prof|Mr|Mrs|Ms)\.?\s+'
-        r'[A-Z][a-z]+(?:\s+[A-Z][a-z]+){0,3}\b'
-    )),
-    ("surname_indian", re.compile(
-        r'\b(?:Kumar|Singh|Sharma|Verma|Gupta|Patel|Shah|Jain|Mishra|Pandey'
-        r'|Reddy|Rao|Nair|Menon|Pillai|Iyer|Iyengar|Mukherjee|Banerjee'
-        r'|Chatterjee|Das|Ghosh|Roy|Sinha|Thakur|Yadav|Tiwari|Dubey'
-        r'|Agarwal|Joshi|Kulkarni|Patil|Kaur|Gill|Bhatia|Fernandes'
-        r"|D'Souza|George|Thomas|Krishnan|Naidu|Choudhury)\b",
-        re.IGNORECASE,
-    )),
-
+    (
+        "name_indian",
+        re.compile(
+            r"\b(?:Shri|Smt|Kumari?|Sri|Thiru|Selvi|Dr|Prof|Mr|Mrs|Ms)\.?\s+"
+            r"[A-Z][a-z]+(?:\s+[A-Z][a-z]+){0,3}\b"
+        ),
+    ),
+    (
+        "surname_indian",
+        re.compile(
+            r"\b(?:Kumar|Singh|Sharma|Verma|Gupta|Patel|Shah|Jain|Mishra|Pandey"
+            r"|Reddy|Rao|Nair|Menon|Pillai|Iyer|Iyengar|Mukherjee|Banerjee"
+            r"|Chatterjee|Das|Ghosh|Roy|Sinha|Thakur|Yadav|Tiwari|Dubey"
+            r"|Agarwal|Joshi|Kulkarni|Patil|Kaur|Gill|Bhatia|Fernandes"
+            r"|D'Souza|George|Thomas|Krishnan|Naidu|Choudhury)\b",
+            re.IGNORECASE,
+        ),
+    ),
     # ── Contact info ──
-    ("email", re.compile(r'\b[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}\b')),
-    ("url", re.compile(r'https?://\S+|www\.\S+', re.IGNORECASE)),
-
+    ("email", re.compile(r"\b[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}\b")),
+    ("url", re.compile(r"https?://\S+|www\.\S+", re.IGNORECASE)),
     # ── Institution ──
-    ("institution", re.compile(r'\b[A-Z][a-z]{2,}\s+(?:Hospital|Clinic|Institute|Centre|Center|University|Diagnostics?|Imaging)\b', re.IGNORECASE)),
-
+    (
+        "institution",
+        re.compile(
+            r"\b[A-Z][a-z]{2,}\s+(?:Hospital|Clinic|Institute|Centre|Center|University|Diagnostics?|Imaging)\b",
+            re.IGNORECASE,
+        ),
+    ),
     # ── Dates / timestamps ──
-    ("date_text", re.compile(r'\b\d{1,2}[-/]\d{1,2}[-/]\d{2,4}\b')),
-    ("date_named", re.compile(r'\b(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\w*\s+\d{1,2},?\s+\d{4}\b', re.IGNORECASE)),
-    ("timestamp_ist", re.compile(r'\b\d{1,2}:\d{2}(?::\d{2})?\s*(?:IST|UTC|GMT)\b', re.IGNORECASE)),
-
+    ("date_text", re.compile(r"\b\d{1,2}[-/]\d{1,2}[-/]\d{2,4}\b")),
+    (
+        "date_named",
+        re.compile(
+            r"\b(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\w*\s+\d{1,2},?\s+\d{4}\b",
+            re.IGNORECASE,
+        ),
+    ),
+    ("timestamp_ist", re.compile(r"\b\d{1,2}:\d{2}(?::\d{2})?\s*(?:IST|UTC|GMT)\b", re.IGNORECASE)),
     # ── MRN / accession ──
-    ("mrn_like", re.compile(r'\b[A-Z]{2,4}\d{6,12}\b')),
+    ("mrn_like", re.compile(r"\b[A-Z]{2,4}\d{6,12}\b")),
 ]
 
 # Tags to skip (binary data, known non-PHI equipment/protocol tags)
-_SKIP_TAGS = frozenset({
-    "PixelData", "OverlayData", "WaveformData",
-    "SpectroscopyData", "EncapsulatedDocument",
-    # Equipment tags — contain vendor names like "GE MEDICAL" that aren't PHI
-    "Manufacturer", "ManufacturerModelName", "SoftwareVersions",
-    "ImplementationClassUID", "ImplementationVersionName",
-    "TransferSyntaxUID", "SOPClassUID", "MediaStorageSOPClassUID",
-    # UIDs — long numeric strings that false-positive as phone numbers
-    "StudyInstanceUID", "SeriesInstanceUID", "SOPInstanceUID",
-    "FrameOfReferenceUID", "MediaStorageSOPInstanceUID",
-    "ReferencedSOPInstanceUID", "RelatedFrameOfReferenceUID",
-    # Protocol/sequence tags — contain technical terms not PHI
-    "SequenceName", "ScanningSequence", "SequenceVariant",
-    "ImageType", "ScanOptions", "MRAcquisitionType",
-    "BodyPartExamined", "Modality", "PhotometricInterpretation",
-    # Spatial/geometric tags — numeric arrays that false-positive as phone numbers
-    "ImageOrientationPatient", "ImagePositionPatient",
-    "PixelSpacing", "SliceLocation", "SliceThickness",
-    "SpacingBetweenSlices", "WindowCenter", "WindowWidth",
-    "RescaleIntercept", "RescaleSlope",
-    "Rows", "Columns", "BitsAllocated", "BitsStored", "HighBit",
-    "SmallestImagePixelValue", "LargestImagePixelValue",
-    "NumberOfFrames", "SamplesPerPixel",
-})
+_SKIP_TAGS = frozenset(
+    {
+        "PixelData",
+        "OverlayData",
+        "WaveformData",
+        "SpectroscopyData",
+        "EncapsulatedDocument",
+        # Equipment tags — contain vendor names like "GE MEDICAL" that aren't PHI
+        "Manufacturer",
+        "ManufacturerModelName",
+        "SoftwareVersions",
+        "ImplementationClassUID",
+        "ImplementationVersionName",
+        "TransferSyntaxUID",
+        "SOPClassUID",
+        "MediaStorageSOPClassUID",
+        # UIDs — long numeric strings that false-positive as phone numbers
+        "StudyInstanceUID",
+        "SeriesInstanceUID",
+        "SOPInstanceUID",
+        "FrameOfReferenceUID",
+        "MediaStorageSOPInstanceUID",
+        "ReferencedSOPInstanceUID",
+        "RelatedFrameOfReferenceUID",
+        # Protocol/sequence tags — contain technical terms not PHI
+        "SequenceName",
+        "ScanningSequence",
+        "SequenceVariant",
+        "ImageType",
+        "ScanOptions",
+        "MRAcquisitionType",
+        "BodyPartExamined",
+        "Modality",
+        "PhotometricInterpretation",
+        # Spatial/geometric tags — numeric arrays that false-positive as phone numbers
+        "ImageOrientationPatient",
+        "ImagePositionPatient",
+        "PixelSpacing",
+        "SliceLocation",
+        "SliceThickness",
+        "SpacingBetweenSlices",
+        "WindowCenter",
+        "WindowWidth",
+        "RescaleIntercept",
+        "RescaleSlope",
+        "Rows",
+        "Columns",
+        "BitsAllocated",
+        "BitsStored",
+        "HighBit",
+        "SmallestImagePixelValue",
+        "LargestImagePixelValue",
+        "NumberOfFrames",
+        "SamplesPerPixel",
+    }
+)
 
 
 @dataclass
 class PHIMatch:
     """A single PHI pattern match in a DICOM tag."""
+
     filename: str
     tag_keyword: str
     pattern_name: str
@@ -111,6 +155,7 @@ class PHIMatch:
 @dataclass
 class FileScanResult:
     """Result of scanning one file."""
+
     filepath: str
     matches: list[PHIMatch] = field(default_factory=list)
     error: str | None = None
@@ -123,6 +168,7 @@ class FileScanResult:
 @dataclass
 class ScanReport:
     """Aggregate scan report."""
+
     total_files: int = 0
     clean_files: int = 0
     dirty_files: int = 0
@@ -158,13 +204,15 @@ def scan_file(filepath: str) -> FileScanResult:
 
         for pattern_name, pattern in _PATTERNS:
             for match in pattern.finditer(val):
-                result.matches.append(PHIMatch(
-                    filename=filename,
-                    tag_keyword=kw,
-                    pattern_name=pattern_name,
-                    matched_text=match.group(),
-                    tag_value_preview=val[:100],
-                ))
+                result.matches.append(
+                    PHIMatch(
+                        filename=filename,
+                        tag_keyword=kw,
+                        pattern_name=pattern_name,
+                        matched_text=match.group(),
+                        tag_value_preview=val[:100],
+                    )
+                )
 
     return result
 

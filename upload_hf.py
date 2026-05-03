@@ -40,7 +40,9 @@ def main():
 
     print(f"Dataset: {out_dir}")
     print(f"  {len(all_files)} files, {total_bytes / 1024**3:.1f} GB")
-    print(f"  Types: {', '.join(f'{ext}:{n}' for ext, n in sorted(by_ext.items(), key=lambda x: -x[1])[:10])}")
+    print(
+        f"  Types: {', '.join(f'{ext}:{n}' for ext, n in sorted(by_ext.items(), key=lambda x: -x[1])[:10])}"
+    )
     print()
 
     # Auth
@@ -50,6 +52,7 @@ def main():
     if not token:
         try:
             from huggingface_hub import HfFolder
+
             token = HfFolder.get_token() or ""
         except Exception:
             pass

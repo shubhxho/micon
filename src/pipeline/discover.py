@@ -55,10 +55,7 @@ def _recursive_scan(directory: Path, depth: int = 0) -> list[Path]:
 
     if depth < 2 and len(subdirs) > 1:
         with ThreadPoolExecutor(max_workers=min(len(subdirs), 8)) as pool:
-            futures = {
-                pool.submit(_recursive_scan, sd, depth + 1): sd
-                for sd in subdirs
-            }
+            futures = {pool.submit(_recursive_scan, sd, depth + 1): sd for sd in subdirs}
             for fut in as_completed(futures):
                 found.extend(fut.result())
     else:
@@ -113,8 +110,7 @@ def discover_dcm_folders(root: Path) -> list[Path]:
         try:
             with os.scandir(directory) as it:
                 return any(
-                    e.is_file(follow_symlinks=False) and e.name.lower().endswith(".dcm")
-                    for e in it
+                    e.is_file(follow_symlinks=False) and e.name.lower().endswith(".dcm") for e in it
                 )
         except PermissionError:
             return False
@@ -136,7 +132,6 @@ def discover_dcm_folders(root: Path) -> list[Path]:
         raise SystemExit(1)
 
     console.print(
-        f"Found [bold]{len(folders)}[/bold] folder(s) with DICOM files "
-        f"under [dim]{root}[/dim]\n"
+        f"Found [bold]{len(folders)}[/bold] folder(s) with DICOM files under [dim]{root}[/dim]\n"
     )
     return folders

@@ -9,7 +9,7 @@ from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
 
-from ..display import _build_series_tree, _build_protocol_table
+from ..display import _build_protocol_table, _build_series_tree
 
 console = Console()
 
@@ -72,24 +72,29 @@ def print_summary(
         if grades:
             sg = grade_study(grades)
             grade = sg["grade"]
-            gc = {"A": "green", "B": "cyan", "C": "yellow", "D": "red", "F": "red"}.get(grade, "dim")
+            gc = {"A": "green", "B": "cyan", "C": "yellow", "D": "red", "F": "red"}.get(
+                grade, "dim"
+            )
             dist = " ".join(f"{g}:{n}" for g, n in sorted(sg["grade_distribution"].items()))
             study_grade_info = (
                 f"\n  [bold]Study grade:  [{gc}]{grade}[/{gc}][/bold] "
                 f"(score: {sg['score']}/100, {dist})"
             )
 
-    console.print(Panel(
-        f"[bold]Extraction complete[/bold] in [bold]{elapsed:.1f}s[/bold]  "
-        f"[dim](extract: {t_extract:.1f}s, series: {elapsed - t_extract:.1f}s)[/dim]\n"
-        f"  Workers:       {n_workers}\n"
-        f"  Files:         {n_files}\n"
-        f"  Image series:  {n_image_uids} ({n_with_vol} with volumes)\n"
-        f"  PS series:     {n_ps_groups} (skipped)\n"
-        f"  Unique tags:   {n_tags}\n"
-        f"  Conformance:   {n_conformance} issues in {n_image_records} image files\n"
-        f"  Output:        {out_dir.resolve()}\n"
-        f"  HTML report:   {html_name}"
-        f"{study_grade_info}",
-        title="Summary", border_style="green",
-    ))
+    console.print(
+        Panel(
+            f"[bold]Extraction complete[/bold] in [bold]{elapsed:.1f}s[/bold]  "
+            f"[dim](extract: {t_extract:.1f}s, series: {elapsed - t_extract:.1f}s)[/dim]\n"
+            f"  Workers:       {n_workers}\n"
+            f"  Files:         {n_files}\n"
+            f"  Image series:  {n_image_uids} ({n_with_vol} with volumes)\n"
+            f"  PS series:     {n_ps_groups} (skipped)\n"
+            f"  Unique tags:   {n_tags}\n"
+            f"  Conformance:   {n_conformance} issues in {n_image_records} image files\n"
+            f"  Output:        {out_dir.resolve()}\n"
+            f"  HTML report:   {html_name}"
+            f"{study_grade_info}",
+            title="Summary",
+            border_style="green",
+        )
+    )

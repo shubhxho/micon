@@ -15,8 +15,8 @@ import tarfile
 import time
 from pathlib import Path
 
-
 # ── Guard: no modal ──────────────────────────────────────────────────────────
+
 
 def _check_quality_imports() -> None:
     """Validate dependencies required for quality + slice-export mode."""
@@ -72,11 +72,13 @@ def _check_annotate_imports() -> None:
 
 # ── Backwards-compat alias used by the pipeline flow entry ───────────────────
 
+
 def _check_imports() -> None:
     _check_quality_imports()
 
 
 # ── Worker: quality + slice export ──────────────────────────────────────────
+
 
 def _quality_one_series(detail_path: Path) -> dict:
     """Mirror of resume_pipeline.quality_one_series — no Modal, no volume.commit()."""
@@ -88,8 +90,12 @@ def _quality_one_series(detail_path: Path) -> dict:
     from src.helpers import safe_squeeze
 
     out: dict = {
-        "ok": False, "skipped": False, "slices": 0,
-        "bytes": 0, "path": str(detail_path), "error": None,
+        "ok": False,
+        "skipped": False,
+        "slices": 0,
+        "bytes": 0,
+        "path": str(detail_path),
+        "error": None,
     }
 
     try:
@@ -121,8 +127,12 @@ def _quality_one_series(detail_path: Path) -> dict:
 
         series_dir = detail_path.parent
         sr = export_all_slices(
-            vol, series_dir.name, str(series_dir.parent),
-            windows=["brain"], max_size=512, n_workers=2,
+            vol,
+            series_dir.name,
+            str(series_dir.parent),
+            windows=["brain"],
+            max_size=512,
+            n_workers=2,
         )
         out["slices"] = sr["total_slices"]
         out["bytes"] = sr["total_bytes"]
@@ -136,11 +146,17 @@ def _quality_one_series(detail_path: Path) -> dict:
 
 # ── Worker: pack slices into tar ─────────────────────────────────────────────
 
+
 def _pack_one_study_slices(study_dir: Path) -> dict:
     """Mirror of resume_pipeline.pack_one_study_slices — no Modal."""
     out: dict = {
-        "ok": False, "skipped": False, "study": study_dir.name,
-        "tar_path": None, "n_slices": 0, "bytes": 0, "error": None,
+        "ok": False,
+        "skipped": False,
+        "study": study_dir.name,
+        "tar_path": None,
+        "n_slices": 0,
+        "bytes": 0,
+        "error": None,
     }
 
     tar_path = study_dir / f"{study_dir.name}.slices.tar"
@@ -162,9 +178,9 @@ def _pack_one_study_slices(study_dir: Path) -> dict:
             with tarfile.open(tar_path, "r") as tf:
                 n = sum(1 for _ in tf)
             if n == len(slice_pngs):
-                out.update(skipped=True, n_slices=n,
-                            bytes=tar_path.stat().st_size,
-                            tar_path=str(tar_path))
+                out.update(
+                    skipped=True, n_slices=n, bytes=tar_path.stat().st_size, tar_path=str(tar_path)
+                )
                 return out
             tar_path.unlink(missing_ok=True)
         except Exception:
@@ -173,11 +189,10 @@ def _pack_one_study_slices(study_dir: Path) -> dict:
     try:
         with tarfile.open(tar_path, "w") as tf:
             for png in slice_pngs:
-                tf.add(str(png), arcname=str(png.relative_to(study_dir)),
-                       recursive=False)
-        out.update(ok=True, tar_path=str(tar_path),
-                   n_slices=len(slice_pngs),
-                   bytes=tar_path.stat().st_size)
+                tf.add(str(png), arcname=str(png.relative_to(study_dir)), recursive=False)
+        out.update(
+            ok=True, tar_path=str(tar_path), n_slices=len(slice_pngs), bytes=tar_path.stat().st_size
+        )
     except Exception as exc:
         out["error"] = f"{type(exc).__name__}: {exc}"
         tar_path.unlink(missing_ok=True)
@@ -186,6 +201,7 @@ def _pack_one_study_slices(study_dir: Path) -> dict:
 
 
 # ── Summary table ─────────────────────────────────────────────────────────────
+
 
 def _print_summary(
     detail_results: list[dict],
@@ -219,7 +235,7 @@ def _print_summary(
             err_count += 1
 
         slices = r.get("slices", 0)
-        size_mb = round(r.get("bytes", 0) / 1024 ** 2, 1)
+        size_mb = round(r.get("bytes", 0) / 1024**2, 1)
         total_slices += slices
         total_bytes += r.get("bytes", 0)
 
@@ -253,6 +269,7 @@ def _print_summary(
 
 # ── Annotation playground ────────────────────────────────────────────────────
 
+
 def dev_annotate(montage_path: str, series_label: str) -> None:
     """Annotate a single series montage locally using the same code the Modal worker uses.
 
@@ -268,14 +285,14 @@ def dev_annotate(montage_path: str, series_label: str) -> None:
     if not os.environ.get("OPENROUTER_API_KEY"):
         try:
             from dotenv import load_dotenv
+
             load_dotenv()
         except ImportError:
             pass
 
     if not os.environ.get("OPENROUTER_API_KEY"):
         print(
-            "ERROR: OPENROUTER_API_KEY not set. "
-            "Add it to .env or export it in your shell.",
+            "ERROR: OPENROUTER_API_KEY not set. Add it to .env or export it in your shell.",
             file=sys.stderr,
         )
         sys.exit(1)
@@ -286,15 +303,16 @@ def dev_annotate(montage_path: str, series_label: str) -> None:
         sys.exit(1)
 
     from concurrent.futures import ThreadPoolExecutor
+
     from rich.console import Console
     from rich.panel import Panel
     from rich.syntax import Syntax
 
     from src.cloud_analysis import (
-        annotate_series_multi,
-        tissue_analysis_with_model,
         _client,
         _detect_provider,
+        annotate_series_multi,
+        tissue_analysis_with_model,
     )
 
     console = Console()
@@ -317,7 +335,9 @@ def dev_annotate(montage_path: str, series_label: str) -> None:
             provider = _detect_provider()
             client = _client()
             result = tissue_analysis_with_model(
-                client, montage_path, series_label,
+                client,
+                montage_path,
+                series_label,
                 prior_annotation=prior_stub,
                 model_key="gemma4",
                 provider=provider,
@@ -342,6 +362,7 @@ def dev_annotate(montage_path: str, series_label: str) -> None:
 
 # ── CLI ───────────────────────────────────────────────────────────────────────
 
+
 def main() -> None:
     parser = argparse.ArgumentParser(
         description="Run Modal pipeline workers locally on a single study."
@@ -352,16 +373,19 @@ def main() -> None:
         help="Path to a study directory (default: mcap-files/3D_Ax_SWAN/)",
     )
     parser.add_argument(
-        "--skip-quality", action="store_true",
+        "--skip-quality",
+        action="store_true",
         help="Skip quality assessment + slice export stage",
     )
     parser.add_argument(
-        "--skip-pack", action="store_true",
+        "--skip-pack",
+        action="store_true",
         help="Skip tarball packing stage",
     )
     # ── Annotate mode ──────────────────────────────────────────────────────
     parser.add_argument(
-        "--annotate", action="store_true",
+        "--annotate",
+        action="store_true",
         help="Run a single annotation locally (requires --montage and --label)",
     )
     parser.add_argument(
@@ -390,6 +414,7 @@ def main() -> None:
         sys.exit(1)
 
     from rich.console import Console
+
     console = Console()
     console.print(f"\n[bold]micom dev[/bold] — study: {study_dir}")
 
@@ -402,7 +427,9 @@ def main() -> None:
 
     # Stage 2: quality + slice export
     if not args.skip_quality:
-        console.print(f"\n[bold]Stage 2:[/bold] quality + slice export ({len(detail_paths)} series)")
+        console.print(
+            f"\n[bold]Stage 2:[/bold] quality + slice export ({len(detail_paths)} series)"
+        )
         for dp in detail_paths:
             console.print(f"  processing {dp.name} ...", end=" ")
             r = _quality_one_series(dp)
@@ -412,17 +439,20 @@ def main() -> None:
     else:
         console.print("\n[dim]Stage 2 skipped (--skip-quality)[/dim]")
         detail_results = [
-            {"ok": False, "skipped": True, "slices": 0, "bytes": 0,
-             "path": str(dp), "error": None}
+            {"ok": False, "skipped": True, "slices": 0, "bytes": 0, "path": str(dp), "error": None}
             for dp in detail_paths
         ]
 
     # Stage 3: pack slices into tar
     pack_result: dict | None = None
     if not args.skip_pack:
-        console.print(f"\n[bold]Stage 3:[/bold] pack slices → tar")
+        console.print("\n[bold]Stage 3:[/bold] pack slices → tar")
         pack_result = _pack_one_study_slices(study_dir)
-        status = "ok" if pack_result["ok"] else ("skipped" if pack_result["skipped"] else f"ERROR: {pack_result['error']}")
+        status = (
+            "ok"
+            if pack_result["ok"]
+            else ("skipped" if pack_result["skipped"] else f"ERROR: {pack_result['error']}")
+        )
         console.print(f"  {status}")
     else:
         console.print("\n[dim]Stage 3 skipped (--skip-pack)[/dim]")

@@ -19,7 +19,6 @@ Usage:
 
 from __future__ import annotations
 
-import json
 import time
 from pathlib import Path
 
@@ -58,15 +57,18 @@ def run_commercial_pipeline(
 
     t0 = time.time()
 
-    console.print(Panel.fit(
-        "[bold cyan]Commercial De-ID Pipeline[/bold cyan]\n"
-        "[dim]HIPAA Safe Harbor · PS3.15 Annex E · Buyer-ready export[/dim]",
-        border_style="cyan",
-    ))
+    console.print(
+        Panel.fit(
+            "[bold cyan]Commercial De-ID Pipeline[/bold cyan]\n"
+            "[dim]HIPAA Safe Harbor · PS3.15 Annex E · Buyer-ready export[/dim]",
+            border_style="cyan",
+        )
+    )
 
     # ── Stage 1: Ingest ─────────────────────────────────────────────────
-    console.print(f"\n[bold]Stage 1: Ingest[/bold]")
+    console.print("\n[bold]Stage 1: Ingest[/bold]")
     from .discover import discover_files
+
     dcm_files = discover_files(input_dir, recursive=True)
     file_paths = [str(f) for f in dcm_files]
     console.print(f"  Found {len(file_paths)} DICOM files")
@@ -75,31 +77,36 @@ def run_commercial_pipeline(
         return {"error": "No DICOM files found"}
 
     # ── Stage 2: Deface (pixel-level) ───────────────────────────────────
-    console.print(f"\n[bold]Stage 2: Deface[/bold]")
+    console.print("\n[bold]Stage 2: Deface[/bold]")
     deface_dir = output_dir / "_defaced"
 
     if skip_deface:
-        console.print(f"  [yellow]SKIPPED[/yellow] (--skip-deface)")
+        console.print("  [yellow]SKIPPED[/yellow] (--skip-deface)")
         # Copy files as-is for next stage
         deface_dir = input_dir
     else:
         deface_dir.mkdir(parents=True, exist_ok=True)
         try:
             from ..deid.deface import deface_study
+
             deface_result = deface_study(file_paths, str(deface_dir), n_workers)
-            console.print(f"  Defaced {deface_result.get('defaced', 0)} files, "
-                          f"skipped {deface_result.get('skipped', 0)}")
+            console.print(
+                f"  Defaced {deface_result.get('defaced', 0)} files, "
+                f"skipped {deface_result.get('skipped', 0)}"
+            )
         except ImportError:
-            console.print(f"  [yellow]SKIPPED[/yellow] (pydeface not installed)")
+            console.print("  [yellow]SKIPPED[/yellow] (pydeface not installed)")
             deface_dir = input_dir
 
     # ── Stage 3: Metadata de-identification ─────────────────────────────
-    console.print(f"\n[bold]Stage 3: Metadata De-identification[/bold]")
+    console.print("\n[bold]Stage 3: Metadata De-identification[/bold]")
     deid_dir = output_dir / "_deid"
     deid_dir.mkdir(parents=True, exist_ok=True)
 
-    from ..deid.metadata import deid_files, DateShifter
-    import hashlib, os
+    import hashlib
+    import os
+
+    from ..deid.metadata import DateShifter, deid_files
 
     salt = hashlib.sha256(os.urandom(32)).hexdigest()[:16]
     date_shifter = DateShifter()
@@ -111,8 +118,11 @@ def run_commercial_pipeline(
 
     console.print(f"  De-identifying {len(stage3_files)} files...")
     deid_summary = deid_files(
-        stage3_files, str(deid_dir), salt=salt,
-        date_shifter=date_shifter, n_workers=n_workers,
+        stage3_files,
+        str(deid_dir),
+        salt=salt,
+        date_shifter=date_shifter,
+        n_workers=n_workers,
     )
 
     # Save encrypted date shift mapping (never ship to buyers)
@@ -129,18 +139,21 @@ def run_commercial_pipeline(
     )
 
     # ── Stage 4: Validate ───────────────────────────────────────────────
-    console.print(f"\n[bold]Stage 4: Validate[/bold]")
+    console.print("\n[bold]Stage 4: Validate[/bold]")
     deid_files_list = [str(f) for f in sorted(deid_dir.rglob("*.dcm"))]
 
     from ..validation.runner import validate_study
+
     validation = validate_study(
-        deid_files_list, study_name=input_dir.name,
-        out_dir=output_dir, n_workers=n_workers,
+        deid_files_list,
+        study_name=input_dir.name,
+        out_dir=output_dir,
+        n_workers=n_workers,
         skip_pixel_ocr=skip_pixel_ocr,
     )
 
     if validation.passed:
-        console.print(f"  [bold green]BUYER-READY[/bold green]")
+        console.print("  [bold green]BUYER-READY[/bold green]")
     else:
         console.print(f"  [bold red]FAILED[/bold red] — {len(validation.failures)} issues")
         for f in validation.failures:
@@ -157,10 +170,13 @@ def run_commercial_pipeline(
     #   - Series stats JSON, DICOM metadata CSV
     #   - MCAP export (per-series + study-level)
     #   - HIPAA compliance scan on de-id'd output
-    console.print(f"\n[bold]Stage 5: Full Extraction (montages, histograms, reports, quality)[/bold]")
+    console.print(
+        "\n[bold]Stage 5: Full Extraction (montages, histograms, reports, quality)[/bold]"
+    )
 
     extraction_dir = output_dir / "reports"
     from .run import run_pipeline
+
     try:
         run_pipeline(
             deid_dir,
@@ -174,10 +190,10 @@ def run_commercial_pipeline(
         console.print(f"  [green]✓[/green] Full extraction → {extraction_dir}")
     except Exception as e:
         console.print(f"  [red]Extraction failed:[/red] {e}")
-        console.print(f"  [dim]Continuing with export...[/dim]")
+        console.print("  [dim]Continuing with export...[/dim]")
 
     # ── Stage 6: Manifest ───────────────────────────────────────────────
-    console.print(f"\n[bold]Stage 6: Chain-of-Custody Manifest[/bold]")
+    console.print("\n[bold]Stage 6: Chain-of-Custody Manifest[/bold]")
     from ..manifest.study_manifest import generate_study_manifest
 
     deid_dict = {
@@ -206,16 +222,18 @@ def run_commercial_pipeline(
     console.print(f"    SHA-256 checksums: {len(manifest.get('validator_checksums', {}))} files")
 
     # ── Stage 7: Export ─────────────────────────────────────────────────
-    console.print(f"\n[bold]Stage 7: Export[/bold]")
+    console.print("\n[bold]Stage 7: Export[/bold]")
 
     # Clean DICOM hierarchy
     clean_dir = output_dir / "clean_dicom"
     from ..export.clean_dicom import export_clean_dicom
+
     export_result = export_clean_dicom(deid_dir, clean_dir)
     console.print(f"  Clean DICOM: {export_result['files_exported']} files → {clean_dir}")
 
     # Sample bundles
     from ..export.sample_bundles import create_sample_bundle
+
     for n in sample_sizes:
         bundle_dir = output_dir / f"sample_{n}_studies"
         bundle = create_sample_bundle(clean_dir, bundle_dir, n_studies=n)
@@ -224,16 +242,18 @@ def run_commercial_pipeline(
     # ── Summary ─────────────────────────────────────────────────────────
     elapsed = time.time() - t0
 
-    console.print(Panel(
-        f"[bold]{'BUYER-READY' if validation.passed else 'NOT READY — see failures above'}[/bold]\n"
-        f"  Files:       {len(file_paths)} input → {deid_summary.files_processed} de-identified\n"
-        f"  Validation:  {'PASS' if validation.passed else 'FAIL'}\n"
-        f"  Private tags: {deid_summary.total_private_stripped} stripped\n"
-        f"  Time:        {elapsed:.0f}s\n"
-        f"  Output:      {output_dir}",
-        title="[bold cyan]Pipeline Complete[/bold cyan]",
-        border_style="green" if validation.passed else "red",
-    ))
+    console.print(
+        Panel(
+            f"[bold]{'BUYER-READY' if validation.passed else 'NOT READY — see failures above'}[/bold]\n"
+            f"  Files:       {len(file_paths)} input → {deid_summary.files_processed} de-identified\n"
+            f"  Validation:  {'PASS' if validation.passed else 'FAIL'}\n"
+            f"  Private tags: {deid_summary.total_private_stripped} stripped\n"
+            f"  Time:        {elapsed:.0f}s\n"
+            f"  Output:      {output_dir}",
+            title="[bold cyan]Pipeline Complete[/bold cyan]",
+            border_style="green" if validation.passed else "red",
+        )
+    )
 
     return {
         "study": input_dir.name,

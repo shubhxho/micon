@@ -19,7 +19,12 @@ def safe_value(elem) -> str | int | float | list | None:
     if isinstance(val, bytes):
         return val.hex() if len(val) <= 64 else f"[bytes: {len(val)}]"
     if isinstance(val, pydicom.multival.MultiValue):
-        return [float(v) if isinstance(v, (pydicom.valuerep.DSfloat, pydicom.valuerep.DSdecimal)) else str(v) for v in val]
+        return [
+            float(v)
+            if isinstance(v, (pydicom.valuerep.DSfloat, pydicom.valuerep.DSdecimal))
+            else str(v)
+            for v in val
+        ]
     if isinstance(val, (int, float)):
         return val
     return str(val)
@@ -55,13 +60,13 @@ def entropy(arr: np.ndarray) -> float:
 def skewness(arr: np.ndarray) -> float:
     """Sample skewness.  O(V) — two passes (mean, then cubed deviation)."""
     m, s = arr.mean(), arr.std()
-    return float(((arr - m) ** 3).mean() / s ** 3) if s > 1e-10 else 0.0
+    return float(((arr - m) ** 3).mean() / s**3) if s > 1e-10 else 0.0
 
 
 def kurtosis(arr: np.ndarray) -> float:
     """Excess kurtosis.  O(V) — two passes (mean, then 4th-power deviation)."""
     m, s = arr.mean(), arr.std()
-    return float(((arr - m) ** 4).mean() / s ** 4 - 3.0) if s > 1e-10 else 0.0
+    return float(((arr - m) ** 4).mean() / s**4 - 3.0) if s > 1e-10 else 0.0
 
 
 def skewness_kurtosis(arr: np.ndarray) -> tuple[float, float]:
@@ -76,11 +81,11 @@ def skewness_kurtosis(arr: np.ndarray) -> tuple[float, float]:
     if s < 1e-10:
         return 0.0, 0.0
     d = arr - m  # O(V) — deviation array, reused for both moments
-    d2 = d * d   # O(V)
-    m3 = (d2 * d).mean()   # O(V) — third central moment
+    d2 = d * d  # O(V)
+    m3 = (d2 * d).mean()  # O(V) — third central moment
     m4 = (d2 * d2).mean()  # O(V) — fourth central moment (reuses d²)
-    s3 = s ** 3
-    s4 = s ** 4
+    s3 = s**3
+    s4 = s**4
     return float(m3 / s3), float(m4 / s4 - 3.0)
 
 

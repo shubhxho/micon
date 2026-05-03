@@ -13,13 +13,13 @@ from pathlib import Path
 
 import pytest
 
+from src.dry_run import _is_derivative, _safe_name, plan
 from src.run_report import RunReport
-from src.dry_run import plan, _safe_name, _is_derivative
-
 
 # ---------------------------------------------------------------------------
 # RunReport -- initialisation
 # ---------------------------------------------------------------------------
+
 
 def test_run_id_generated_when_omitted(tmp_output_dir: Path) -> None:
     r = RunReport(tmp_output_dir)
@@ -40,6 +40,7 @@ def test_started_at_is_iso(tmp_output_dir: Path) -> None:
 # ---------------------------------------------------------------------------
 # RunReport -- record_stage
 # ---------------------------------------------------------------------------
+
 
 def test_record_appends_stage(tmp_output_dir: Path) -> None:
     r = RunReport(tmp_output_dir, run_id="r1")
@@ -78,6 +79,7 @@ def test_multiple_stages(tmp_output_dir: Path) -> None:
 # RunReport -- cost tracking
 # ---------------------------------------------------------------------------
 
+
 def test_set_estimated_cost(tmp_output_dir: Path) -> None:
     r = RunReport(tmp_output_dir, run_id="cost-test")
     r.set_estimated_cost(modal_dollars=1.5, openrouter_dollars=0.25)
@@ -101,6 +103,7 @@ def test_default_cost_none(tmp_output_dir: Path) -> None:
 # ---------------------------------------------------------------------------
 # RunReport -- write / JSON round-trip
 # ---------------------------------------------------------------------------
+
 
 def test_write_creates_json(tmp_output_dir: Path) -> None:
     r = RunReport(tmp_output_dir, run_id="write-test")
@@ -141,8 +144,14 @@ def test_schema_fields_present(tmp_output_dir: Path) -> None:
     path = r.write()
     data = json.loads(path.read_text())
     required = {
-        "run_id", "started_at", "finished_at", "stages",
-        "cost_estimated", "cost_actual", "modal_app", "git_sha",
+        "run_id",
+        "started_at",
+        "finished_at",
+        "stages",
+        "cost_estimated",
+        "cost_actual",
+        "modal_app",
+        "git_sha",
     }
     assert required == required & data.keys()
 
@@ -150,6 +159,7 @@ def test_schema_fields_present(tmp_output_dir: Path) -> None:
 # ---------------------------------------------------------------------------
 # RunReport -- format_text
 # ---------------------------------------------------------------------------
+
 
 def test_format_text_nonempty(tmp_output_dir: Path) -> None:
     r = RunReport(tmp_output_dir, run_id="fmt-test")
@@ -179,6 +189,7 @@ def test_format_text_shows_cost(tmp_output_dir: Path) -> None:
 # ---------------------------------------------------------------------------
 # dry_run.plan
 # ---------------------------------------------------------------------------
+
 
 def _make_detail(path: Path, has_quality: bool = False) -> None:
     data: dict = {"series_description": "T1"}
@@ -248,10 +259,14 @@ def test_pack_done_when_tar_exists(tmp_path: Path) -> None:
 def test_plan_return_keys(tmp_path: Path) -> None:
     result = plan(tmp_path)
     expected_keys = {
-        "n_studies", "n_series_total",
-        "n_series_quality_pending", "n_series_annotation_pending",
+        "n_studies",
+        "n_series_total",
+        "n_series_quality_pending",
+        "n_series_annotation_pending",
         "n_studies_pack_pending",
-        "est_modal_dollars", "est_openrouter_dollars", "est_wall_minutes",
+        "est_modal_dollars",
+        "est_openrouter_dollars",
+        "est_wall_minutes",
     }
     assert expected_keys == expected_keys & result.keys()
 
@@ -259,6 +274,7 @@ def test_plan_return_keys(tmp_path: Path) -> None:
 # ---------------------------------------------------------------------------
 # Helper functions: _safe_name / _is_derivative
 # ---------------------------------------------------------------------------
+
 
 def test_safe_name_replaces_spaces() -> None:
     assert _safe_name("Series 10 \u2014 T1") == "Series_10___T1"

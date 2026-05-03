@@ -16,8 +16,8 @@ Usage:  uv run parquet_extract.py <file.parquet> [--head 20] [--export-csv] [--e
 
 from __future__ import annotations
 
+import contextlib
 import json
-import sys
 from pathlib import Path
 from typing import Annotated
 
@@ -48,7 +48,7 @@ def schema_table(df: pl.DataFrame) -> Table:
     t.add_column("Nulls", style="yellow", justify="right")
     t.add_column("Null %", justify="right")
     t.add_column("Unique", justify="right")
-    for i, (name, dtype) in enumerate(zip(df.columns, df.dtypes)):
+    for i, (name, dtype) in enumerate(zip(df.columns, df.dtypes, strict=False)):
         null_count = df[name].null_count()
         null_pct = f"{100 * null_count / len(df):.1f}%" if len(df) > 0 else "—"
         try:
@@ -73,7 +73,7 @@ def stats_table(df: pl.DataFrame) -> Table:
         s = df[col].drop_nulls()
         if len(s) == 0:
             continue
-        try:
+        with contextlib.suppress(Exception):
             t.add_row(
                 col,
                 f"{s.min():.4g}",
@@ -84,8 +84,6 @@ def stats_table(df: pl.DataFrame) -> Table:
                 f"{s.quantile(0.25):.4g}",
                 f"{s.quantile(0.75):.4g}",
             )
-        except Exception:
-            pass
     return t
 
 
@@ -143,14 +141,16 @@ def main(
     fsize = file_size_str(file.stat().st_size)
 
     # Overview
-    console.print(Panel.fit(
-        f"[bold cyan]Parquet Extractor[/bold cyan]\n"
-        f"[dim]File:[/dim]    {file}\n"
-        f"[dim]Size:[/dim]    {fsize}\n"
-        f"[dim]Rows:[/dim]    {len(df):,}\n"
-        f"[dim]Columns:[/dim] {len(df.columns)}",
-        border_style="cyan",
-    ))
+    console.print(
+        Panel.fit(
+            f"[bold cyan]Parquet Extractor[/bold cyan]\n"
+            f"[dim]File:[/dim]    {file}\n"
+            f"[dim]Size:[/dim]    {fsize}\n"
+            f"[dim]Rows:[/dim]    {len(df):,}\n"
+            f"[dim]Columns:[/dim] {len(df.columns)}",
+            border_style="cyan",
+        )
+    )
 
     # Schema
     console.print(schema_table(df))

@@ -12,7 +12,9 @@ Outputs:
 
 Requires OPENROUTER_API_KEY in /Users/shubh/Documents/micom/.env
 """
+
 from __future__ import annotations
+
 import base64
 import json
 import os
@@ -21,8 +23,8 @@ import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 
-from dotenv import load_dotenv
 import openai
+from dotenv import load_dotenv
 
 ROOT = Path(__file__).resolve().parent.parent
 load_dotenv(ROOT / ".env")
@@ -35,8 +37,8 @@ MODEL = "google/gemma-4-31b-it"
 MODEL_NAME = "Gemma 4 31B IT"
 
 DERIVATIVE_RE = re.compile(
-    r'\b(d{0,2}REG\b|d{0,2}ADC\w*|d?ISO\w*|ISOTROPIC|FILT_PHA|COL:|PJN:|MIP|MinIP'
-    r'|REFORMATT?ED|SUBTRACT|Processed)',
+    r"\b(d{0,2}REG\b|d{0,2}ADC\w*|d?ISO\w*|ISOTROPIC|FILT_PHA|COL:|PJN:|MIP|MinIP"
+    r"|REFORMATT?ED|SUBTRACT|Processed)",
     re.IGNORECASE,
 )
 
@@ -57,13 +59,15 @@ def build_quality_ctx(detail: dict) -> str:
     parts = ["**Quantitative metrics:**"]
     qg = qa.get("quality_grade", {})
     if qg:
-        parts.append(f"- Grade: {qg.get('grade','?')} ({qg.get('score',0)}/100)")
+        parts.append(f"- Grade: {qg.get('grade', '?')} ({qg.get('score', 0)}/100)")
     motion = qa.get("motion_analysis", {})
     if motion:
-        parts.append(f"- Motion: ghosting={motion.get('ghosting_ratio',1):.2f}, slice_corr={motion.get('adjacent_slice_correlation',1):.3f}")
+        parts.append(
+            f"- Motion: ghosting={motion.get('ghosting_ratio', 1):.2f}, slice_corr={motion.get('adjacent_slice_correlation', 1):.3f}"
+        )
     sym = qa.get("symmetry_analysis", {})
     if sym:
-        parts.append(f"- Symmetry: {sym.get('symmetry_index',0):.3f}")
+        parts.append(f"- Symmetry: {sym.get('symmetry_index', 0):.3f}")
     return "\n".join(parts)
 
 
@@ -204,13 +208,18 @@ def call_with_image(prompt: str, image_b64: str, max_tokens: int = 3500) -> tupl
             r = client.chat.completions.create(
                 model=MODEL,
                 max_tokens=max_tokens,
-                messages=[{
-                    "role": "user",
-                    "content": [
-                        {"type": "image_url", "image_url": {"url": f"data:image/png;base64,{image_b64}"}},
-                        {"type": "text", "text": prompt},
-                    ],
-                }],
+                messages=[
+                    {
+                        "role": "user",
+                        "content": [
+                            {
+                                "type": "image_url",
+                                "image_url": {"url": f"data:image/png;base64,{image_b64}"},
+                            },
+                            {"type": "text", "text": prompt},
+                        ],
+                    }
+                ],
             )
             return r.choices[0].message.content, time.time() - t0
         except openai.RateLimitError:
@@ -250,7 +259,7 @@ def find_montage(src_dir: Path) -> Path | None:
 
 
 def safe_label(label: str) -> str:
-    return re.sub(r'[^\w\-]+', '_', label).strip('_') or 'unknown'
+    return re.sub(r"[^\w\-]+", "_", label).strip("_") or "unknown"
 
 
 def process_series(entry: dict) -> dict:
@@ -280,22 +289,31 @@ def process_series(entry: dict) -> dict:
         raw, t = call_with_image(prompt, img_b64, max_tokens=2000)
         annot = parse_json(raw)
         out = {
-            "series_number": sn, "series_label": label,
-            "model": MODEL_NAME, "model_id": MODEL, "provider": "openrouter",
+            "series_number": sn,
+            "series_label": label,
+            "model": MODEL_NAME,
+            "model_id": MODEL,
+            "provider": "openrouter",
             "kind": "derivative",
-            "annotation": annot, "raw": raw if not annot else None,
-            "time_s": round(t, 2), "ok": annot is not None,
+            "annotation": annot,
+            "raw": raw if not annot else None,
+            "time_s": round(t, 2),
+            "ok": annot is not None,
         }
     else:
         # Fire both prompts in parallel -- the deep-tissue prompt only uses the
         # prior annotation as light context, so racing them costs nothing in
         # quality and roughly halves wall time per primary series.
         prompt1 = ANNOT_PROMPT.format(label=label, quality_ctx=quality_ctx)
-        prompt2_prior_stub = json.dumps({
-            "sequence_type_hint": "see montage",
-            "quality_grade_hint": "see montage",
-        })
-        prompt2 = TISSUE_PROMPT.format(label=label, quality_ctx=quality_ctx, prior=prompt2_prior_stub)
+        prompt2_prior_stub = json.dumps(
+            {
+                "sequence_type_hint": "see montage",
+                "quality_grade_hint": "see montage",
+            }
+        )
+        prompt2 = TISSUE_PROMPT.format(
+            label=label, quality_ctx=quality_ctx, prior=prompt2_prior_stub
+        )
         with ThreadPoolExecutor(max_workers=2) as inner:
             f1 = inner.submit(call_with_image, prompt1, img_b64, 3500)
             f2 = inner.submit(call_with_image, prompt2, img_b64, 3500)
@@ -305,16 +323,23 @@ def process_series(entry: dict) -> dict:
         tissue = parse_json(raw2)
 
         out = {
-            "series_number": sn, "series_label": label,
-            "model": MODEL_NAME, "model_id": MODEL, "provider": "openrouter",
+            "series_number": sn,
+            "series_label": label,
+            "model": MODEL_NAME,
+            "model_id": MODEL,
+            "provider": "openrouter",
             "kind": "primary",
             "stage_1_annotation": {
-                "annotation": annot, "raw": raw1 if not annot else None,
-                "time_s": round(t1, 2), "ok": annot is not None,
+                "annotation": annot,
+                "raw": raw1 if not annot else None,
+                "time_s": round(t1, 2),
+                "ok": annot is not None,
             },
             "stage_2_tissue_analysis": {
-                "tissue_analysis": tissue, "raw": raw2 if not tissue else None,
-                "time_s": round(t2, 2), "ok": tissue is not None,
+                "tissue_analysis": tissue,
+                "raw": raw2 if not tissue else None,
+                "time_s": round(t2, 2),
+                "ok": tissue is not None,
             },
         }
 
@@ -375,12 +400,14 @@ def main():
             pricing.append(dva["suggested_price_tier"])
         hr = t.get("health_recommendations", {})
         if hr.get("summary"):
-            plain_summaries.append({
-                "series": r.get("series_label"),
-                "summary": hr["summary"],
-                "brain_health_score": hr.get("brain_health_score"),
-                "urgency": hr.get("urgency"),
-            })
+            plain_summaries.append(
+                {
+                    "series": r.get("series_label"),
+                    "summary": hr["summary"],
+                    "brain_health_score": hr.get("brain_health_score"),
+                    "urgency": hr.get("urgency"),
+                }
+            )
 
     bhs = [p["brain_health_score"] for p in plain_summaries if p.get("brain_health_score")]
     consensus_bhs = max(set(bhs), key=bhs.count) if bhs else None
@@ -396,8 +423,12 @@ def main():
             "series_in_study": index.get("total_series"),
             "primary_series_processed": len(primary),
             "derivative_series_processed": len(derivative),
-            "primary_succeeded_stage1": sum(1 for r in primary if (r.get("stage_1_annotation") or {}).get("ok")),
-            "primary_succeeded_stage2": sum(1 for r in primary if (r.get("stage_2_tissue_analysis") or {}).get("ok")),
+            "primary_succeeded_stage1": sum(
+                1 for r in primary if (r.get("stage_1_annotation") or {}).get("ok")
+            ),
+            "primary_succeeded_stage2": sum(
+                1 for r in primary if (r.get("stage_2_tissue_analysis") or {}).get("ok")
+            ),
             "derivative_succeeded": sum(1 for r in derivative if r.get("ok")),
         },
         "ai_consensus": {
@@ -411,7 +442,9 @@ def main():
         },
         "plain_language_summaries": plain_summaries,
         "per_series_files": {
-            f"s{r['series_number']:04d}_{safe_label(r.get('series_label', 'unknown'))}.json": r.get("kind", "?")
+            f"s{r['series_number']:04d}_{safe_label(r.get('series_label', 'unknown'))}.json": r.get(
+                "kind", "?"
+            )
             for r in results
         },
     }

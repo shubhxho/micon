@@ -29,8 +29,6 @@ from rich.console import Console
 from rich.panel import Panel
 from rich.progress import BarColumn, Progress, SpinnerColumn, TextColumn, TimeElapsedColumn
 
-from ..helpers import to_json
-
 console = Console()
 
 
@@ -79,7 +77,8 @@ def _extract_dicom(fpath: str, record: dict) -> None:
     try:
         import numpy as np
         import pydicom
-        from ..helpers import safe_value, safe_getfloat
+
+        from ..helpers import safe_getfloat
 
         ds = pydicom.dcmread(fpath, force=True)
         record["file_type"] = "dicom"
@@ -167,6 +166,7 @@ def _extract_nifti(fpath: str, record: dict) -> None:
     """Extract NIfTI file metadata."""
     try:
         import nibabel as nib
+
         img = nib.load(fpath)
         record["file_type"] = "nifti"
         record["nifti_shape"] = str(list(img.shape))
@@ -185,6 +185,7 @@ def _extract_image(fpath: str, record: dict) -> None:
     """Extract image file metadata."""
     try:
         from PIL import Image
+
         img = Image.open(fpath)
         record["file_type"] = "image"
         record["image_width"] = img.width
@@ -240,11 +241,13 @@ def run_parquet_convert(
     t0 = time.time()
     n_workers = workers or min(multiprocessing.cpu_count(), 8)
 
-    console.print(Panel.fit(
-        f"[bold green]Universal → Parquet Converter[/bold green]  [dim]({n_workers} threads)[/dim]\n"
-        "[dim]Any file type · threaded · columnar · snappy compressed[/dim]",
-        border_style="green",
-    ))
+    console.print(
+        Panel.fit(
+            f"[bold green]Universal → Parquet Converter[/bold green]  [dim]({n_workers} threads)[/dim]\n"
+            "[dim]Any file type · threaded · columnar · snappy compressed[/dim]",
+            border_style="green",
+        )
+    )
 
     # Discover all files recursively
     all_files: list[Path] = []
@@ -278,7 +281,9 @@ def run_parquet_convert(
     for f in all_files:
         e = f.suffix.lower() or "(none)"
         ext_counts[e] = ext_counts.get(e, 0) + 1
-    ext_summary = ", ".join(f"{e}: {c}" for e, c in sorted(ext_counts.items(), key=lambda x: -x[1])[:10])
+    ext_summary = ", ".join(
+        f"{e}: {c}" for e, c in sorted(ext_counts.items(), key=lambda x: -x[1])[:10]
+    )
     console.print(f"Found [bold]{len(all_files)}[/bold] files — {ext_summary}\n")
 
     if out_path is None:
@@ -290,9 +295,12 @@ def run_parquet_convert(
 
     records: list[dict] = []
     with Progress(
-        SpinnerColumn(), TextColumn("[green]{task.description}"),
-        BarColumn(), TextColumn("{task.completed}/{task.total}"),
-        TimeElapsedColumn(), console=console,
+        SpinnerColumn(),
+        TextColumn("[green]{task.description}"),
+        BarColumn(),
+        TextColumn("{task.completed}/{task.total}"),
+        TimeElapsedColumn(),
+        console=console,
     ) as progress:
         task = progress.add_task("Extracting", total=len(all_files))
         with ThreadPoolExecutor(max_workers=n_workers) as pool:
@@ -308,8 +316,18 @@ def run_parquet_convert(
     df = pl.DataFrame(records, infer_schema_length=None)
 
     # Reorder: base fields first, then type-specific
-    base_cols = ["filepath", "filename", "stem", "extension", "file_type",
-                 "size_bytes", "modified", "created", "parent_dir", "mime_type"]
+    base_cols = [
+        "filepath",
+        "filename",
+        "stem",
+        "extension",
+        "file_type",
+        "size_bytes",
+        "modified",
+        "created",
+        "parent_dir",
+        "mime_type",
+    ]
     existing_base = [c for c in base_cols if c in df.columns]
     remaining = sorted(c for c in df.columns if c not in existing_base)
     df = df.select(existing_base + remaining)
@@ -327,15 +345,18 @@ def run_parquet_convert(
         type_counts[ft] = type_counts.get(ft, 0) + 1
     type_str = ", ".join(f"{t}: {c}" for t, c in sorted(type_counts.items(), key=lambda x: -x[1]))
 
-    console.print(Panel(
-        f"[bold]Parquet conversion complete[/bold] in [bold]{t_total:.1f}s[/bold]\n"
-        f"  Files:    {len(records)}\n"
-        f"  Types:    {type_str}\n"
-        f"  Columns:  {len(df.columns)}\n"
-        f"  Rows:     {len(df)}\n"
-        f"  Size:     {format_size(file_size)} (snappy)\n"
-        f"  Output:   {out_path}",
-        title="Summary", border_style="green",
-    ))
+    console.print(
+        Panel(
+            f"[bold]Parquet conversion complete[/bold] in [bold]{t_total:.1f}s[/bold]\n"
+            f"  Files:    {len(records)}\n"
+            f"  Types:    {type_str}\n"
+            f"  Columns:  {len(df.columns)}\n"
+            f"  Rows:     {len(df)}\n"
+            f"  Size:     {format_size(file_size)} (snappy)\n"
+            f"  Output:   {out_path}",
+            title="Summary",
+            border_style="green",
+        )
+    )
 
     return out_path

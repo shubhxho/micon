@@ -21,6 +21,7 @@ Usage:
 """
 
 import argparse
+import contextlib
 import json
 import sys
 import time
@@ -73,10 +74,8 @@ def extract_all_tags(fpath: str) -> dict:
     if hasattr(ds, "file_meta"):
         for elem in ds.file_meta:
             kw = elem.keyword or f"Meta_{elem.tag.group:04X}_{elem.tag.element:04X}"
-            try:
+            with contextlib.suppress(Exception):
                 record[f"_meta_{kw}"] = str(elem.value)
-            except Exception:
-                pass
 
     return record
 
@@ -173,26 +172,16 @@ def extract_study(study_dir: Path, study_idx: int) -> dict:
             ti = None
             fa = None
             bval = None
-            try:
+            with contextlib.suppress(ValueError, TypeError):
                 tr = float(meta["repetition_time"]) if meta["repetition_time"] else None
-            except (ValueError, TypeError):
-                pass
-            try:
+            with contextlib.suppress(ValueError, TypeError):
                 te = float(meta["echo_time"]) if meta["echo_time"] else None
-            except (ValueError, TypeError):
-                pass
-            try:
+            with contextlib.suppress(ValueError, TypeError):
                 ti = float(meta["inversion_time"]) if meta["inversion_time"] else None
-            except (ValueError, TypeError):
-                pass
-            try:
+            with contextlib.suppress(ValueError, TypeError):
                 fa = float(meta["flip_angle"]) if meta["flip_angle"] else None
-            except (ValueError, TypeError):
-                pass
 
-            seq_class = classify_sequence(
-                meta.get("series_description", ""), tr, te, ti, fa, bval
-            )
+            seq_class = classify_sequence(meta.get("series_description", ""), tr, te, ti, fa, bval)
             meta["sequence_classification"] = seq_class
     except Exception as e:
         print(f"    Sequence classification failed: {e}")
@@ -201,10 +190,17 @@ def extract_study(study_dir: Path, study_idx: int) -> dict:
     series_analysis = {}
     try:
         import SimpleITK as sitk
-        from src.extraction import volume_stats
-        from src.quality import grade_series, detect_anomalous_slices, compute_symmetry, compute_sharpness, detect_motion_artifacts
+
         from src.advanced_quality import full_quality_assessment
+        from src.extraction import volume_stats
         from src.helpers import safe_squeeze
+        from src.quality import (
+            compute_sharpness,
+            compute_symmetry,
+            detect_anomalous_slices,
+            detect_motion_artifacts,
+            grade_series,
+        )
 
         for uid, files in series_groups.items():
             meta = series_meta.get(uid, {})
@@ -265,6 +261,7 @@ def extract_study(study_dir: Path, study_idx: int) -> dict:
     conformance = []
     try:
         from src.extraction import check_conformance
+
         issues = check_conformance(all_records)
         conformance = issues
     except Exception:
@@ -285,9 +282,11 @@ def extract_study(study_dir: Path, study_idx: int) -> dict:
                         private_tags.add(k)
 
     elapsed = time.time() - t0
-    print(f"    Done in {elapsed:.1f}s: {len(all_records)} files, "
-          f"{len(series_groups)} series, {len(all_tags)} unique tags, "
-          f"{len(private_tags)} private tags")
+    print(
+        f"    Done in {elapsed:.1f}s: {len(all_records)} files, "
+        f"{len(series_groups)} series, {len(all_tags)} unique tags, "
+        f"{len(private_tags)} private tags"
+    )
 
     return {
         "study_name": study_dir.name,
@@ -329,11 +328,16 @@ def main():
         sys.exit(1)
 
     # Find study directories
-    study_dirs = sorted([
-        d for d in root.iterdir()
-        if d.is_dir() and not d.name.startswith(".") and d.suffix != ".zip"
-        and any(d.rglob("*.dcm"))
-    ])[:args.n]
+    study_dirs = sorted(
+        [
+            d
+            for d in root.iterdir()
+            if d.is_dir()
+            and not d.name.startswith(".")
+            and d.suffix != ".zip"
+            and any(d.rglob("*.dcm"))
+        ]
+    )[: args.n]
 
     print(f"Extracting {len(study_dirs)} studies from {root.name}")
     print(f"Output: {args.output}")

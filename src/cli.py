@@ -21,7 +21,6 @@ from __future__ import annotations
 import subprocess
 import sys
 from pathlib import Path
-from typing import Optional
 
 import typer
 
@@ -31,6 +30,7 @@ app = typer.Typer(name="speall", help="Speall MRI pipeline CLI", no_args_is_help
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _run(cmd: list[str]) -> None:
     """Print the resolved command then stream it to the terminal."""
@@ -43,6 +43,7 @@ def _run(cmd: list[str]) -> None:
 # ---------------------------------------------------------------------------
 # Local commands
 # ---------------------------------------------------------------------------
+
 
 @app.command()
 def dev(
@@ -78,8 +79,9 @@ def plan(
 ) -> None:
     """Print a cost + wall-time dry-run plan for the pipeline."""
     from rich.console import Console
-    from src.dry_run import plan as _plan
+
     from src.cli_planner import _build_table
+    from src.dry_run import plan as _plan
 
     output_dir = Path(root)
     console = Console()
@@ -108,7 +110,9 @@ def manifest(
 
     counts = write_manifests(Path(root), Path(out))
     typer.echo(f"Wrote {counts['series_rows']} series rows -> {Path(out) / 'manifest.parquet'}")
-    typer.echo(f"Wrote {counts['study_rows']} study rows  -> {Path(out) / 'study_manifest.parquet'}")
+    typer.echo(
+        f"Wrote {counts['study_rows']} study rows  -> {Path(out) / 'study_manifest.parquet'}"
+    )
 
 
 @app.command()
@@ -120,6 +124,7 @@ def pdf() -> None:
         sys.path.insert(0, str(repo_root))
 
     from generate_pdf import build
+
     build()
 
 
@@ -141,6 +146,7 @@ def version() -> None:
 def _get_version() -> str:
     try:
         from importlib.metadata import version
+
         return version("micom")
     except Exception:
         pass
@@ -178,6 +184,7 @@ def _get_git_sha() -> str:
 # Modal shell-out commands
 # ---------------------------------------------------------------------------
 
+
 @app.command()
 def resume(
     repo: str = typer.Option("shubhxho/speall-mri", "--repo", help="HuggingFace repo ID."),
@@ -213,7 +220,9 @@ def upload(
 
 @app.command()
 def backfill(
-    repo_dir: str = typer.Option("akai_mri", "--repo-dir", help="Sub-directory under /vol/output/ to backfill."),
+    repo_dir: str = typer.Option(
+        "akai_mri", "--repo-dir", help="Sub-directory under /vol/output/ to backfill."
+    ),
 ) -> None:
     """Backfill study_id and pipeline_version into existing detail.json files via Modal."""
     _run(["modal", "run", "--detach", "backfill_metadata.py", "--repo-dir", repo_dir])

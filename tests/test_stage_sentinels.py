@@ -23,10 +23,10 @@ from stage_sentinels import (
     summarize,
 )
 
-
 # ---------------------------------------------------------------------------
 # Basic sentinel lifecycle
 # ---------------------------------------------------------------------------
+
 
 def test_mark_started_creates_sentinel(tmp_path: Path) -> None:
     path = mark_started(tmp_path, "quality")
@@ -122,6 +122,7 @@ def test_mark_finished_without_prior_mark_started(tmp_path: Path) -> None:
 # ---------------------------------------------------------------------------
 # Atomic write: .tmp file is replaced, leaving no leftover
 # ---------------------------------------------------------------------------
+
 
 def test_atomic_write_leaves_no_tmp(tmp_path: Path) -> None:
     mark_started(tmp_path, "quality")

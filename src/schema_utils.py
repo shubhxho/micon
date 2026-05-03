@@ -4,7 +4,6 @@ Ergonomic helpers for working with Pydantic v2 pipeline schemas.
 
 from __future__ import annotations
 
-import json
 from pathlib import Path
 
 from src.schemas import SeriesDetail
@@ -28,7 +27,7 @@ def validate_directory(root: Path) -> list[tuple[Path, str]]:
     for detail_path in sorted(root.rglob("*_detail.json")):
         try:
             SeriesDetail.from_json_file(detail_path)
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             errors.append((detail_path, str(exc)))
 
     return errors

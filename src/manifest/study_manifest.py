@@ -120,9 +120,7 @@ def generate_dataset_manifest(
     output_dir = Path(output_dir)
 
     # Aggregate demographics
-    patient_ids = set()
     scanner_models = set()
-    date_range = [None, None]
     grade_distribution: dict[str, int] = defaultdict(int)
     sequence_types: dict[str, int] = defaultdict(int)
 

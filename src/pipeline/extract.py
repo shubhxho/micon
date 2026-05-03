@@ -4,14 +4,14 @@ from __future__ import annotations
 
 import time
 from collections import defaultdict
-from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor, as_completed
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 
 from rich.console import Console
 from rich.progress import BarColumn, Progress, SpinnerColumn, TextColumn, TimeElapsedColumn
 
 from ..constants import NON_IMAGE_SOP
-from ..extraction import extract_single_file, check_conformance
+from ..extraction import check_conformance, extract_single_file
 
 console = Console()
 
@@ -40,9 +40,12 @@ def extract_files(dcm_files: list[Path], folder: Path, n_workers: int) -> dict:
     skip_px = True
 
     with Progress(
-        SpinnerColumn(), TextColumn("[cyan]{task.description}"),
-        BarColumn(), TextColumn("{task.completed}/{task.total}"),
-        TimeElapsedColumn(), console=console,
+        SpinnerColumn(),
+        TextColumn("[cyan]{task.description}"),
+        BarColumn(),
+        TextColumn("{task.completed}/{task.total}"),
+        TimeElapsedColumn(),
+        console=console,
     ) as progress:
         task = progress.add_task(f"Extracting ({mode})", total=len(file_paths))
         # Metadata-only reads are I/O bound — use 2x workers for better throughput
@@ -121,7 +124,8 @@ def extract_files(dcm_files: list[Path], folder: Path, n_workers: int) -> dict:
 
     t_extract = time.time() - t0
     n_image_groups = sum(
-        1 for uid in sorted_uids
+        1
+        for uid in sorted_uids
         if series_meta.get(uid, {}).get("sop_class_uid", "") not in NON_IMAGE_SOP
     )
     n_ps_groups = len(sorted_uids) - n_image_groups
@@ -135,10 +139,7 @@ def extract_files(dcm_files: list[Path], folder: Path, n_workers: int) -> dict:
     )
 
     # Filter image records and run conformance — overlapped with the sort above
-    image_records = [
-        r for r in all_records
-        if r.get("_sop_class_uid", "") not in NON_IMAGE_SOP
-    ]
+    image_records = [r for r in all_records if r.get("_sop_class_uid", "") not in NON_IMAGE_SOP]
     # Conformance check: O(R * T) where R=records, T=required tags
     # Each record is independent — check in parallel chunks
     conformance_issues = check_conformance(image_records)

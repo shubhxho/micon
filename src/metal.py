@@ -14,6 +14,7 @@ import numpy as np
 
 try:
     import mlx.core as mx
+
     MLX_AVAILABLE = True
 except ImportError:
     MLX_AVAILABLE = False
@@ -22,7 +23,7 @@ _MIN_GPU_ELEMENTS = 16_384
 _mlx_lock = threading.Lock()
 
 
-def _to_mlx(arr: np.ndarray) -> "mx.array":
+def _to_mlx(arr: np.ndarray) -> mx.array:
     if arr.dtype == np.float64:
         return mx.array(arr.astype(np.float32))
     return mx.array(arr)
@@ -91,8 +92,8 @@ def gpu_stats(vol: np.ndarray) -> dict:
             m3 = mx.mean(d2 * d)
             m4 = mx.mean(d2 * d2)
             mx.eval(m3, m4)
-            skew = float(m3.item()) / std_f ** 3
-            kurt = float(m4.item()) / std_f ** 4 - 3.0
+            skew = float(m3.item()) / std_f**3
+            kurt = float(m4.item()) / std_f**4 - 3.0
         else:
             skew = kurt = 0.0
 
@@ -104,17 +105,21 @@ def gpu_stats(vol: np.ndarray) -> dict:
     entropy = float(-np.sum(p * np.log2(p)))
 
     return {
-        "mean": mean_f, "std": std_f,
-        "min": min_f, "max": max_f,
+        "mean": mean_f,
+        "std": std_f,
+        "min": min_f,
+        "max": max_f,
         "nonzero_pct": float(nonzero.item()) * 100,
         "dynamic_range": max_f - min_f,
-        "skewness": skew, "kurtosis": kurt,
+        "skewness": skew,
+        "kurtosis": kurt,
         "entropy": entropy,
     }
 
 
 def gpu_stats_and_percentiles(
-    vol: np.ndarray, pcts: list[float],
+    vol: np.ndarray,
+    pcts: list[float],
 ) -> tuple[dict, np.ndarray]:
     """Combined stats + percentiles in a SINGLE lock acquisition + GPU upload.
 
@@ -150,8 +155,8 @@ def gpu_stats_and_percentiles(
             m3 = mx.mean(d2 * d)
             m4 = mx.mean(d2 * d2)
             mx.eval(m3, m4)
-            skew = float(m3.item()) / std_f ** 3
-            kurt = float(m4.item()) / std_f ** 4 - 3.0
+            skew = float(m3.item()) / std_f**3
+            kurt = float(m4.item()) / std_f**4 - 3.0
         else:
             skew = kurt = 0.0
 
@@ -160,10 +165,9 @@ def gpu_stats_and_percentiles(
         sorted_arr = mx.sort(flat)
         mx.eval(sorted_arr)
         n = sorted_arr.size
-        pct_vals = np.array([
-            float(sorted_arr[min(int(p / 100.0 * (n - 1)), n - 1)].item())
-            for p in pcts
-        ])
+        pct_vals = np.array(
+            [float(sorted_arr[min(int(p / 100.0 * (n - 1)), n - 1)].item()) for p in pcts]
+        )
 
     # Entropy on CPU
     flat_np = vol.ravel()
@@ -173,11 +177,14 @@ def gpu_stats_and_percentiles(
     entropy = float(-np.sum(p * np.log2(p)))
 
     stats = {
-        "mean": mean_f, "std": std_f,
-        "min": min_f, "max": max_f,
+        "mean": mean_f,
+        "std": std_f,
+        "min": min_f,
+        "max": max_f,
         "nonzero_pct": float(nonzero.item()) * 100,
         "dynamic_range": max_f - min_f,
-        "skewness": skew, "kurtosis": kurt,
+        "skewness": skew,
+        "kurtosis": kurt,
         "entropy": entropy,
     }
     return stats, pct_vals
@@ -200,8 +207,9 @@ def gpu_slice_stats(vol: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
         return np.array(means), np.array(stds)
 
 
-def gpu_histogram(arr: np.ndarray, bins: int = 200,
-                  range_: tuple[float, float] | None = None) -> tuple[np.ndarray, np.ndarray]:
+def gpu_histogram(
+    arr: np.ndarray, bins: int = 200, range_: tuple[float, float] | None = None
+) -> tuple[np.ndarray, np.ndarray]:
     """GPU-accelerated histogram via sort + searchsorted binning.
 
     MLX has no native histogram, so we:
@@ -235,7 +243,8 @@ def gpu_histogram(arr: np.ndarray, bins: int = 200,
 
 
 def gpu_histogram_and_percentiles(
-    arr: np.ndarray, bins: int = 200,
+    arr: np.ndarray,
+    bins: int = 200,
     pcts: list[float] | None = None,
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray | None]:
     """Combined GPU histogram + percentiles in a SINGLE lock acquisition + sort.
@@ -265,10 +274,7 @@ def gpu_histogram_and_percentiles(
         pct_vals = None
         if pcts:
             n = sorted_np.size
-            pct_vals = np.array([
-                sorted_np[min(int(p / 100.0 * (n - 1)), n - 1)]
-                for p in pcts
-            ])
+            pct_vals = np.array([sorted_np[min(int(p / 100.0 * (n - 1)), n - 1)] for p in pcts])
 
     idx_np = np.searchsorted(sorted_np, edges)
     counts = np.diff(idx_np)
@@ -328,14 +334,13 @@ def gpu_pixel_stats(arr: np.ndarray) -> dict | None:
             m3 = mx.mean(d2 * d)
             m4 = mx.mean(d2 * d2)
             mx.eval(m3, m4)
-            skew = float(m3.item()) / std_f ** 3
-            kurt = float(m4.item()) / std_f ** 4 - 3.0
+            skew = float(m3.item()) / std_f**3
+            kurt = float(m4.item()) / std_f**4 - 3.0
         else:
             skew = kurt = 0.0
 
     # Entropy on CPU (histogram bins)
-    hist, _ = np.histogram(arr.ravel(), bins=256,
-                           range=(float(vmin.item()), float(vmax.item())))
+    hist, _ = np.histogram(arr.ravel(), bins=256, range=(float(vmin.item()), float(vmax.item())))
     hist = hist[hist > 0]
     p = hist / hist.sum()
     ent = float(-np.sum(p * np.log2(p)))
@@ -346,10 +351,14 @@ def gpu_pixel_stats(arr: np.ndarray) -> dict | None:
         "pixel_mean": mean_f,
         "pixel_std": std_f,
         "pixel_median": pcts[4],
-        "pixel_p1": pcts[0], "pixel_p5": pcts[1],
-        "pixel_p10": pcts[2], "pixel_p25": pcts[3],
-        "pixel_p50": pcts[4], "pixel_p75": pcts[5],
-        "pixel_p90": pcts[6], "pixel_p95": pcts[7],
+        "pixel_p1": pcts[0],
+        "pixel_p5": pcts[1],
+        "pixel_p10": pcts[2],
+        "pixel_p25": pcts[3],
+        "pixel_p50": pcts[4],
+        "pixel_p75": pcts[5],
+        "pixel_p90": pcts[6],
+        "pixel_p95": pcts[7],
         "pixel_p99": pcts[8],
         "pixel_iqr": pcts[5] - pcts[3],
         "nonzero_ratio": float(nonzero.item()),
@@ -360,6 +369,7 @@ def gpu_pixel_stats(arr: np.ndarray) -> dict | None:
 
 
 # ── GPU rendering functions for enhanced VLM analysis ─────────────────────────
+
 
 def gpu_mip(vol: np.ndarray) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     """Maximum Intensity Projection along all 3 axes on Metal GPU.
@@ -455,13 +465,16 @@ def gpu_tissue_mask(vol: np.ndarray, low_pct: float = 15, high_pct: float = 99) 
 
 
 def gpu_batch_enhanced(
-    vol: np.ndarray, low_pct: float = 1, high_pct: float = 99,
-    tissue_low: float = 15, tissue_high: float = 99,
+    vol: np.ndarray,
+    low_pct: float = 1,
+    high_pct: float = 99,
+    tissue_low: float = 15,
+    tissue_high: float = 99,
 ) -> tuple[
     tuple[np.ndarray, np.ndarray, np.ndarray],  # MIP (ax, cor, sag)
     tuple[np.ndarray, np.ndarray, np.ndarray],  # MinIP (ax, cor, sag)
-    np.ndarray,                                  # tissue mask
-    np.ndarray,                                  # normalized volume
+    np.ndarray,  # tissue mask
+    np.ndarray,  # normalized volume
 ]:
     """Batch all enhanced-view GPU ops in a single lock + upload.
 
@@ -475,8 +488,16 @@ def gpu_batch_enhanced(
         vol_norm = np.clip((vol - vmin) / (vmax - vmin + 1e-6), 0, 1).astype(np.float32)
         tlow, thigh = np.percentile(vol, [tissue_low, tissue_high])
         mask = ((vol > tlow) & (vol < thigh)).astype(np.float32)
-        mip = (vol.max(0).astype(np.float32), vol.max(1).astype(np.float32), vol.max(2).astype(np.float32))
-        minip = (vol.min(0).astype(np.float32), vol.min(1).astype(np.float32), vol.min(2).astype(np.float32))
+        mip = (
+            vol.max(0).astype(np.float32),
+            vol.max(1).astype(np.float32),
+            vol.max(2).astype(np.float32),
+        )
+        minip = (
+            vol.min(0).astype(np.float32),
+            vol.min(1).astype(np.float32),
+            vol.min(2).astype(np.float32),
+        )
         return mip, minip, mask, vol_norm
 
     with _mlx_lock:
@@ -510,8 +531,16 @@ def gpu_batch_enhanced(
         mx.eval(mip_ax, mip_cor, mip_sag, minip_ax, minip_cor, minip_sag, norm, mask)
 
         return (
-            (np.array(mip_ax, dtype=np.float32), np.array(mip_cor, dtype=np.float32), np.array(mip_sag, dtype=np.float32)),
-            (np.array(minip_ax, dtype=np.float32), np.array(minip_cor, dtype=np.float32), np.array(minip_sag, dtype=np.float32)),
+            (
+                np.array(mip_ax, dtype=np.float32),
+                np.array(mip_cor, dtype=np.float32),
+                np.array(mip_sag, dtype=np.float32),
+            ),
+            (
+                np.array(minip_ax, dtype=np.float32),
+                np.array(minip_cor, dtype=np.float32),
+                np.array(minip_sag, dtype=np.float32),
+            ),
             np.array(mask, dtype=np.float32),
             np.array(norm, dtype=np.float32),
         )
@@ -522,8 +551,8 @@ def _numpy_stats(vol: np.ndarray) -> dict:
     if s > 1e-10:
         d = vol - m
         d2 = d * d
-        skew = float((d2 * d).mean() / s ** 3)
-        kurt = float((d2 * d2).mean() / s ** 4 - 3.0)
+        skew = float((d2 * d).mean() / s**3)
+        kurt = float((d2 * d2).mean() / s**4 - 3.0)
     else:
         skew = kurt = 0.0
 
@@ -533,10 +562,13 @@ def _numpy_stats(vol: np.ndarray) -> dict:
     entropy = float(-np.sum(p * np.log2(p)))
 
     return {
-        "mean": m, "std": s,
-        "min": float(vol.min()), "max": float(vol.max()),
+        "mean": m,
+        "std": s,
+        "min": float(vol.min()),
+        "max": float(vol.max()),
         "nonzero_pct": float((vol != 0).mean() * 100),
         "dynamic_range": float(vol.max() - vol.min()),
-        "skewness": skew, "kurtosis": kurt,
+        "skewness": skew,
+        "kurtosis": kurt,
         "entropy": entropy,
     }

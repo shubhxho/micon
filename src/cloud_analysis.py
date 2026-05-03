@@ -23,6 +23,7 @@ Requires: OPENROUTER_API_KEY env var.
 from __future__ import annotations
 
 import base64
+import contextlib
 import json
 import os
 import re
@@ -49,18 +50,20 @@ SYNTHESIS_MODEL_KEY = os.environ.get("MICOM_SYNTHESIS_MODEL", "gemma4")
 # Whitelisted metadata fields that may leave the local environment for the
 # synthesis prompt. Anything not in this set is dropped — we never ship
 # patient name/MRN/DOB/weight to OpenRouter, even with a redacted study.
-_SAFE_METADATA_FIELDS = frozenset({
-    "patient_sex",
-    "patient_age_bracket",
-    "study_date_year",
-    "study_description",
-    "institution",
-    "manufacturer",
-    "model",
-    "field_strength",
-    "software_versions",
-    "station_name",
-})
+_SAFE_METADATA_FIELDS = frozenset(
+    {
+        "patient_sex",
+        "patient_age_bracket",
+        "study_date_year",
+        "study_description",
+        "institution",
+        "manufacturer",
+        "model",
+        "field_strength",
+        "software_versions",
+        "station_name",
+    }
+)
 
 
 def _sanitize_patient_info(info: dict | None) -> dict:
@@ -94,13 +97,21 @@ def _sanitize_patient_info(info: dict | None) -> dict:
     if len(study_date) >= 4 and study_date[:4].isdigit():
         safe["study_date_year"] = study_date[:4]
 
-    for k in ("study_description", "institution", "manufacturer",
-              "model", "field_strength", "software_versions", "station_name"):
+    for k in (
+        "study_description",
+        "institution",
+        "manufacturer",
+        "model",
+        "field_strength",
+        "software_versions",
+        "station_name",
+    ):
         v = info.get(k)
         if v:
             safe[k] = v
 
     return {k: v for k, v in safe.items() if k in _SAFE_METADATA_FIELDS}
+
 
 # ── Models ──────────────────────────────────────────────────────────────────
 
@@ -214,7 +225,9 @@ def _call_model(
     for attempt in range(retries):
         try:
             resp = client.with_options(timeout=request_timeout).chat.completions.create(
-                model=model_id, max_tokens=max_tokens, messages=messages,
+                model=model_id,
+                max_tokens=max_tokens,
+                messages=messages,
             )
             return resp.choices[0].message.content
         except openai.RateLimitError:
@@ -351,8 +364,12 @@ def annotate_with_model(
     provider = provider or _detect_provider() or _PROVIDER_OPENROUTER
     model_id = _resolve_model_id(model_key, provider)
     if model_id is None:
-        return {"model": model["name"], "model_key": model_key,
-                "error": f"{model['name']} not available on {provider}", "time_s": 0}
+        return {
+            "model": model["name"],
+            "model_key": model_key,
+            "error": f"{model['name']} not available on {provider}",
+            "time_s": 0,
+        }
 
     t0 = time.time()
 
@@ -378,20 +395,16 @@ def annotate_with_model(
             annotation = json.loads(raw)
         except json.JSONDecodeError:
             # Try extracting from markdown
-            match = re.search(r'```(?:json)?\s*(\{.*?\})\s*```', raw, re.DOTALL)
+            match = re.search(r"```(?:json)?\s*(\{.*?\})\s*```", raw, re.DOTALL)
             if match:
-                try:
+                with contextlib.suppress(json.JSONDecodeError):
                     annotation = json.loads(match.group(1))
-                except json.JSONDecodeError:
-                    pass
             if not annotation:
                 # Try finding any JSON object
-                match = re.search(r'\{.*\}', raw, re.DOTALL)
+                match = re.search(r"\{.*\}", raw, re.DOTALL)
                 if match:
-                    try:
+                    with contextlib.suppress(json.JSONDecodeError):
                         annotation = json.loads(match.group())
-                    except json.JSONDecodeError:
-                        pass
 
     return {
         "model": model["name"],
@@ -566,12 +579,10 @@ def tissue_analysis_with_model(
         try:
             annotation = json.loads(raw)
         except json.JSONDecodeError:
-            match = re.search(r'\{.*\}', raw, re.DOTALL)
+            match = re.search(r"\{.*\}", raw, re.DOTALL)
             if match:
-                try:
+                with contextlib.suppress(json.JSONDecodeError):
                     annotation = json.loads(match.group())
-                except json.JSONDecodeError:
-                    pass
 
     return {
         "model": MODELS.get(model_key, {}).get("name", model_key),
@@ -583,6 +594,7 @@ def tissue_analysis_with_model(
 
 
 # ── Multi-model parallel annotation ─────────────────────────────────────────
+
 
 def annotate_series_multi(
     montage_path: str,
@@ -603,7 +615,9 @@ def annotate_series_multi(
     results = {}
     with ThreadPoolExecutor(max_workers=len(model_keys)) as pool:
         futures = {
-            pool.submit(annotate_with_model, client, mk, montage_path, series_label, quality_ctx, provider): mk
+            pool.submit(
+                annotate_with_model, client, mk, montage_path, series_label, quality_ctx, provider
+            ): mk
             for mk in model_keys
         }
         for fut in as_completed(futures):
@@ -637,9 +651,7 @@ def _build_consensus(results: dict[str, dict]) -> dict:
     seq_agreement = seq_types.count(seq_type) / len(seq_types)
 
     # Pathology — any model finding pathology flags it
-    pathology_found = any(
-        a.get("pathology", {}).get("found", False) for a in annotations.values()
-    )
+    pathology_found = any(a.get("pathology", {}).get("found", False) for a in annotations.values())
     # Findings may be either strings (legacy/relaxed) or dicts (rich schema).
     # Normalize to a string key for dedup; preserve the original payload.
     all_findings = []
@@ -649,7 +661,7 @@ def _build_consensus(results: dict[str, dict]) -> dict:
         path = a.get("pathology", {})
         for f in path.get("findings", []):
             if isinstance(f, dict):
-                key = f"{f.get('location','?')}|{f.get('signal_on_this_sequence','')}|{f.get('size_mm','')}"
+                key = f"{f.get('location', '?')}|{f.get('signal_on_this_sequence', '')}|{f.get('size_mm', '')}"
             else:
                 key = str(f)
             if key in seen_keys:
@@ -658,10 +670,11 @@ def _build_consensus(results: dict[str, dict]) -> dict:
             all_findings.append(f)
         all_differentials.extend(path.get("differential", []))
     unique_findings = all_findings
-    unique_differentials = list(dict.fromkeys(
-        d if isinstance(d, str) else json.dumps(d, sort_keys=True)
-        for d in all_differentials
-    ))
+    unique_differentials = list(
+        dict.fromkeys(
+            d if isinstance(d, str) else json.dumps(d, sort_keys=True) for d in all_differentials
+        )
+    )
 
     # Quality — average grades
     grade_map = {"A": 4, "B": 3, "C": 2, "D": 1, "F": 0}
@@ -693,21 +706,26 @@ def _build_consensus(results: dict[str, dict]) -> dict:
     # Disagreements
     disagreements = []
     if seq_agreement < 1.0:
-        disagreements.append({
-            "field": "sequence_type",
-            "votes": {st: seq_types.count(st) for st in set(seq_types)},
-        })
+        disagreements.append(
+            {
+                "field": "sequence_type",
+                "votes": {st: seq_types.count(st) for st in set(seq_types)},
+            }
+        )
 
     pathology_votes = {
         k: v["annotation"].get("pathology", {}).get("found", False)
-        for k, v in results.items() if v.get("annotation")
+        for k, v in results.items()
+        if v.get("annotation")
     }
     if len(set(pathology_votes.values())) > 1:
-        disagreements.append({
-            "field": "pathology_found",
-            "votes": {MODELS[k]["name"]: v for k, v in pathology_votes.items()},
-            "flag": "NEEDS HUMAN REVIEW — models disagree on pathology",
-        })
+        disagreements.append(
+            {
+                "field": "pathology_found",
+                "votes": {MODELS[k]["name"]: v for k, v in pathology_votes.items()},
+                "flag": "NEEDS HUMAN REVIEW — models disagree on pathology",
+            }
+        )
 
     return {
         "sequence_type": seq_type,
@@ -723,15 +741,18 @@ def _build_consensus(results: dict[str, dict]) -> dict:
         "quality_grade": consensus_grade,
         "notable": unique_notable[:10],
         "disagreements": disagreements,
-        "models_used": [MODELS[k]["name"] for k in results.keys()],
+        "models_used": [MODELS[k]["name"] for k in results],
     }
 
 
 # ── Full study annotation ───────────────────────────────────────────────────
 
 _GRADE_STYLE = {
-    "A": "bold green", "B": "green", "C": "yellow",
-    "D": "red", "F": "bold red",
+    "A": "bold green",
+    "B": "green",
+    "C": "yellow",
+    "D": "red",
+    "F": "bold red",
 }
 
 
@@ -767,7 +788,7 @@ def annotate_study_multi(
         )
         return {"error": "No API key set"}
 
-    from .ai_analysis import _is_derivative, _build_quality_context
+    from .ai_analysis import _build_quality_context, _is_derivative
 
     ann_dir = out_dir / "annotations"
     ann_dir.mkdir(parents=True, exist_ok=True)
@@ -786,8 +807,14 @@ def annotate_study_multi(
     if synthesize and _resolve_model_id(syn_key, provider) is None:
         # Synthesis model not served by the active provider — fall back to a
         # supported one (prefer gpt4 on direct-OpenAI).
-        fallback = next((k for k in ("gpt4", "claude", "gemma4", "gemini", "qwen")
-                         if _resolve_model_id(k, provider) is not None), None)
+        fallback = next(
+            (
+                k
+                for k in ("gpt4", "claude", "gemma4", "gemini", "qwen")
+                if _resolve_model_id(k, provider) is not None
+            ),
+            None,
+        )
         if fallback:
             console.print(
                 f"[yellow]Synthesis model {MODELS[syn_key]['name']} not available "
@@ -807,20 +834,23 @@ def annotate_study_multi(
         (str(len(series_results)), "cyan"),
         ("    ", ""),
         ("Synthesis: ", "bold"),
-        (MODELS[syn_key]["name"] if synthesize else "off",
-         "cyan" if synthesize else "dim"),
+        (MODELS[syn_key]["name"] if synthesize else "off", "cyan" if synthesize else "dim"),
     ]
     if dropped:
-        parts.extend([
-            ("\nSkipped (unavailable on " + provider + "): ", "dim"),
-            (", ".join(MODELS[k]["name"] for k in dropped), "dim"),
-        ])
-    console.print(Panel(
-        Text.assemble(*parts),
-        title=f"[bold cyan]{title}[/bold cyan]",
-        border_style="cyan",
-        padding=(0, 1),
-    ))
+        parts.extend(
+            [
+                ("\nSkipped (unavailable on " + provider + "): ", "dim"),
+                (", ".join(MODELS[k]["name"] for k in dropped), "dim"),
+            ]
+        )
+    console.print(
+        Panel(
+            Text.assemble(*parts),
+            title=f"[bold cyan]{title}[/bold cyan]",
+            border_style="cyan",
+            padding=(0, 1),
+        )
+    )
 
     all_annotations: dict[str, dict] = {}
 
@@ -839,11 +869,13 @@ def annotate_study_multi(
     # concurrency budget.
     annot_jobs: list[tuple[str, str, dict]] = []
     for r in series_results:
-        montage_path = r.get("montage_path") if isinstance(r, dict) else getattr(r, "montage_path", None)
+        montage_path = (
+            r.get("montage_path") if isinstance(r, dict) else getattr(r, "montage_path", None)
+        )
         if not montage_path:
             continue
         info = r.get("info", r) if isinstance(r, dict) else r.info
-        label = f"Series {info.get('series_number','?')} — {info.get('series_description','')}"
+        label = f"Series {info.get('series_number', '?')} — {info.get('series_description', '')}"
         if _is_derivative(label):
             continue
         qa = info.get("quality_analysis")
@@ -866,10 +898,8 @@ def annotate_study_multi(
             label, result = fut.result()
             all_annotations[label] = result
 
-            safe_name = re.sub(r'[^\w\-]', '_', label)
-            (ann_dir / f"{safe_name}.json").write_text(
-                json.dumps(result, indent=2, default=str)
-            )
+            safe_name = re.sub(r"[^\w\-]", "_", label)
+            (ann_dir / f"{safe_name}.json").write_text(json.dumps(result, indent=2, default=str))
 
             consensus = result.get("consensus", {})
             n_ok = result.get("models_succeeded", 0)
@@ -898,7 +928,7 @@ def annotate_study_multi(
     # Runs on each primary (non-derivative) series using the initial
     # annotation as context. This adds tissue characterization, clinical
     # correlation, and per-study pricing assessment.
-    console.print(f"\n[cyan]Deep tissue analysis (Gemma 4)…[/cyan]")
+    console.print("\n[cyan]Deep tissue analysis (Gemma 4)…[/cyan]")
     tissue_model = "gemma4"
     if _resolve_model_id(tissue_model, provider) is None:
         tissue_model = model_keys[0] if model_keys else None
@@ -911,7 +941,7 @@ def annotate_study_multi(
         by_label: dict[str, dict] = {}
         for r in series_results:
             info = r.get("info", r) if isinstance(r, dict) else r.info
-            rl = f"Series {info.get('series_number','?')} — {info.get('series_description','')}"
+            rl = f"Series {info.get('series_number', '?')} — {info.get('series_description', '')}"
             mp = r.get("montage_path") if isinstance(r, dict) else getattr(r, "montage_path", None)
             by_label[rl] = {"montage_path": mp, "qa": info.get("quality_analysis")}
 
@@ -921,19 +951,25 @@ def annotate_study_multi(
             if not entry or not entry.get("montage_path"):
                 return label, None
             consensus = result.get("consensus", {})
-            prior_summary = json.dumps({
-                "sequence": consensus.get("sequence_type", "?"),
-                "pathology_found": consensus.get("pathology", {}).get("found", False),
-                "findings": consensus.get("pathology", {}).get("findings", [])[:3],
-                "quality_grade": consensus.get("quality_grade", "?"),
-            }, default=str)
+            prior_summary = json.dumps(
+                {
+                    "sequence": consensus.get("sequence_type", "?"),
+                    "pathology_found": consensus.get("pathology", {}).get("found", False),
+                    "findings": consensus.get("pathology", {}).get("findings", [])[:3],
+                    "quality_grade": consensus.get("quality_grade", "?"),
+                },
+                default=str,
+            )
             quality_ctx = _build_quality_context(entry["qa"]) if entry["qa"] else ""
             try:
                 return label, tissue_analysis_with_model(
-                    client, entry["montage_path"], label,
+                    client,
+                    entry["montage_path"],
+                    label,
                     prior_annotation=prior_summary,
                     quality_ctx=quality_ctx,
-                    model_key=tissue_model, provider=provider,
+                    model_key=tissue_model,
+                    provider=provider,
                 )
             except Exception as e:
                 return label, {"error": str(e)}
@@ -945,12 +981,14 @@ def annotate_study_multi(
                     continue
                 all_annotations[label]["tissue_analysis"] = tissue_result["tissue_analysis"]
                 tissue_count += 1
-                safe_name = re.sub(r'[^\w\-]', '_', label)
+                safe_name = re.sub(r"[^\w\-]", "_", label)
                 (ann_dir / f"{safe_name}.json").write_text(
                     json.dumps(all_annotations[label], indent=2, default=str)
                 )
 
-        console.print(f"  [green]✓[/green] Tissue analysis: {tissue_count}/{len(all_annotations)} series")
+        console.print(
+            f"  [green]✓[/green] Tissue analysis: {tissue_count}/{len(all_annotations)} series"
+        )
 
     summary = _build_study_summary(all_annotations)
 
@@ -964,8 +1002,7 @@ def annotate_study_multi(
     }
 
     if synthesize and all_annotations:
-        console.print(f"[cyan]Synthesizing final report via "
-                      f"{MODELS[syn_key]['name']}…[/cyan]")
+        console.print(f"[cyan]Synthesizing final report via {MODELS[syn_key]['name']}…[/cyan]")
         try:
             narrative = synthesize_cloud_report(
                 all_annotations,
@@ -980,26 +1017,28 @@ def annotate_study_multi(
             console.print(f"[red]Synthesis failed:[/red] {e}")
             study_report["synthesis_error"] = str(e)
 
-    (ann_dir / "study_annotations.json").write_text(
-        json.dumps(study_report, indent=2, default=str)
-    )
+    (ann_dir / "study_annotations.json").write_text(json.dumps(study_report, indent=2, default=str))
 
     n_path = summary.get("pathology_detected", 0)
     n_dis = summary.get("disagreements", 0)
-    console.print(Panel(
-        Text.assemble(
-            ("Annotated: ", "bold"), (f"{len(all_annotations)} series", ""),
-            ("\nPathology: ", "bold"),
-            (f"{n_path} series", "red" if n_path else ""),
-            ("    ", ""),
-            ("Disagreements: ", "bold"),
-            (f"{n_dis} series", "yellow" if n_dis else ""),
-            ("\nOutput: ", "bold"), (str(ann_dir), "dim"),
-        ),
-        title="[bold green]Annotation Complete[/bold green]",
-        border_style="green",
-        padding=(0, 1),
-    ))
+    console.print(
+        Panel(
+            Text.assemble(
+                ("Annotated: ", "bold"),
+                (f"{len(all_annotations)} series", ""),
+                ("\nPathology: ", "bold"),
+                (f"{n_path} series", "red" if n_path else ""),
+                ("    ", ""),
+                ("Disagreements: ", "bold"),
+                (f"{n_dis} series", "yellow" if n_dis else ""),
+                ("\nOutput: ", "bold"),
+                (str(ann_dir), "dim"),
+            ),
+            title="[bold green]Annotation Complete[/bold green]",
+            border_style="green",
+            padding=(0, 1),
+        )
+    )
 
     return study_report
 
@@ -1185,20 +1224,31 @@ def synthesize_cloud_report(
     if model_key not in MODELS:
         raise ValueError(f"Unknown synthesis model_key: {model_key}")
 
-    consensus_block = "\n\n".join(
-        _format_series_consensus(label, result)
-        for label, result in sorted(annotations.items())
-    ) or "_No annotations available._"
+    consensus_block = (
+        "\n\n".join(
+            _format_series_consensus(label, result) for label, result in sorted(annotations.items())
+        )
+        or "_No annotations available._"
+    )
 
     compact_meta = {
         "patient": _sanitize_patient_info(patient_info),
         "series": [
-            {k: v for k, v in (s or {}).items()
-             if k not in (
-                 "series_uid", "volume_stats", "quality_analysis",
-                 "patient_id", "patient_name", "patient_birth_date",
-                 "patient_weight", "accession_number",
-             )}
+            {
+                k: v
+                for k, v in (s or {}).items()
+                if k
+                not in (
+                    "series_uid",
+                    "volume_stats",
+                    "quality_analysis",
+                    "patient_id",
+                    "patient_name",
+                    "patient_birth_date",
+                    "patient_weight",
+                    "accession_number",
+                )
+            }
             for s in (series_info or [])
         ],
     }
@@ -1228,12 +1278,10 @@ def _build_study_summary(annotations: dict) -> dict:
         return {}
 
     pathology_series = sum(
-        1 for a in annotations.values()
-        if a.get("consensus", {}).get("pathology", {}).get("found")
+        1 for a in annotations.values() if a.get("consensus", {}).get("pathology", {}).get("found")
     )
     disagreement_series = sum(
-        1 for a in annotations.values()
-        if a.get("consensus", {}).get("disagreements")
+        1 for a in annotations.values() if a.get("consensus", {}).get("disagreements")
     )
 
     all_findings = []
@@ -1241,7 +1289,7 @@ def _build_study_summary(annotations: dict) -> dict:
     for a in annotations.values():
         for f in a.get("consensus", {}).get("pathology", {}).get("findings", []):
             if isinstance(f, dict):
-                key = f"{f.get('location','?')}|{f.get('signal_on_this_sequence','')}|{f.get('size_mm','')}"
+                key = f"{f.get('location', '?')}|{f.get('signal_on_this_sequence', '')}|{f.get('size_mm', '')}"
             else:
                 key = str(f)
             if key in seen:

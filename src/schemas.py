@@ -20,13 +20,10 @@ Key design decisions
 
 from __future__ import annotations
 
-import json
 from pathlib import Path
-from typing import Any, Literal, Optional
+from typing import Any, Literal, Self
 
 from pydantic import AliasChoices, BaseModel, ConfigDict, Field, field_validator, model_validator
-from typing_extensions import Self
-
 
 # ---------------------------------------------------------------------------
 # Mixin
@@ -51,17 +48,17 @@ class _JsonFileMixin(BaseModel):
 class SequenceParams(_JsonFileMixin):
     model_config = ConfigDict(extra="allow", populate_by_name=True)
 
-    tr: Optional[float] = Field(default=None)
-    te: Optional[float] = Field(default=None)
-    ti: Optional[float] = Field(default=None)
-    fa: Optional[float] = Field(default=None)
-    b_value: Optional[float] = Field(default=None)
-    slice_thickness: Optional[float] = Field(default=None)
-    spacing_between_slices: Optional[float] = Field(default=None)
-    rows: Optional[int] = Field(default=None)
-    columns: Optional[int] = Field(default=None)
-    field_strength: Optional[float] = Field(default=None)
-    pixel_spacing: Optional[list[float]] = Field(default=None)
+    tr: float | None = Field(default=None)
+    te: float | None = Field(default=None)
+    ti: float | None = Field(default=None)
+    fa: float | None = Field(default=None)
+    b_value: float | None = Field(default=None)
+    slice_thickness: float | None = Field(default=None)
+    spacing_between_slices: float | None = Field(default=None)
+    rows: int | None = Field(default=None)
+    columns: int | None = Field(default=None)
+    field_strength: float | None = Field(default=None)
+    pixel_spacing: list[float] | None = Field(default=None)
 
     @field_validator("pixel_spacing", mode="before")
     @classmethod
@@ -83,7 +80,7 @@ class SequenceClassification(_JsonFileMixin):
     sequence_type: str
     confidence: Literal["high", "medium", "low", "unknown"]
     reasoning: list[str] = Field(default_factory=list)
-    parameters: Optional[dict[str, Any]] = Field(default=None)
+    parameters: dict[str, Any] | None = Field(default=None)
 
 
 # ---------------------------------------------------------------------------
@@ -97,15 +94,15 @@ class VolumeStats(_JsonFileMixin):
     volume_shape: list[int] = Field(default_factory=list)
     spacing_mm: list[float] = Field(default_factory=list)
     fov_mm: list[float] = Field(default_factory=list)
-    volume_min: Optional[float] = Field(default=None)
-    volume_max: Optional[float] = Field(default=None)
-    volume_mean: Optional[float] = Field(default=None)
-    volume_std: Optional[float] = Field(default=None)
-    volume_snr_estimate: Optional[float] = Field(default=None)
-    volume_cnr: Optional[float] = Field(default=None)
-    volume_entropy: Optional[float] = Field(default=None)
-    quality_grade: Optional[Literal["A", "B", "C", "D", "F"]] = Field(default=None)
-    quality_score: Optional[float] = Field(default=None)
+    volume_min: float | None = Field(default=None)
+    volume_max: float | None = Field(default=None)
+    volume_mean: float | None = Field(default=None)
+    volume_std: float | None = Field(default=None)
+    volume_snr_estimate: float | None = Field(default=None)
+    volume_cnr: float | None = Field(default=None)
+    volume_entropy: float | None = Field(default=None)
+    quality_grade: Literal["A", "B", "C", "D", "F"] | None = Field(default=None)
+    quality_score: float | None = Field(default=None)
 
 
 # ---------------------------------------------------------------------------
@@ -131,9 +128,9 @@ class QualityAnalysis(_JsonFileMixin):
 class MLTrainingScore(_JsonFileMixin):
     model_config = ConfigDict(extra="allow", populate_by_name=True)
 
-    score: Optional[float] = Field(default=None)
-    grade: Optional[str] = Field(default=None)
-    commercial_tier: Optional[str] = Field(default=None)
+    score: float | None = Field(default=None)
+    grade: str | None = Field(default=None)
+    commercial_tier: str | None = Field(default=None)
 
 
 # ---------------------------------------------------------------------------
@@ -144,8 +141,8 @@ class MLTrainingScore(_JsonFileMixin):
 class PipelineVersion(_JsonFileMixin):
     model_config = ConfigDict(extra="allow", populate_by_name=True)
 
-    timestamp: Optional[str] = Field(default=None)
-    git_sha: Optional[str] = Field(default=None)
+    timestamp: str | None = Field(default=None)
+    git_sha: str | None = Field(default=None)
 
 
 # ---------------------------------------------------------------------------
@@ -158,24 +155,24 @@ class SeriesIdentity(_JsonFileMixin):
 
     model_config = ConfigDict(extra="allow", populate_by_name=True)
 
-    uid: Optional[str] = Field(
+    uid: str | None = Field(
         default=None,
         validation_alias=AliasChoices("uid", "series_uid"),
     )
-    number: Optional[int] = Field(
+    number: int | None = Field(
         default=None,
         validation_alias=AliasChoices("number", "series_number"),
     )
-    description: Optional[str] = Field(
+    description: str | None = Field(
         default=None,
         validation_alias=AliasChoices("description", "series_description"),
     )
-    modality: Optional[str] = Field(default=None)
-    sop_class: Optional[str] = Field(default=None)
-    sop_class_uid: Optional[str] = Field(default=None)
-    file_count: Optional[int] = Field(default=None)
-    has_pixels: Optional[bool] = Field(default=None)
-    source_subdir: Optional[str] = Field(default=None)
+    modality: str | None = Field(default=None)
+    sop_class: str | None = Field(default=None)
+    sop_class_uid: str | None = Field(default=None)
+    file_count: int | None = Field(default=None)
+    has_pixels: bool | None = Field(default=None)
+    source_subdir: str | None = Field(default=None)
 
 
 # ---------------------------------------------------------------------------
@@ -213,18 +210,18 @@ class SeriesDetail(_JsonFileMixin):
     model_config = ConfigDict(extra="allow", populate_by_name=True)
 
     series: SeriesIdentity
-    sequence_classification: Optional[SequenceClassification] = Field(default=None)
-    sequence_params: Optional[SequenceParams] = Field(default=None)
-    volume_stats: Optional[VolumeStats] = Field(default=None)
-    quality_analysis: Optional[QualityAnalysis] = Field(default=None)
-    advanced_quality: Optional[dict[str, Any]] = Field(default=None)
-    ml_training_score: Optional[MLTrainingScore] = Field(default=None)
-    study_id: Optional[str] = Field(default=None)
-    pipeline_version: Optional[PipelineVersion] = Field(default=None)
+    sequence_classification: SequenceClassification | None = Field(default=None)
+    sequence_params: SequenceParams | None = Field(default=None)
+    volume_stats: VolumeStats | None = Field(default=None)
+    quality_analysis: QualityAnalysis | None = Field(default=None)
+    advanced_quality: dict[str, Any] | None = Field(default=None)
+    ml_training_score: MLTrainingScore | None = Field(default=None)
+    study_id: str | None = Field(default=None)
+    pipeline_version: PipelineVersion | None = Field(default=None)
     files: list[str] = Field(default_factory=list)
     file_paths: list[str] = Field(default_factory=list)
     conformance_issues: list[dict[str, Any]] = Field(default_factory=list)
-    conformance_summary: Optional[dict[str, Any]] = Field(default=None)
+    conformance_summary: dict[str, Any] | None = Field(default=None)
     per_file_stats: list[dict[str, Any]] = Field(default_factory=list)
 
     @model_validator(mode="before")
@@ -258,35 +255,35 @@ class SeriesDetail(_JsonFileMixin):
 class ManifestRow(_JsonFileMixin):
     model_config = ConfigDict(extra="allow", populate_by_name=True)
 
-    study_id: Optional[str] = None
-    series_uid: Optional[str] = None
-    series_number: Optional[int] = None
-    series_description: Optional[str] = None
-    sequence_type: Optional[str] = None
-    sequence_confidence: Optional[str] = None
-    modality: Optional[str] = None
-    file_count: Optional[int] = None
-    tr_ms: Optional[float] = None
-    te_ms: Optional[float] = None
-    ti_ms: Optional[float] = None
-    fa_deg: Optional[float] = None
-    b_value: Optional[float] = None
-    field_strength_T: Optional[float] = None
-    plane: Optional[str] = None
-    volume_shape: Optional[list[int]] = None
-    spacing_mm: Optional[list[float]] = None
-    fov_mm: Optional[list[float]] = None
-    volume_snr: Optional[float] = None
-    volume_cnr: Optional[float] = None
-    volume_entropy: Optional[float] = None
-    quality_grade: Optional[str] = None
-    quality_score: Optional[float] = None
-    ml_score: Optional[float] = None
-    ml_grade: Optional[str] = None
-    commercial_tier: Optional[str] = None
-    detail_path: Optional[str] = None
-    montage_path: Optional[str] = None
-    has_tar_shard: Optional[bool] = None
+    study_id: str | None = None
+    series_uid: str | None = None
+    series_number: int | None = None
+    series_description: str | None = None
+    sequence_type: str | None = None
+    sequence_confidence: str | None = None
+    modality: str | None = None
+    file_count: int | None = None
+    tr_ms: float | None = None
+    te_ms: float | None = None
+    ti_ms: float | None = None
+    fa_deg: float | None = None
+    b_value: float | None = None
+    field_strength_T: float | None = None
+    plane: str | None = None
+    volume_shape: list[int] | None = None
+    spacing_mm: list[float] | None = None
+    fov_mm: list[float] | None = None
+    volume_snr: float | None = None
+    volume_cnr: float | None = None
+    volume_entropy: float | None = None
+    quality_grade: str | None = None
+    quality_score: float | None = None
+    ml_score: float | None = None
+    ml_grade: str | None = None
+    commercial_tier: str | None = None
+    detail_path: str | None = None
+    montage_path: str | None = None
+    has_tar_shard: bool | None = None
 
 
 # ---------------------------------------------------------------------------
@@ -297,20 +294,20 @@ class ManifestRow(_JsonFileMixin):
 class StudyManifestRow(_JsonFileMixin):
     model_config = ConfigDict(extra="allow", populate_by_name=True)
 
-    study_id: Optional[str] = None
-    n_series: Optional[int] = None
-    sequences_present: Optional[list[str]] = None
-    total_files: Optional[int] = None
-    dominant_grade: Optional[str] = None
-    mean_ml_score: Optional[float] = None
-    has_dwi: Optional[bool] = None
-    has_flair: Optional[bool] = None
-    has_swan: Optional[bool] = None
-    has_tof: Optional[bool] = None
-    has_t1: Optional[bool] = None
-    has_t2: Optional[bool] = None
-    total_size_mb: Optional[float] = None
-    tar_shard_path: Optional[str] = None
+    study_id: str | None = None
+    n_series: int | None = None
+    sequences_present: list[str] | None = None
+    total_files: int | None = None
+    dominant_grade: str | None = None
+    mean_ml_score: float | None = None
+    has_dwi: bool | None = None
+    has_flair: bool | None = None
+    has_swan: bool | None = None
+    has_tof: bool | None = None
+    has_t1: bool | None = None
+    has_t2: bool | None = None
+    total_size_mb: float | None = None
+    tar_shard_path: str | None = None
 
 
 # ---------------------------------------------------------------------------
@@ -321,11 +318,11 @@ class StudyManifestRow(_JsonFileMixin):
 class AnnotationConsensus(_JsonFileMixin):
     model_config = ConfigDict(extra="allow", populate_by_name=True)
 
-    sequence_type: Optional[str] = None
-    sequence_agreement: Optional[float] = None
+    sequence_type: str | None = None
+    sequence_agreement: float | None = None
     anatomical_structures: list[str] = Field(default_factory=list)
     pathology: dict[str, Any] = Field(default_factory=dict)
-    quality_grade: Optional[str] = None
+    quality_grade: str | None = None
     notable: list[str] = Field(default_factory=list)
     disagreements: list[dict[str, Any]] = Field(default_factory=list)
 
@@ -333,9 +330,9 @@ class AnnotationConsensus(_JsonFileMixin):
 class AnnotationRecord(_JsonFileMixin):
     model_config = ConfigDict(extra="allow", populate_by_name=True)
 
-    series_label: Optional[str] = None
-    models_called: Optional[int] = None
-    models_succeeded: Optional[int] = None
+    series_label: str | None = None
+    models_called: int | None = None
+    models_succeeded: int | None = None
     per_model: dict[str, Any] = Field(default_factory=dict)
-    consensus: Optional[AnnotationConsensus] = None
-    tissue_analysis: Optional[dict[str, Any]] = None
+    consensus: AnnotationConsensus | None = None
+    tissue_analysis: dict[str, Any] | None = None

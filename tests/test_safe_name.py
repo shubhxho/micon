@@ -1,4 +1,4 @@
-"""Tests for the _safe_name helper in resume_pipeline.py and src/dry_run.py.
+r"""Tests for the _safe_name helper in resume_pipeline.py and src/dry_run.py.
 
 Property test: for any string label, _safe_name(label) contains only
 characters that match [a-zA-Z0-9_-] (the regex character class [\w\-]).
@@ -22,12 +22,13 @@ from hypothesis import strategies as st
 from src.dry_run import _safe_name
 
 # The expected output character class: word chars (\w) plus hyphens.
-_ALLOWED_RE = re.compile(r'^[\w\-]*$')
+_ALLOWED_RE = re.compile(r"^[\w\-]*$")
 
 
 # ---------------------------------------------------------------------------
 # Hypothesis property test
 # ---------------------------------------------------------------------------
+
 
 @given(label=st.text(max_size=200))
 @settings(max_examples=500)
@@ -43,6 +44,7 @@ def test_safe_name_output_only_allowed_chars(label: str) -> None:
 # Concrete em-dash collapse tests (filename stability)
 # ---------------------------------------------------------------------------
 
+
 def test_em_dash_space_collapses_to_three_underscores() -> None:
     """' \u2014 ' (space + em-dash + space) becomes '___' (three underscores).
 
@@ -53,8 +55,7 @@ def test_em_dash_space_collapses_to_three_underscores() -> None:
     label = "Series 5 \u2014 Ax DWI"
     result = _safe_name(label)
     assert result == "Series_5___Ax_DWI", (
-        f"em-dash collapse changed -- existing annotation files would be orphaned. "
-        f"Got: {result!r}"
+        f"em-dash collapse changed -- existing annotation files would be orphaned. Got: {result!r}"
     )
 
 
@@ -65,17 +66,20 @@ def test_em_dash_without_spaces_collapses_to_one_underscore() -> None:
     assert result == "Series5_AxDWI"
 
 
-@pytest.mark.parametrize("label,expected", [
-    # The canonical pipeline format: space + em-dash + space
-    ("Series 10 \u2014 T1", "Series_10___T1"),
-    # Another real label from the annotation path
-    ("Series 9 \u2014 MIP", "Series_9___MIP"),
-    # Plain spaces only
-    ("Series 3 T1 MPRAGE", "Series_3_T1_MPRAGE"),
-    # Already safe -- no change
-    ("Series_3_T1", "Series_3_T1"),
-    # Hyphens are allowed and preserved
-    ("Series-3-T1", "Series-3-T1"),
-])
+@pytest.mark.parametrize(
+    "label,expected",
+    [
+        # The canonical pipeline format: space + em-dash + space
+        ("Series 10 \u2014 T1", "Series_10___T1"),
+        # Another real label from the annotation path
+        ("Series 9 \u2014 MIP", "Series_9___MIP"),
+        # Plain spaces only
+        ("Series 3 T1 MPRAGE", "Series_3_T1_MPRAGE"),
+        # Already safe -- no change
+        ("Series_3_T1", "Series_3_T1"),
+        # Hyphens are allowed and preserved
+        ("Series-3-T1", "Series-3-T1"),
+    ],
+)
 def test_safe_name_concrete_cases(label: str, expected: str) -> None:
     assert _safe_name(label) == expected

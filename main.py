@@ -33,10 +33,9 @@ Just run it:  uv run main.py
 from __future__ import annotations
 
 from dotenv import load_dotenv
+
 load_dotenv()
 
-import os
-import subprocess
 import sys
 import time
 import webbrowser
@@ -50,9 +49,9 @@ from rich.table import Table
 from rich.text import Text
 
 from src.pipeline import discover_dcm_folders, run_pipeline
-from src.pipeline.redact import run_redaction
 from src.pipeline.mcap_convert import run_mcap_convert
 from src.pipeline.parquet_convert import run_parquet_convert
+from src.pipeline.redact import run_redaction
 
 console = Console()
 
@@ -64,8 +63,11 @@ DEFAULT_INPUT_DIR = _T7 if _T7.exists() else Path("mcap-files")
 # ── Grade colors ────────────────────────────────────────────────────────────
 
 GRADE_STYLE = {
-    "A": "bold green", "B": "green", "C": "yellow",
-    "D": "red", "F": "bold red",
+    "A": "bold green",
+    "B": "green",
+    "C": "yellow",
+    "D": "red",
+    "F": "bold red",
 }
 
 
@@ -96,19 +98,30 @@ def _open_report(out_dir: Path):
 
 # ── Main command ────────────────────────────────────────────────────────────
 
+
 @app.command()
 def main(
-    folder: Annotated[Path, typer.Argument(help="DICOM folder (auto-detects T7 Shield or mcap-files/)")] = None,
-    out_dir: Annotated[Path, typer.Option("--out-dir", "-o", help="Output directory")] = Path("output"),
-    do_redact: Annotated[bool, typer.Option("--do-redact", "-r", help="HIPAA-redact before extraction")] = False,
-    upload_hf: Annotated[bool, typer.Option("--upload-hf", "-u", help="Upload to Hugging Face")] = False,
+    folder: Annotated[
+        Path | None, typer.Argument(help="DICOM folder (auto-detects T7 Shield or mcap-files/)")
+    ] = None,
+    out_dir: Annotated[Path, typer.Option("--out-dir", "-o", help="Output directory")] = Path(
+        "output"
+    ),
+    do_redact: Annotated[
+        bool, typer.Option("--do-redact", "-r", help="HIPAA-redact before extraction")
+    ] = False,
+    upload_hf: Annotated[
+        bool, typer.Option("--upload-hf", "-u", help="Upload to Hugging Face")
+    ] = False,
     hf_repo: Annotated[str, typer.Option("--hf-repo", help="HF repo (auto from username)")] = "",
     hf_public: Annotated[bool, typer.Option("--hf-public", help="Make HF dataset public")] = True,
     export_nii: Annotated[bool, typer.Option("--export-nii", help="Export NIfTI volumes")] = False,
     analyze: Annotated[bool, typer.Option("--analyze", help="AI analysis (Apple Silicon)")] = False,
     compress: Annotated[bool, typer.Option("--compress", help="Compress outputs")] = False,
     local: Annotated[bool, typer.Option("--local", help="Run on this machine, not Modal")] = False,
-    no_open: Annotated[bool, typer.Option("--no-open", help="Don't open report in browser")] = False,
+    no_open: Annotated[
+        bool, typer.Option("--no-open", help="Don't open report in browser")
+    ] = False,
 ):
     """Process a DICOM study — upload, extract, grade, download.
 
@@ -129,27 +142,51 @@ def main(
     # ── Banner ─────────────────────────────────────────────────────────
     mode = "local" if local else "cloud"
     flags = []
-    if do_redact: flags.append("redact")
-    if upload_hf: flags.append("hf")
-    if export_nii: flags.append("nifti")
-    if analyze: flags.append("ai")
+    if do_redact:
+        flags.append("redact")
+    if upload_hf:
+        flags.append("hf")
+    if export_nii:
+        flags.append("nifti")
+    if analyze:
+        flags.append("ai")
     flag_str = f"  [{', '.join(flags)}]" if flags else ""
 
-    console.print(Panel(
-        f"[bold]{folder.name}[/bold]  [dim]{folder}[/dim]\n"
-        f"[dim]{mode}{flag_str} → {out_dir}[/dim]",
-        title="[bold cyan]micom[/bold cyan]",
-        border_style="cyan",
-        padding=(0, 1),
-    ))
+    console.print(
+        Panel(
+            f"[bold]{folder.name}[/bold]  [dim]{folder}[/dim]\n"
+            f"[dim]{mode}{flag_str} → {out_dir}[/dim]",
+            title="[bold cyan]micom[/bold cyan]",
+            border_style="cyan",
+            padding=(0, 1),
+        )
+    )
 
     # ── Dispatch ───────────────────────────────────────────────────────
     if local:
-        result = _run_local(folder, analyze, export_nii, out_dir, compress,
-                            do_redact, upload_hf, hf_repo, not hf_public)
+        result = _run_local(
+            folder,
+            analyze,
+            export_nii,
+            out_dir,
+            compress,
+            do_redact,
+            upload_hf,
+            hf_repo,
+            not hf_public,
+        )
     else:
-        result = _run_modal(folder, analyze, export_nii, out_dir, compress,
-                            do_redact, upload_hf, hf_repo, not hf_public)
+        result = _run_modal(
+            folder,
+            analyze,
+            export_nii,
+            out_dir,
+            compress,
+            do_redact,
+            upload_hf,
+            hf_repo,
+            not hf_public,
+        )
 
     if result is None:
         return
@@ -199,7 +236,9 @@ def main(
     tbl.add_row("Output", str(out_dir))
     tbl.add_row("Time", f"{elapsed:.0f}s")
 
-    console.print(Panel(tbl, title="[bold green]Done[/bold green]", border_style="green", padding=(0, 1)))
+    console.print(
+        Panel(tbl, title="[bold green]Done[/bold green]", border_style="green", padding=(0, 1))
+    )
 
     # ── Open report ────────────────────────────────────────────────────
     if not no_open:
@@ -208,20 +247,31 @@ def main(
 
 # ── Modal pipeline ──────────────────────────────────────────────────────────
 
+
 def _run_modal(
-    folder: Path, analyze: bool, export_nii: bool, out_dir: Path,
-    compress: bool, do_redact: bool, upload_hf: bool, hf_repo: str,
+    folder: Path,
+    analyze: bool,
+    export_nii: bool,
+    out_dir: Path,
+    compress: bool,
+    do_redact: bool,
+    upload_hf: bool,
+    hf_repo: str,
     hf_private: bool,
 ) -> dict | None:
     """Upload → [redact →] extract on Modal → download."""
-    import json
     import modal
 
     from modal_app import (
-        _ensure_uploaded, _parallel_download, _VOL_OUTPUT,
+        _VOL_OUTPUT,
+        _ensure_uploaded,
+        _parallel_download,
+        run_extraction_pipeline,
+        run_redaction_pipeline,
+    )
+    from modal_app import (
         app as modal_app,
     )
-    from modal_app import run_extraction_pipeline, run_redaction_pipeline
 
     # ── Upload ─────────────────────────────────────────────────────────
     with console.status("[cyan]Uploading to Modal volume…[/cyan]"):
@@ -230,18 +280,18 @@ def _run_modal(
         console.print(f"[red]Upload failed:[/red] {stats['error']}")
         return None
     if stats.get("uploaded"):
-        console.print(f"[green]Uploaded[/green] {stats['uploaded']} files "
-                      f"({stats.get('total_bytes', 0) / 1024**2:.0f} MB, "
-                      f"{stats.get('elapsed', 0):.0f}s)")
+        console.print(
+            f"[green]Uploaded[/green] {stats['uploaded']} files "
+            f"({stats.get('total_bytes', 0) / 1024**2:.0f} MB, "
+            f"{stats.get('elapsed', 0):.0f}s)"
+        )
     else:
-        console.print(f"[dim]Already on volume[/dim]")
+        console.print("[dim]Already on volume[/dim]")
 
     extract_study = study_name
     result = {}
 
-    with modal.enable_output():
-      with modal_app.run():
-
+    with modal.enable_output(), modal_app.run():
         # ── Redact ─────────────────────────────────────────────────────
         if do_redact:
             console.print(f"[red]Redacting[/red] {study_name}…")
@@ -259,8 +309,13 @@ def _run_modal(
         # ── Extract ────────────────────────────────────────────────────
         console.print(f"[cyan]Processing[/cyan] {extract_study} on Modal…")
         result = run_extraction_pipeline.remote(
-            extract_study, analyze, export_nii, compress,
-            upload_hf=upload_hf, hf_repo=hf_repo, hf_private=hf_private,
+            extract_study,
+            analyze,
+            export_nii,
+            compress,
+            upload_hf=upload_hf,
+            hf_repo=hf_repo,
+            hf_private=hf_private,
         )
         if result.get("error"):
             console.print(f"[red]Extraction failed:[/red] {result['error']}")
@@ -268,12 +323,15 @@ def _run_modal(
 
         grade = result.get("study_grade", "?")
         score = result.get("study_score", 0)
-        console.print(Text.assemble(
-            ("Extracted ", ""), ("  ", ""),
-            _grade_text(grade, score),
-            ("  ", ""),
-            (f"HIPAA {result.get('hipaa_score', '?')}/100", "dim"),
-        ))
+        console.print(
+            Text.assemble(
+                ("Extracted ", ""),
+                ("  ", ""),
+                _grade_text(grade, score),
+                ("  ", ""),
+                (f"HIPAA {result.get('hipaa_score', '?')}/100", "dim"),
+            )
+        )
 
     # ── Download ───────────────────────────────────────────────────────
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -294,9 +352,16 @@ def _run_modal(
 
 # ── Local pipeline ──────────────────────────────────────────────────────────
 
+
 def _run_local(
-    folder: Path, analyze: bool, export_nii: bool, out_dir: Path,
-    compress: bool, do_redact: bool, upload_hf: bool, hf_repo: str,
+    folder: Path,
+    analyze: bool,
+    export_nii: bool,
+    out_dir: Path,
+    compress: bool,
+    do_redact: bool,
+    upload_hf: bool,
+    hf_repo: str,
     hf_private: bool,
 ) -> dict | None:
     """Run entirely on this machine."""
@@ -330,32 +395,43 @@ def _run_local(
 
     if hipaa_path.exists():
         hipaa_report = json.loads(hipaa_path.read_text())
-        result["hipaa_score"] = hipaa_report.get("compliance_score",
-            hipaa_report.get("post_redaction", {}).get("compliance_score", "?"))
+        result["hipaa_score"] = hipaa_report.get(
+            "compliance_score", hipaa_report.get("post_redaction", {}).get("compliance_score", "?")
+        )
 
     # Compute grade from series
     if series_info:
-        grades = [s.get("quality_analysis", {}).get("quality_grade", {}).get("grade")
-                  for s in series_info if s.get("has_pixels") and s.get("quality_analysis")]
+        grades = [
+            s.get("quality_analysis", {}).get("quality_grade", {}).get("grade")
+            for s in series_info
+            if s.get("has_pixels") and s.get("quality_analysis")
+        ]
         grades = [g for g in grades if g]
         if grades:
             from src.quality import grade_study
-            all_grade_dicts = [s["quality_analysis"]["quality_grade"]
-                               for s in series_info
-                               if s.get("has_pixels") and s.get("quality_analysis", {}).get("quality_grade")]
+
+            all_grade_dicts = [
+                s["quality_analysis"]["quality_grade"]
+                for s in series_info
+                if s.get("has_pixels") and s.get("quality_analysis", {}).get("quality_grade")
+            ]
             sg = grade_study(all_grade_dicts)
             result["study_grade"] = sg.get("grade", "?")
             result["study_score"] = sg.get("score", 0)
             result["grade_distribution"] = sg.get("grade_distribution", {})
 
     if upload_hf:
-        console.print(f"[cyan]Uploading to Hugging Face…[/cyan]")
+        console.print("[cyan]Uploading to Hugging Face…[/cyan]")
         try:
             from src.hf_upload import upload_to_huggingface
+
             url = upload_to_huggingface(
-                out_dir, study_name=folder.name,
-                repo_id=hf_repo or "", patient_info=patient_info,
-                series_info=series_info, hipaa_report=hipaa_report,
+                out_dir,
+                study_name=folder.name,
+                repo_id=hf_repo or "",
+                patient_info=patient_info,
+                series_info=series_info,
+                hipaa_report=hipaa_report,
                 private=hf_private,
                 source_dir=folder,
             )
@@ -369,10 +445,11 @@ def _run_local(
 
 # ── Other commands ──────────────────────────────────────────────────────────
 
+
 @app.command()
 def mcap(
     folder: Annotated[Path, typer.Argument(help="Folder containing .dcm files")],
-    output: Annotated[Path, typer.Option("--output", "-o", help="Output .mcap file")] = None,
+    output: Annotated[Path | None, typer.Option("--output", "-o", help="Output .mcap file")] = None,
     workers: Annotated[int, typer.Option("--workers", help="Parallel threads")] = 0,
 ):
     """Convert DICOM folder to MCAP format."""
@@ -381,7 +458,7 @@ def mcap(
 
 @app.command(name="mcap-export")
 def mcap_export(
-    folder: Annotated[Path, typer.Argument(help="Folder containing .dcm files")] = None,
+    folder: Annotated[Path | None, typer.Argument(help="Folder containing .dcm files")] = None,
     out_dir: Annotated[Path, typer.Option("--out-dir", help="Output directory")] = Path("output"),
     workers: Annotated[int, typer.Option("--workers", help="Parallel workers")] = 0,
     batch: Annotated[bool, typer.Option("--batch", help="Process subfolders separately")] = False,
@@ -402,13 +479,17 @@ def mcap_export(
             sub_out = out_dir / rel
             console.print(f"[dim][{i}/{len(dcm_folders)}][/dim] {rel}")
             try:
-                run_pipeline(dcm_folder, out_dir=sub_out, workers=workers, recursive=False, mcap_only=True)
+                run_pipeline(
+                    dcm_folder, out_dir=sub_out, workers=workers, recursive=False, mcap_only=True
+                )
                 succeeded.append(dcm_folder)
             except (SystemExit, Exception) as exc:
                 console.print(f"[red]Failed: {rel} — {exc}[/red]")
                 failed.append((dcm_folder, str(exc)))
-        console.print(f"[green]{len(succeeded)} ok[/green], [red]{len(failed)} failed[/red] "
-                      f"in {time.time() - t0:.0f}s")
+        console.print(
+            f"[green]{len(succeeded)} ok[/green], [red]{len(failed)} failed[/red] "
+            f"in {time.time() - t0:.0f}s"
+        )
     else:
         run_pipeline(folder, out_dir=out_dir, workers=workers, mcap_only=True)
 
@@ -416,7 +497,9 @@ def mcap_export(
 @app.command()
 def parquet(
     folder: Annotated[Path, typer.Argument(help="Folder to convert")],
-    output: Annotated[Path, typer.Option("--output", "-o", help="Output .parquet file")] = None,
+    output: Annotated[
+        Path | None, typer.Option("--output", "-o", help="Output .parquet file")
+    ] = None,
     workers: Annotated[int, typer.Option("--workers", help="Parallel threads")] = 0,
     extensions: Annotated[str, typer.Option("--ext", help="File extensions (comma-sep)")] = "",
 ):
@@ -427,7 +510,7 @@ def parquet(
 
 @app.command()
 def redact(
-    folder: Annotated[Path, typer.Argument(help="DICOM folder to redact")] = None,
+    folder: Annotated[Path | None, typer.Argument(help="DICOM folder to redact")] = None,
     out_dir: Annotated[Path, typer.Option("--out-dir", help="Output directory")] = Path("redacted"),
     workers: Annotated[int, typer.Option("--workers", help="Parallel workers")] = 0,
     salt: Annotated[str, typer.Option("--salt", help="UID hash salt")] = "",
@@ -437,7 +520,8 @@ def redact(
     """HIPAA Safe Harbor de-identification."""
     import json
     import multiprocessing
-    from src.hipaa import run_hipaa_scan, compliance_report_to_dict
+
+    from src.hipaa import compliance_report_to_dict, run_hipaa_scan
 
     if folder is None:
         folder = _find_input()
@@ -448,25 +532,31 @@ def redact(
     n_workers = workers or min(multiprocessing.cpu_count(), 8)
 
     from src.pipeline.discover import discover_files
+
     dcm_files = discover_files(folder, recursive=True)
     file_paths = [str(f) for f in dcm_files]
 
     console.print(f"[red]Scanning[/red] {len(file_paths)} files…")
     pre_report = run_hipaa_scan(file_paths, study_name=f"{folder.name}_pre", n_workers=n_workers)
-    console.print(f"  Pre: {pre_report.compliance_score:.0f}/100, {pre_report.total_phi_findings} PHI")
+    console.print(
+        f"  Pre: {pre_report.compliance_score:.0f}/100, {pre_report.total_phi_findings} PHI"
+    )
 
-    console.print(f"[red]Redacting[/red]…")
+    console.print("[red]Redacting[/red]…")
     shift = date_shift if date_shift != 0 else None
     summary = run_redaction(folder, out_dir, n_workers, salt, shift, False, not no_verify)
 
-    from src.redaction import PHI_TAGS_HASH, PHI_TAGS_DATE, PHI_TAGS_BLANK, PHI_TAGS_REMOVE
+    from src.redaction import PHI_TAGS_BLANK, PHI_TAGS_DATE, PHI_TAGS_HASH, PHI_TAGS_REMOVE
+
     de_identified = PHI_TAGS_HASH | PHI_TAGS_DATE | PHI_TAGS_BLANK | PHI_TAGS_REMOVE
 
     redacted_files = [str(f) for f in out_dir.rglob("*.dcm")]
     if redacted_files:
         console.print(f"[cyan]Verifying[/cyan] {len(redacted_files)} files…")
         post_report = run_hipaa_scan(
-            redacted_files, study_name=f"{folder.name}_post", n_workers=n_workers,
+            redacted_files,
+            study_name=f"{folder.name}_post",
+            n_workers=n_workers,
             de_identified_tags=de_identified,
         )
 
@@ -484,10 +574,14 @@ def redact(
             "pre_redaction": compliance_report_to_dict(pre_report),
             "post_redaction": compliance_report_to_dict(post_report),
             "improvement": {
-                "phi_removed": delta_phi, "score_increase": round(delta_score, 1),
-                "files_redacted": summary.files_processed, "files_failed": summary.files_failed,
-                "tags_removed": summary.total_tags_removed, "tags_blanked": summary.total_tags_blanked,
-                "tags_hashed": summary.total_tags_hashed, "tags_date_shifted": summary.total_tags_date_shifted,
+                "phi_removed": delta_phi,
+                "score_increase": round(delta_score, 1),
+                "files_redacted": summary.files_processed,
+                "files_failed": summary.files_failed,
+                "tags_removed": summary.total_tags_removed,
+                "tags_blanked": summary.total_tags_blanked,
+                "tags_hashed": summary.total_tags_hashed,
+                "tags_date_shifted": summary.total_tags_date_shifted,
             },
         }
         (out_dir / "hipaa_compliance.json").write_text(json.dumps(combined, indent=2))
@@ -495,14 +589,15 @@ def redact(
 
 @app.command()
 def hipaa(
-    folder: Annotated[Path, typer.Argument(help="DICOM folder to scan")] = None,
+    folder: Annotated[Path | None, typer.Argument(help="DICOM folder to scan")] = None,
     out_dir: Annotated[Path, typer.Option("--out-dir", help="Output directory")] = Path("output"),
     workers: Annotated[int, typer.Option("--workers", help="Parallel workers")] = 0,
 ):
     """HIPAA compliance scan — read-only, no modifications."""
     import json
     import multiprocessing
-    from src.hipaa import run_hipaa_scan, compliance_report_to_dict
+
+    from src.hipaa import compliance_report_to_dict, run_hipaa_scan
     from src.pipeline.discover import discover_files
 
     if folder is None:
@@ -544,8 +639,10 @@ def hipaa(
 
 @app.command()
 def deid(
-    folder: Annotated[Path, typer.Argument(help="DICOM folder to de-identify")] = None,
-    out_dir: Annotated[Path, typer.Option("--out-dir", "-o", help="Output directory")] = Path("clean_output"),
+    folder: Annotated[Path | None, typer.Argument(help="DICOM folder to de-identify")] = None,
+    out_dir: Annotated[Path, typer.Option("--out-dir", "-o", help="Output directory")] = Path(
+        "clean_output"
+    ),
     workers: Annotated[int, typer.Option("--workers", help="Parallel workers")] = 0,
     skip_deface: Annotated[bool, typer.Option("--skip-deface", help="Skip pixel defacing")] = False,
     skip_ocr: Annotated[bool, typer.Option("--skip-ocr", help="Skip OCR pixel PHI scan")] = False,
@@ -556,6 +653,7 @@ def deid(
     Output passes a serious de-identification audit.
     """
     import multiprocessing
+
     from src.pipeline.commercial import run_commercial_pipeline
 
     if folder is None:
@@ -566,14 +664,17 @@ def deid(
 
     n = workers or multiprocessing.cpu_count()
     result = run_commercial_pipeline(
-        folder, out_dir, n_workers=n,
-        skip_deface=skip_deface, skip_pixel_ocr=skip_ocr,
+        folder,
+        out_dir,
+        n_workers=n,
+        skip_deface=skip_deface,
+        skip_pixel_ocr=skip_ocr,
     )
 
     if result.get("validation_passed"):
         console.print(f"\n[bold green]BUYER-READY[/bold green] → {out_dir}")
     else:
-        console.print(f"\n[bold red]NOT READY[/bold red] — see validation failures above")
+        console.print("\n[bold red]NOT READY[/bold red] — see validation failures above")
 
 
 if __name__ == "__main__":

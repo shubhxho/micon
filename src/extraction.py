@@ -9,15 +9,16 @@ import numpy as np
 import pydicom
 import SimpleITK as sitk
 
-from .constants import TRANSFER_SYNTAX_NAMES, REQUIRED_MR_TAGS
-from .helpers import safe_value, safe_getfloat, entropy, skewness, kurtosis, skewness_kurtosis
-
+from .constants import REQUIRED_MR_TAGS, TRANSFER_SYNTAX_NAMES
+from .helpers import entropy, safe_getfloat, safe_value, skewness_kurtosis
 
 # ── Shared memory helpers (zero-copy pixel transfer between processes) ────────
 
-def _shm_create(arr: np.ndarray) -> "multiprocessing.shared_memory.SharedMemory | None":
+
+def _shm_create(arr: np.ndarray) -> multiprocessing.shared_memory.SharedMemory | None:
     """Write a numpy array into a new shared memory block. Returns the shm object."""
     from multiprocessing.shared_memory import SharedMemory
+
     try:
         shm = SharedMemory(create=True, size=arr.nbytes)
         buf = np.ndarray(arr.shape, dtype=arr.dtype, buffer=shm.buf)
@@ -31,6 +32,7 @@ def _shm_create(arr: np.ndarray) -> "multiprocessing.shared_memory.SharedMemory 
 def shm_read(name: str, shape: list[int], dtype: str) -> np.ndarray | None:
     """Read a numpy array from shared memory by name. Returns None on failure."""
     from multiprocessing.shared_memory import SharedMemory
+
     try:
         shm = SharedMemory(name=name, create=False)
         arr = np.ndarray(shape, dtype=np.dtype(dtype), buffer=shm.buf).copy()
@@ -43,6 +45,7 @@ def shm_read(name: str, shape: list[int], dtype: str) -> np.ndarray | None:
 def shm_cleanup(names: list[str]) -> None:
     """Unlink shared memory blocks by name. Safe to call if already unlinked."""
     from multiprocessing.shared_memory import SharedMemory
+
     for name in names:
         try:
             shm = SharedMemory(name=name, create=False)
@@ -53,6 +56,7 @@ def shm_cleanup(names: list[str]) -> None:
 
 
 # ── Per-file extraction (runs in worker processes) ────────────────────────────
+
 
 def _compute_pixel_stats(arr: np.ndarray, raw_dtype: str) -> dict:
     """Compute all pixel-level stats — Metal GPU if available, else threaded numpy."""
@@ -88,10 +92,14 @@ def _compute_pixel_stats(arr: np.ndarray, raw_dtype: str) -> dict:
         "pixel_mean": float(arr.mean()),
         "pixel_std": float(arr.std()),
         "pixel_median": float(pcts[4]),
-        "pixel_p1": float(pcts[0]), "pixel_p5": float(pcts[1]),
-        "pixel_p10": float(pcts[2]), "pixel_p25": float(pcts[3]),
-        "pixel_p50": float(pcts[4]), "pixel_p75": float(pcts[5]),
-        "pixel_p90": float(pcts[6]), "pixel_p95": float(pcts[7]),
+        "pixel_p1": float(pcts[0]),
+        "pixel_p5": float(pcts[1]),
+        "pixel_p10": float(pcts[2]),
+        "pixel_p25": float(pcts[3]),
+        "pixel_p50": float(pcts[4]),
+        "pixel_p75": float(pcts[5]),
+        "pixel_p90": float(pcts[6]),
+        "pixel_p95": float(pcts[7]),
         "pixel_p99": float(pcts[8]),
         "pixel_iqr": float(pcts[5] - pcts[3]),
         "nonzero_ratio": float((arr != 0).mean()),
@@ -199,6 +207,7 @@ def extract_single_file(fpath: str, skip_pixels: bool = True) -> dict:
 
 # ── Sequence classification ─────────────────────────────────────────────────
 
+
 def _normalize_series_name(desc: str) -> str:
     """Normalize series description for robust pattern matching.
 
@@ -211,7 +220,7 @@ def _normalize_series_name(desc: str) -> str:
     s = _RE_WHITESPACE.sub(" ", s)
     for prefix in ("SE ", "MS ", "WIP ", "REF ", "PH ", "MAG "):
         if s.startswith(prefix):
-            s = s[len(prefix):]
+            s = s[len(prefix) :]
     return s
 
 
@@ -219,8 +228,9 @@ import re as _re
 
 # Pre-compiled regex patterns for sequence classification — compiled ONCE at
 # module load instead of recompiling 50+ patterns per series call.
-_SEQ_PATTERNS: list[tuple["_re.Pattern[str]", str]] = [
-    (_re.compile(p), t) for p, t in [
+_SEQ_PATTERNS: list[tuple[_re.Pattern[str], str]] = [
+    (_re.compile(p), t)
+    for p, t in [
         (r"\bE?ADC\b", "ADC Map"),
         (r"\bFA\s*MAP\b", "FA Map"),
         (r"\bTRACE\b", "Trace DWI"),
@@ -282,9 +292,14 @@ _RE_SEPARATORS = _re.compile(r"[_\-/\\]+")
 _RE_WHITESPACE = _re.compile(r"\s+")
 
 
-def classify_sequence(desc: str, tr: float | None, te: float | None,
-                      ti: float | None, fa: float | None,
-                      b_value: float | None) -> dict:
+def classify_sequence(
+    desc: str,
+    tr: float | None,
+    te: float | None,
+    ti: float | None,
+    fa: float | None,
+    b_value: float | None,
+) -> dict:
     desc_norm = _normalize_series_name(desc)
     result = {"sequence_type": "Unknown", "confidence": "low", "reasoning": []}
 
@@ -297,7 +312,10 @@ def classify_sequence(desc: str, tr: float | None, te: float | None,
 
     # Refine diffusion with b-value
     if b_value is not None and result["sequence_type"] in (
-        "DWI", "DTI", "Trace DWI", "Isotropic DWI",
+        "DWI",
+        "DTI",
+        "Trace DWI",
+        "Isotropic DWI",
     ):
         if b_value > 500:
             result["reasoning"].append(f"b-value={b_value} confirms diffusion weighting")
@@ -357,13 +375,17 @@ def classify_sequence(desc: str, tr: float | None, te: float | None,
             result["reasoning"].append(f"b-value={b_value} -> diffusion-weighted")
 
     result["parameters"] = {
-        "TR_ms": tr, "TE_ms": te, "TI_ms": ti,
-        "flip_angle_deg": fa, "b_value": b_value,
+        "TR_ms": tr,
+        "TE_ms": te,
+        "TI_ms": ti,
+        "flip_angle_deg": fa,
+        "b_value": b_value,
     }
     return result
 
 
 # ── Volume stats ─────────────────────────────────────────────────────────────
+
 
 def _recursive_slice_stats(vol: np.ndarray, start: int, end: int) -> tuple[np.ndarray, np.ndarray]:
     """Recursively compute per-slice mean and std via divide-and-conquer.
@@ -414,10 +436,14 @@ def _estimate_background_noise(vol: np.ndarray) -> float:
                 slc = slc[0]
             h, w = slc.shape[:2]
             ch, cw = max(h // 8, 2), max(w // 8, 2)
-            corners = np.concatenate([
-                slc[:ch, :cw].ravel(), slc[:ch, -cw:].ravel(),
-                slc[-ch:, :cw].ravel(), slc[-ch:, -cw:].ravel(),
-            ])
+            corners = np.concatenate(
+                [
+                    slc[:ch, :cw].ravel(),
+                    slc[:ch, -cw:].ravel(),
+                    slc[-ch:, :cw].ravel(),
+                    slc[-ch:, -cw:].ravel(),
+                ]
+            )
             nonzero_corners = corners[corners != 0]
             if len(nonzero_corners) > 10:
                 corner_mean = float(nonzero_corners.mean())
@@ -430,10 +456,14 @@ def _estimate_background_noise(vol: np.ndarray) -> float:
             slc = slc[0]
         h, w = slc.shape[:2]
         ch, cw = max(h // 8, 2), max(w // 8, 2)
-        corners = np.concatenate([
-            slc[:ch, :cw].ravel(), slc[:ch, -cw:].ravel(),
-            slc[-ch:, :cw].ravel(), slc[-ch:, -cw:].ravel(),
-        ])
+        corners = np.concatenate(
+            [
+                slc[:ch, :cw].ravel(),
+                slc[:ch, -cw:].ravel(),
+                slc[-ch:, :cw].ravel(),
+                slc[-ch:, -cw:].ravel(),
+            ]
+        )
         nonzero_corners = corners[corners != 0]
         if len(nonzero_corners) > 10:
             corner_mean = float(nonzero_corners.mean())
@@ -492,7 +522,7 @@ def _otsu_threshold(vol: np.ndarray) -> float:
 
 
 def volume_stats(vol: np.ndarray, sitk_img: sitk.Image | None = None) -> dict:
-    from .metal import gpu_available, gpu_stats_and_percentiles, gpu_slice_stats, gpu_tissue_pct
+    from .metal import gpu_available, gpu_slice_stats, gpu_stats_and_percentiles, gpu_tissue_pct
 
     ndim = vol.ndim
     if sitk_img:
@@ -504,7 +534,7 @@ def volume_stats(vol: np.ndarray, sitk_img: sitk.Image | None = None) -> dict:
         origin = [0.0] * ndim
         direction = []
 
-    sp3 = (spacing + [1.0, 1.0, 1.0])[:3]
+    sp3 = ([*spacing, 1.0, 1.0, 1.0])[:3]
     voxel_vol_mm3 = float(np.prod(sp3))
     total_vol_mm3 = voxel_vol_mm3 * int(np.prod(vol.shape[:3]))
     fov = [float(vol.shape[i]) * float(sp3[min(2 - i, len(sp3) - 1)]) for i in range(min(3, ndim))]
@@ -565,17 +595,16 @@ def volume_stats(vol: np.ndarray, sitk_img: sitk.Image | None = None) -> dict:
     if gpu_available() and vol.size >= 16_384:
         tissue_mask = vol > otsu_thresh
     tissue_mean = float(vol[tissue_mask].mean()) if tissue_mask.any() else vol_mean
-    tissue_std = float(vol[tissue_mask].std()) if tissue_mask.any() and tissue_mask.sum() > 100 else vol_std
+    tissue_std = (
+        float(vol[tissue_mask].std()) if tissue_mask.any() and tissue_mask.sum() > 100 else vol_std
+    )
 
     # NEMA-like dual SNR estimation with automatic selection
     snr_from_bg = float(tissue_mean / (bg_noise + 1e-6))
     snr_from_tissue = float(tissue_mean / (tissue_std + 1e-6))
 
     # If bg_noise estimate gives implausible SNR (>100), fall back to tissue-based
-    if snr_from_bg > 100:
-        snr_estimate = snr_from_tissue
-    else:
-        snr_estimate = snr_from_bg
+    snr_estimate = snr_from_tissue if snr_from_bg > 100 else snr_from_bg
 
     # Contrast-to-noise ratio: tissue vs background separation
     bg_mask = ~tissue_mask & (vol > 0)
@@ -602,9 +631,12 @@ def volume_stats(vol: np.ndarray, sitk_img: sitk.Image | None = None) -> dict:
         "volume_mean": vol_mean,
         "volume_std": vol_std,
         "volume_median": float(pcts[4]),
-        "volume_p1": float(pcts[0]), "volume_p5": float(pcts[1]),
-        "volume_p25": float(pcts[3]), "volume_p75": float(pcts[5]),
-        "volume_p95": float(pcts[6]), "volume_p99": float(pcts[7]),
+        "volume_p1": float(pcts[0]),
+        "volume_p5": float(pcts[1]),
+        "volume_p25": float(pcts[3]),
+        "volume_p75": float(pcts[5]),
+        "volume_p95": float(pcts[6]),
+        "volume_p99": float(pcts[7]),
         "volume_iqr": float(pcts[5] - pcts[3]),
         "volume_dynamic_range": float(vol.max() - vol.min()),
         "volume_snr_estimate": snr_estimate,
@@ -627,10 +659,10 @@ def volume_stats(vol: np.ndarray, sitk_img: sitk.Image | None = None) -> dict:
 
 # ── Conformance check ────────────────────────────────────────────────────────
 
+
 def _check_one_record(r: dict) -> dict | None:
     """Check conformance for a single record. Returns issue dict or None."""
-    missing = [tag for tag in REQUIRED_MR_TAGS
-               if r.get(tag) in (None, "", "None")]
+    missing = [tag for tag in REQUIRED_MR_TAGS if r.get(tag) in (None, "", "None")]
     if missing:
         return {
             "filename": r.get("_filename", "?"),
@@ -647,6 +679,7 @@ def check_conformance(records: list[dict]) -> list[dict]:
         return []
 
     from concurrent.futures import as_completed
+
     issues = []
     with ThreadPoolExecutor(max_workers=min(len(records), 8)) as pool:
         futures = [pool.submit(_check_one_record, r) for r in records]

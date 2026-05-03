@@ -47,18 +47,21 @@ def scan_file_private_tags(filepath: str) -> list[PrivateTagFinding]:
 
     for elem in ds:
         if elem.tag.group % 2 == 1:  # odd group = private
-            findings.append(PrivateTagFinding(
-                filename=filename,
-                tag=f"({elem.tag.group:04X},{elem.tag.element:04X})",
-                group=elem.tag.group,
-                description=elem.keyword or "Unknown",
-            ))
+            findings.append(
+                PrivateTagFinding(
+                    filename=filename,
+                    tag=f"({elem.tag.group:04X},{elem.tag.element:04X})",
+                    group=elem.tag.group,
+                    description=elem.keyword or "Unknown",
+                )
+            )
 
     return findings
 
 
 def scan_private_tags(
-    file_paths: list[str], n_workers: int = 8,
+    file_paths: list[str],
+    n_workers: int = 8,
 ) -> PrivateTagReport:
     """Scan all files for remaining private tags."""
     report = PrivateTagReport(total_files=len(file_paths))

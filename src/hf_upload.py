@@ -194,6 +194,7 @@ def upload_to_huggingface(
         # Fall back to cached token from `huggingface-cli login`
         try:
             from huggingface_hub import HfFolder
+
             token = HfFolder.get_token() or ""
         except Exception:
             pass
@@ -202,16 +203,16 @@ def upload_to_huggingface(
         if token_path.exists():
             token = token_path.read_text().strip()
     if not token:
-        raise ValueError(
-            "HF_TOKEN not set. Run `huggingface-cli login` or set HF_TOKEN env var."
-        )
+        raise ValueError("HF_TOKEN not set. Run `huggingface-cli login` or set HF_TOKEN env var.")
 
     # HIPAA guard — refuse to upload if study might contain unredacted PHI
     hipaa_path = Path(out_dir) / "hipaa_compliance.json"
     if hipaa_path.exists():
         try:
             h = json.loads(hipaa_path.read_text())
-            score = h.get("compliance_score", h.get("post_redaction", {}).get("compliance_score", 0))
+            score = h.get(
+                "compliance_score", h.get("post_redaction", {}).get("compliance_score", 0)
+            )
             if isinstance(score, (int, float)) and score < 90:
                 high_risk = h.get("audit_summary", {}).get("high_risk_files", 0)
                 if high_risk > 0:
@@ -235,7 +236,12 @@ def upload_to_huggingface(
 
     # Generate dataset card
     card = _build_dataset_card(
-        study_name, out_dir, patient_info, series_info, hipaa_report, study_grade,
+        study_name,
+        out_dir,
+        patient_info,
+        series_info,
+        hipaa_report,
+        study_grade,
     )
     (out_dir / "README.md").write_text(card)
 
@@ -245,6 +251,7 @@ def upload_to_huggingface(
     if csv_path.exists() and not parquet_path.exists():
         try:
             import polars as pl
+
             df = pl.read_csv(csv_path, infer_schema_length=10000)
             parquet_path.parent.mkdir(parents=True, exist_ok=True)
             df.write_parquet(parquet_path)
@@ -314,9 +321,16 @@ def upload_to_huggingface(
 
     # series/ — per-series folders, renamed cleanly
     _SKIP_SUFFIXES = {".dcm", ".nii", ".zip", ".parquet"}
-    _ROOT_ONLY = {"report.html", "series_stats.json", "hipaa_compliance.json",
-                  "dicom_metadata.csv", "dicom_study.mcap", "dicom_full_dump.json",
-                  "cross_series_comparison.png", "README.md"}
+    _ROOT_ONLY = {
+        "report.html",
+        "series_stats.json",
+        "hipaa_compliance.json",
+        "dicom_metadata.csv",
+        "dicom_study.mcap",
+        "dicom_full_dump.json",
+        "cross_series_comparison.png",
+        "README.md",
+    }
 
     for f in sorted(out_dir.rglob("*")):
         if not f.is_file():
@@ -347,9 +361,7 @@ def upload_to_huggingface(
             uploads.append((f, f"series/{series_dir}/detail.json"))
         elif name == "ai_analysis.md":
             uploads.append((f, f"series/{series_dir}/ai_analysis.md"))
-        elif suffix == ".png":
-            uploads.append((f, f"series/{series_dir}/{name}"))
-        elif suffix == ".json":
+        elif suffix == ".png" or suffix == ".json":
             uploads.append((f, f"series/{series_dir}/{name}"))
 
     # Deduplicate by repo_path
@@ -406,7 +418,8 @@ def upload_to_huggingface(
 
     elapsed = time.time() - t0
     url = f"https://huggingface.co/datasets/{repo_id}"
-    print(f"Uploaded {len(uploads)} files ({total_bytes / 1024**2:.1f} MB) "
-          f"to {url} in {elapsed:.1f}s")
+    print(
+        f"Uploaded {len(uploads)} files ({total_bytes / 1024**2:.1f} MB) to {url} in {elapsed:.1f}s"
+    )
 
     return url

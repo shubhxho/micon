@@ -43,12 +43,20 @@ def _build_series_card(s: dict, b64_cache: dict, idx: int) -> str:
     confidence = seq_class.get("confidence", "low")
 
     badge_cls = "seq-other"
-    for k, cls in [("T1", "seq-T1"), ("T2", "seq-T2"), ("FLAIR", "seq-FLAIR"),
-                    ("DWI", "seq-DWI"), ("ADC", "seq-ADC"), ("GRE", "seq-GRE")]:
+    for k, cls in [
+        ("T1", "seq-T1"),
+        ("T2", "seq-T2"),
+        ("FLAIR", "seq-FLAIR"),
+        ("DWI", "seq-DWI"),
+        ("ADC", "seq-ADC"),
+        ("GRE", "seq-GRE"),
+    ]:
         if k in seq_type.upper():
             badge_cls = cls
             break
-    conf_cls = {"high": "conf-high", "medium": "conf-med", "low": "conf-low"}.get(confidence, "conf-low")
+    conf_cls = {"high": "conf-high", "medium": "conf-med", "low": "conf-low"}.get(
+        confidence, "conf-low"
+    )
 
     # Quality data
     qa = s.get("quality_analysis", {})
@@ -67,7 +75,10 @@ def _build_series_card(s: dict, b64_cache: dict, idx: int) -> str:
     param_html = ""
     param_items = [(k, v) for k, v in params.items() if v not in (None, "", "None")]
     if param_items:
-        rows = "".join(f"<tr><td>{html_mod.escape(str(k))}</td><td>{html_mod.escape(str(v))}</td></tr>" for k, v in param_items)
+        rows = "".join(
+            f"<tr><td>{html_mod.escape(str(k))}</td><td>{html_mod.escape(str(v))}</td></tr>"
+            for k, v in param_items
+        )
         param_html = f'<table class="param-table"><thead><tr><th>Parameter</th><th>Value</th></tr></thead><tbody>{rows}</tbody></table>'
 
     # Build metrics rows
@@ -83,13 +94,23 @@ def _build_series_card(s: dict, b64_cache: dict, idx: int) -> str:
         ("Non-zero %", f"{vs.get('volume_nonzero_pct', 0):.1f}%"),
     ]
     metric_rows = "".join(f"<tr><td>{m}</td><td>{v}</td></tr>" for m, v in metric_items if v)
-    metric_html = f'<table class="param-table"><thead><tr><th>Metric</th><th>Value</th></tr></thead><tbody>{metric_rows}</tbody></table>' if metric_rows else ""
+    metric_html = (
+        f'<table class="param-table"><thead><tr><th>Metric</th><th>Value</th></tr></thead><tbody>{metric_rows}</tbody></table>'
+        if metric_rows
+        else ""
+    )
 
     # Quality breakdown bars
     quality_bars = ""
     if breakdown:
-        max_pts = {"snr": 30, "uniformity": 20, "tissue_coverage": 15,
-                   "dynamic_range": 15, "entropy": 10, "nonzero_coverage": 10}
+        max_pts = {
+            "snr": 30,
+            "uniformity": 20,
+            "tissue_coverage": 15,
+            "dynamic_range": 15,
+            "entropy": 10,
+            "nonzero_coverage": 10,
+        }
         bar_items = []
         for metric_name, pts in breakdown.items():
             mx = max_pts.get(metric_name, 30)
@@ -101,9 +122,9 @@ def _build_series_card(s: dict, b64_cache: dict, idx: int) -> str:
                 f'<span class="qbar-label">{label}</span>'
                 f'<div class="qbar-track"><div class="qbar-fill" style="width:{pct:.0f}%;background:{color}"></div></div>'
                 f'<span class="qbar-pts">{pts:.0f}/{mx}</span>'
-                f'</div>'
+                f"</div>"
             )
-        quality_bars = '<div class="qbar-container">' + "".join(bar_items) + '</div>'
+        quality_bars = '<div class="qbar-container">' + "".join(bar_items) + "</div>"
 
     # Quality badges
     quality_badges = ""
@@ -119,34 +140,60 @@ def _build_series_card(s: dict, b64_cache: dict, idx: int) -> str:
         anomaly = qa.get("anomaly_detection", {})
         n_anom = anomaly.get("n_anomalous", 0)
         if n_anom > 0:
-            badges.append(f'<span class="qa-badge qa-danger">{n_anom} outlier slice{"s" if n_anom > 1 else ""}</span>')
+            badges.append(
+                f'<span class="qa-badge qa-danger">{n_anom} outlier slice{"s" if n_anom > 1 else ""}</span>'
+            )
 
         sym = qa.get("symmetry_analysis", {})
         si = sym.get("symmetry_index", 1)
         sym_interp = sym.get("interpretation", "")
-        if sym_interp and sym_interp not in ("N/A", "N/A (2D)", "N/A (non-axial)", "N/A (single slice)", "N/A (small)"):
+        if sym_interp and sym_interp not in (
+            "N/A",
+            "N/A (2D)",
+            "N/A (non-axial)",
+            "N/A (single slice)",
+            "N/A (small)",
+        ):
             sym_cls = "qa-ok" if si > 0.90 else "qa-warn" if si > 0.80 else "qa-danger"
             badges.append(f'<span class="qa-badge {sym_cls}">Symmetry: {si:.2f}</span>')
 
         sharpness = qa.get("sharpness_analysis", {})
         sharp_interp = sharpness.get("interpretation", "")
         if sharp_interp and sharp_interp != "N/A":
-            sharp_cls = "qa-ok" if "sharp" in sharp_interp.lower() else "qa-warn" if "moderate" in sharp_interp.lower() else "qa-danger"
-            badges.append(f'<span class="qa-badge {sharp_cls}">{html_mod.escape(sharp_interp)}</span>')
+            sharp_cls = (
+                "qa-ok"
+                if "sharp" in sharp_interp.lower()
+                else "qa-warn"
+                if "moderate" in sharp_interp.lower()
+                else "qa-danger"
+            )
+            badges.append(
+                f'<span class="qa-badge {sharp_cls}">{html_mod.escape(sharp_interp)}</span>'
+            )
 
-        quality_badges = '<div class="qa-badges">' + "".join(badges) + '</div>' if badges else ""
+        quality_badges = '<div class="qa-badges">' + "".join(badges) + "</div>" if badges else ""
 
     # Reasoning
     reasoning = seq_class.get("reasoning", [])
     reasoning_html = ""
     if reasoning:
-        reasoning_html = f'<div class="reasoning">{" &bull; ".join(html_mod.escape(r) for r in reasoning)}</div>'
+        reasoning_html = (
+            f'<div class="reasoning">{" &bull; ".join(html_mod.escape(r) for r in reasoning)}</div>'
+        )
 
     # Images
     mb64 = b64_cache.get(f"montage_{key}", "")
     hb64 = b64_cache.get(f"hist_{key}", "")
-    montage_img = f'<img src="data:image/png;base64,{mb64}" class="zoomable" alt="Montage for series {snum}" loading="lazy">' if mb64 else '<div class="no-image">No montage available</div>'
-    hist_img = f'<img src="data:image/png;base64,{hb64}" class="zoomable hist-img" alt="Histogram for series {snum}" loading="lazy">' if hb64 else ''
+    montage_img = (
+        f'<img src="data:image/png;base64,{mb64}" class="zoomable" alt="Montage for series {snum}" loading="lazy">'
+        if mb64
+        else '<div class="no-image">No montage available</div>'
+    )
+    hist_img = (
+        f'<img src="data:image/png;base64,{hb64}" class="zoomable hist-img" alt="Histogram for series {snum}" loading="lazy">'
+        if hb64
+        else ""
+    )
 
     card_id = f"series-{snum}"
 
@@ -194,7 +241,9 @@ def _build_series_cards(series_list: list[dict], b64_cache: dict) -> str:
     if len(image_series) <= 2:
         return "\n".join(_build_series_card(s, b64_cache, i) for i, s in enumerate(series_list))
     with ThreadPoolExecutor(max_workers=min(len(image_series), 8)) as pool:
-        futures = [pool.submit(_build_series_card, s, b64_cache, i) for i, s in enumerate(series_list)]
+        futures = [
+            pool.submit(_build_series_card, s, b64_cache, i) for i, s in enumerate(series_list)
+        ]
         return "\n".join(f.result() for f in futures)
 
 
@@ -204,18 +253,26 @@ def _build_conformance_section(conformance_issues: list[dict]) -> str:
     if conformance_issues:
         worst = min(i["completeness_pct"] for i in conformance_issues)
         best = max(i["completeness_pct"] for i in conformance_issues)
-        parts.append(f'<div class="alert alert-warn">Tag completeness ranges from {worst}% to {best}% across files.</div>')
-        parts.append('<div class="card"><table class="data-table"><thead><tr><th>File</th><th>Missing Tags</th><th>Completeness</th></tr></thead><tbody>')
+        parts.append(
+            f'<div class="alert alert-warn">Tag completeness ranges from {worst}% to {best}% across files.</div>'
+        )
+        parts.append(
+            '<div class="card"><table class="data-table"><thead><tr><th>File</th><th>Missing Tags</th><th>Completeness</th></tr></thead><tbody>'
+        )
         for issue in sorted(conformance_issues, key=lambda x: x["completeness_pct"])[:20]:
             ms = ", ".join(issue["missing_tags"][:8])
             if len(issue["missing_tags"]) > 8:
                 ms += f" (+{len(issue['missing_tags']) - 8})"
             pct = issue["completeness_pct"]
             pct_cls = "pct-good" if pct >= 90 else "pct-warn" if pct >= 70 else "pct-bad"
-            parts.append(f'<tr><td class="mono">{html_mod.escape(issue["filename"])}</td><td class="small">{ms}</td><td class="{pct_cls}">{pct}%</td></tr>')
+            parts.append(
+                f'<tr><td class="mono">{html_mod.escape(issue["filename"])}</td><td class="small">{ms}</td><td class="{pct_cls}">{pct}%</td></tr>'
+            )
         parts.append("</tbody></table></div>")
     else:
-        parts.append('<div class="alert alert-ok">All files pass DICOM MR conformance checks.</div>')
+        parts.append(
+            '<div class="alert alert-ok">All files pass DICOM MR conformance checks.</div>'
+        )
     parts.append("</div>")
     return "\n".join(parts)
 
@@ -223,7 +280,11 @@ def _build_conformance_section(conformance_issues: list[dict]) -> str:
 def _build_study_dashboard(series_info: list[dict], n_files: int) -> str:
     """Build the study-level quality dashboard."""
     image_series = [s for s in series_info if s.get("has_pixels")]
-    grades = [s.get("quality_analysis", {}).get("quality_grade", {}) for s in image_series if s.get("quality_analysis")]
+    grades = [
+        s.get("quality_analysis", {}).get("quality_grade", {})
+        for s in image_series
+        if s.get("quality_analysis")
+    ]
 
     study_grade = grade_study(grades)
     sg = study_grade.get("grade", "N/A")
@@ -241,8 +302,15 @@ def _build_study_dashboard(series_info: list[dict], n_files: int) -> str:
         dist_bars += f'<div class="dist-col"><div class="dist-bar grade-{g}-bg" style="height:{max(height, 4):.0f}%"></div><span class="dist-label">{g}</span><span class="dist-count">{count}</span></div>'
 
     # Count issues
-    motion_count = sum(1 for s in image_series if s.get("quality_analysis", {}).get("motion_analysis", {}).get("motion_detected"))
-    anomaly_count = sum(s.get("quality_analysis", {}).get("anomaly_detection", {}).get("n_anomalous", 0) for s in image_series)
+    motion_count = sum(
+        1
+        for s in image_series
+        if s.get("quality_analysis", {}).get("motion_analysis", {}).get("motion_detected")
+    )
+    anomaly_count = sum(
+        s.get("quality_analysis", {}).get("anomaly_detection", {}).get("n_anomalous", 0)
+        for s in image_series
+    )
 
     return f"""<div class="section" id="dashboard">
   <h2>Study Quality Dashboard</h2>
@@ -268,10 +336,10 @@ def _build_study_dashboard(series_info: list[dict], n_files: int) -> str:
     </div>
     <div class="dash-card">
       <div class="dash-metrics-grid">
-        <div class="dash-metric"><span class="dash-val {'text-danger' if motion_count > 0 else 'text-ok'}">{motion_count}</span><span class="dash-sub">Motion Issues</span></div>
-        <div class="dash-metric"><span class="dash-val {'text-danger' if anomaly_count > 0 else 'text-ok'}">{anomaly_count}</span><span class="dash-sub">Outlier Slices</span></div>
-        <div class="dash-metric"><span class="dash-val">{study_grade.get('best_score', 0):.0f}</span><span class="dash-sub">Best Score</span></div>
-        <div class="dash-metric"><span class="dash-val">{study_grade.get('worst_score', 0):.0f}</span><span class="dash-sub">Worst Score</span></div>
+        <div class="dash-metric"><span class="dash-val {"text-danger" if motion_count > 0 else "text-ok"}">{motion_count}</span><span class="dash-sub">Motion Issues</span></div>
+        <div class="dash-metric"><span class="dash-val {"text-danger" if anomaly_count > 0 else "text-ok"}">{anomaly_count}</span><span class="dash-sub">Outlier Slices</span></div>
+        <div class="dash-metric"><span class="dash-val">{study_grade.get("best_score", 0):.0f}</span><span class="dash-sub">Best Score</span></div>
+        <div class="dash-metric"><span class="dash-val">{study_grade.get("worst_score", 0):.0f}</span><span class="dash-sub">Worst Score</span></div>
       </div>
     </div>
   </div>
@@ -923,8 +991,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
 def generate_html_report(
-    patient_info: dict, series_info: list[dict], conformance_issues: list[dict],
-    image_paths: dict[str, dict], cross_series_path: str | None, out_dir: Path,
+    patient_info: dict,
+    series_info: list[dict],
+    conformance_issues: list[dict],
+    image_paths: dict[str, dict],
+    cross_series_path: str | None,
+    out_dir: Path,
     thread_pool: ThreadPoolExecutor,
 ) -> Path:
     """Generate HTML report with threaded image encoding + concurrent section building."""
@@ -950,29 +1022,45 @@ def generate_html_report(
 
     p = patient_info
     n_files = sum(s.get("file_count", 0) for s in series_info)
-    n_image = sum(1 for s in series_info if s.get("has_pixels"))
+    sum(1 for s in series_info if s.get("has_pixels"))
 
     # Study dashboard
     dashboard_html = _build_study_dashboard(series_info, n_files)
 
     # Collect unique sequence types and grades for filter buttons
-    seq_types = sorted({s.get("sequence_classification", {}).get("sequence_type", "").upper()
-                        for s in series_info if s.get("has_pixels") and s.get("sequence_classification")})
+    seq_types = sorted(
+        {
+            s.get("sequence_classification", {}).get("sequence_type", "").upper()
+            for s in series_info
+            if s.get("has_pixels") and s.get("sequence_classification")
+        }
+    )
     seq_types = [t for t in seq_types if t and t != "UNKNOWN"]
 
-    grades_present = sorted({s.get("quality_analysis", {}).get("quality_grade", {}).get("grade", "")
-                             for s in series_info if s.get("has_pixels") and s.get("quality_analysis")})
+    grades_present = sorted(
+        {
+            s.get("quality_analysis", {}).get("quality_grade", {}).get("grade", "")
+            for s in series_info
+            if s.get("has_pixels") and s.get("quality_analysis")
+        }
+    )
     grades_present = [g for g in grades_present if g]
 
-    type_btns = "".join(f'<button class="filter-btn" data-filter-type="type" data-seqtype="{t}" onclick="filterByType(\'{t}\')">{t}</button>' for t in seq_types)
-    grade_btns = "".join(f'<button class="filter-btn" data-filter-type="grade" data-grade="{g}" onclick="filterByGrade(\'{g}\')">Grade {g}</button>' for g in grades_present)
+    type_btns = "".join(
+        f'<button class="filter-btn" data-filter-type="type" data-seqtype="{t}" onclick="filterByType(\'{t}\')">{t}</button>'
+        for t in seq_types
+    )
+    grade_btns = "".join(
+        f'<button class="filter-btn" data-filter-type="grade" data-grade="{g}" onclick="filterByGrade(\'{g}\')">Grade {g}</button>'
+        for g in grades_present
+    )
 
     # Cross-series section
     cross_html = ""
     if b64_cache.get("cross"):
         cross_html = f"""<div class="section" id="cross-series">
   <h2>Cross-Series Comparison</h2>
-  <div class="card"><img src="data:image/png;base64,{b64_cache['cross']}" class="cross-series-img" alt="Cross-series comparison"></div>
+  <div class="card"><img src="data:image/png;base64,{b64_cache["cross"]}" class="cross-series-img" alt="Cross-series comparison"></div>
 </div>"""
 
     now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
@@ -982,7 +1070,7 @@ def generate_html_report(
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>DICOM Study &mdash; {html_mod.escape(p.get('patient_name', 'Report'))}</title>
+<title>DICOM Study &mdash; {html_mod.escape(p.get("patient_name", "Report"))}</title>
 <style>{_CSS}</style>
 </head>
 <body>
@@ -1005,19 +1093,19 @@ def generate_html_report(
 
 <div class="report-header">
   <h1>DICOM Study Report</h1>
-  <div class="subtitle">{html_mod.escape(p.get('patient_name', '?'))} &bull; {html_mod.escape(p.get('study_date', '?'))} &bull; {html_mod.escape(p.get('manufacturer', '?'))} {html_mod.escape(p.get('model', ''))} &bull; {html_mod.escape(p.get('field_strength', '?'))}T</div>
+  <div class="subtitle">{html_mod.escape(p.get("patient_name", "?"))} &bull; {html_mod.escape(p.get("study_date", "?"))} &bull; {html_mod.escape(p.get("manufacturer", "?"))} {html_mod.escape(p.get("model", ""))} &bull; {html_mod.escape(p.get("field_strength", "?"))}T</div>
 </div>
 
 <div class="section" id="patient">
   <h2>Patient &amp; Scanner</h2>
   <div class="patient-grid">
-    <div class="patient-cell"><div class="val">{html_mod.escape(p.get('patient_name', '?'))}</div><div class="label">Patient</div></div>
-    <div class="patient-cell"><div class="val">{html_mod.escape(p.get('patient_sex', '?'))}</div><div class="label">Sex</div></div>
-    <div class="patient-cell"><div class="val">{html_mod.escape(p.get('study_date', '?'))}</div><div class="label">Study Date</div></div>
-    <div class="patient-cell"><div class="val">{html_mod.escape(p.get('manufacturer', '?'))}</div><div class="label">Manufacturer</div></div>
-    <div class="patient-cell"><div class="val">{html_mod.escape(p.get('model', '?'))}</div><div class="label">Scanner Model</div></div>
-    <div class="patient-cell"><div class="val">{html_mod.escape(p.get('field_strength', '?'))}T</div><div class="label">Field Strength</div></div>
-    <div class="patient-cell"><div class="val">{html_mod.escape(p.get('institution', '?'))}</div><div class="label">Institution</div></div>
+    <div class="patient-cell"><div class="val">{html_mod.escape(p.get("patient_name", "?"))}</div><div class="label">Patient</div></div>
+    <div class="patient-cell"><div class="val">{html_mod.escape(p.get("patient_sex", "?"))}</div><div class="label">Sex</div></div>
+    <div class="patient-cell"><div class="val">{html_mod.escape(p.get("study_date", "?"))}</div><div class="label">Study Date</div></div>
+    <div class="patient-cell"><div class="val">{html_mod.escape(p.get("manufacturer", "?"))}</div><div class="label">Manufacturer</div></div>
+    <div class="patient-cell"><div class="val">{html_mod.escape(p.get("model", "?"))}</div><div class="label">Scanner Model</div></div>
+    <div class="patient-cell"><div class="val">{html_mod.escape(p.get("field_strength", "?"))}T</div><div class="label">Field Strength</div></div>
+    <div class="patient-cell"><div class="val">{html_mod.escape(p.get("institution", "?"))}</div><div class="label">Institution</div></div>
   </div>
 </div>
 

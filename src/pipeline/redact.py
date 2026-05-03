@@ -12,11 +12,15 @@ from rich.panel import Panel
 from rich.progress import BarColumn, Progress, SpinnerColumn, TextColumn, TimeElapsedColumn
 from rich.table import Table
 
-from .discover import discover_files
 from ..redaction import (
-    redact_files, RedactionSummary,
-    PHI_TAGS_REMOVE, PHI_TAGS_BLANK, PHI_TAGS_HASH, PHI_TAGS_DATE,
+    PHI_TAGS_BLANK,
+    PHI_TAGS_DATE,
+    PHI_TAGS_HASH,
+    PHI_TAGS_REMOVE,
+    RedactionSummary,
+    redact_files,
 )
+from .discover import discover_files
 
 console = Console()
 
@@ -39,11 +43,13 @@ def run_redaction(
     t0 = time.time()
     n_workers = workers or min(multiprocessing.cpu_count(), 8)
 
-    console.print(Panel.fit(
-        f"[bold red]DICOM PHI Redaction Pipeline[/bold red]  [dim]({n_workers} threads)[/dim]\n"
-        "[dim]HIPAA Safe Harbor · O(T) per file · threaded · single-pass verify[/dim]",
-        border_style="red",
-    ))
+    console.print(
+        Panel.fit(
+            f"[bold red]DICOM PHI Redaction Pipeline[/bold red]  [dim]({n_workers} threads)[/dim]\n"
+            "[dim]HIPAA Safe Harbor · O(T) per file · threaded · single-pass verify[/dim]",
+            border_style="red",
+        )
+    )
 
     # Stage 1 — Discover
     dcm_files = discover_files(folder, recursive=recursive)
@@ -62,9 +68,12 @@ def run_redaction(
     console.print(f"[bold red]Redacting {len(file_paths)} files ({n_workers} threads)…[/bold red]")
 
     with Progress(
-        SpinnerColumn(), TextColumn("[red]{task.description}"),
-        BarColumn(), TextColumn("{task.completed}/{task.total}"),
-        TimeElapsedColumn(), console=console,
+        SpinnerColumn(),
+        TextColumn("[red]{task.description}"),
+        BarColumn(),
+        TextColumn("{task.completed}/{task.total}"),
+        TimeElapsedColumn(),
+        console=console,
     ) as progress:
         task = progress.add_task("Redact + verify", total=len(file_paths))
 
@@ -72,8 +81,13 @@ def run_redaction(
             progress.update(task, completed=done)
 
         summary = redact_files(
-            file_paths, str(out_dir), n_workers,
-            salt, date_shift, verify, _on_progress,
+            file_paths,
+            str(out_dir),
+            n_workers,
+            salt,
+            date_shift,
+            verify,
+            _on_progress,
         )
 
     t_total = time.time() - t0
@@ -98,15 +112,18 @@ def run_redaction(
     console.print(table)
 
     files_per_sec = summary.files_processed / max(t_total, 0.01)
-    console.print(Panel(
-        f"[bold]Redaction complete[/bold] in [bold]{t_total:.1f}s[/bold] "
-        f"({files_per_sec:.0f} files/s)\n"
-        f"  Files:        {summary.files_processed} processed, {summary.files_failed} failed\n"
-        f"  Date shift:   {summary.date_shift_days} days\n"
-        f"  Verified:     {clean} clean" + (f", {dirty} dirty" if dirty else "") + "\n"
-        f"  Output:       {out_dir.resolve()}",
-        title="Summary", border_style="red",
-    ))
+    console.print(
+        Panel(
+            f"[bold]Redaction complete[/bold] in [bold]{t_total:.1f}s[/bold] "
+            f"({files_per_sec:.0f} files/s)\n"
+            f"  Files:        {summary.files_processed} processed, {summary.files_failed} failed\n"
+            f"  Date shift:   {summary.date_shift_days} days\n"
+            f"  Verified:     {clean} clean" + (f", {dirty} dirty" if dirty else "") + "\n"
+            f"  Output:       {out_dir.resolve()}",
+            title="Summary",
+            border_style="red",
+        )
+    )
 
     # Write log
     log_path = out_dir / "redaction_log.json"

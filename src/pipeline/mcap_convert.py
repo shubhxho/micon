@@ -23,12 +23,13 @@ from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 from time import time_ns
+
 from rich.console import Console
 from rich.panel import Panel
 from rich.progress import BarColumn, Progress, SpinnerColumn, TextColumn, TimeElapsedColumn
 
-from .discover import discover_files
 from ..helpers import to_json
+from .discover import discover_files
 
 console = Console()
 
@@ -41,7 +42,8 @@ def _extract_for_mcap(fpath: str) -> dict:
     """
     import numpy as np
     import pydicom
-    from ..helpers import safe_value, safe_getfloat
+
+    from ..helpers import safe_getfloat, safe_value
 
     f = Path(fpath)
     ds = pydicom.dcmread(fpath, force=True)
@@ -108,14 +110,16 @@ def _encode_mcap_message(r: dict, uid: str, snum: str, desc: str) -> bytes:
             "std": r.get("pixel_std"),
         },
         "sequence_params": {
-            "tr": r.get("_tr"), "te": r.get("_te"),
-            "ti": r.get("_ti"), "fa": r.get("_fa"),
+            "tr": r.get("_tr"),
+            "te": r.get("_te"),
+            "ti": r.get("_ti"),
+            "fa": r.get("_fa"),
             "b_value": r.get("_b_value"),
         },
         "tags": {
-            k: to_json(v) for k, v in r.items()
-            if not k.startswith("_")
-            and k not in ("histogram_counts", "histogram_edges")
+            k: to_json(v)
+            for k, v in r.items()
+            if not k.startswith("_") and k not in ("histogram_counts", "histogram_edges")
         },
     }
     return json.dumps(msg, default=str).encode()
@@ -135,16 +139,18 @@ def run_mcap_convert(
     Memory: only holds records (metadata-sized dicts) — no pixel arrays retained.
     """
     import zstandard
-    from mcap.writer import Writer, CompressionType
+    from mcap.writer import CompressionType, Writer
 
     t0 = time.time()
     n_workers = workers or min(multiprocessing.cpu_count(), 8)
 
-    console.print(Panel.fit(
-        f"[bold cyan]DICOM → MCAP Converter[/bold cyan]  [dim]({n_workers} threads)[/dim]\n"
-        "[dim]Threaded extraction · streaming write · zstd-7 · O(N×T)[/dim]",
-        border_style="cyan",
-    ))
+    console.print(
+        Panel.fit(
+            f"[bold cyan]DICOM → MCAP Converter[/bold cyan]  [dim]({n_workers} threads)[/dim]\n"
+            "[dim]Threaded extraction · streaming write · zstd-7 · O(N×T)[/dim]",
+            border_style="cyan",
+        )
+    )
 
     # Discover
     dcm_files = discover_files(folder, recursive=recursive)
@@ -160,9 +166,12 @@ def run_mcap_convert(
 
     all_records: list[dict] = []
     with Progress(
-        SpinnerColumn(), TextColumn("[cyan]{task.description}"),
-        BarColumn(), TextColumn("{task.completed}/{task.total}"),
-        TimeElapsedColumn(), console=console,
+        SpinnerColumn(),
+        TextColumn("[cyan]{task.description}"),
+        BarColumn(),
+        TextColumn("{task.completed}/{task.total}"),
+        TimeElapsedColumn(),
+        console=console,
     ) as progress:
         task = progress.add_task("Extracting", total=len(file_paths))
         with ThreadPoolExecutor(max_workers=n_workers) as pool:
@@ -197,37 +206,40 @@ def run_mcap_convert(
             snum = r0.get("_series_number", "?")
             desc = r0.get("_series_description", "unknown")
             encode_futures[uid] = [
-                encode_pool.submit(_encode_mcap_message, r, uid, snum, desc)
-                for r in recs
+                encode_pool.submit(_encode_mcap_message, r, uid, snum, desc) for r in recs
             ]
         for uid in series_order:
             encoded_messages[uid] = [f.result() for f in encode_futures[uid]]
 
     # Schemas
-    record_schema = json.dumps({
-        "type": "object",
-        "properties": {
-            "filename": {"type": "string"},
-            "series_uid": {"type": "string"},
-            "series_number": {"type": "string"},
-            "series_description": {"type": "string"},
-            "modality": {"type": "string"},
-            "pixel_stats": {"type": "object"},
-            "sequence_params": {"type": "object"},
-            "tags": {"type": "object"},
-        },
-    })
+    record_schema = json.dumps(
+        {
+            "type": "object",
+            "properties": {
+                "filename": {"type": "string"},
+                "series_uid": {"type": "string"},
+                "series_number": {"type": "string"},
+                "series_description": {"type": "string"},
+                "modality": {"type": "string"},
+                "pixel_stats": {"type": "object"},
+                "sequence_params": {"type": "object"},
+                "tags": {"type": "object"},
+            },
+        }
+    )
 
-    summary_schema = json.dumps({
-        "type": "object",
-        "properties": {
-            "series_uid": {"type": "string"},
-            "series_number": {"type": "string"},
-            "series_description": {"type": "string"},
-            "file_count": {"type": "integer"},
-            "modality": {"type": "string"},
-        },
-    })
+    summary_schema = json.dumps(
+        {
+            "type": "object",
+            "properties": {
+                "series_uid": {"type": "string"},
+                "series_number": {"type": "string"},
+                "series_description": {"type": "string"},
+                "file_count": {"type": "integer"},
+                "modality": {"type": "string"},
+            },
+        }
+    )
 
     _orig_compress = zstandard.compress
     _zctx = zstandard.ZstdCompressor(level=7)
@@ -239,10 +251,14 @@ def run_mcap_convert(
             writer.start(profile="dicom", library="micom-mcap-converter")
 
             record_schema_id = writer.register_schema(
-                name="dicom_record", encoding="jsonschema", data=record_schema.encode(),
+                name="dicom_record",
+                encoding="jsonschema",
+                data=record_schema.encode(),
             )
             summary_schema_id = writer.register_schema(
-                name="series_summary", encoding="jsonschema", data=summary_schema.encode(),
+                name="series_summary",
+                encoding="jsonschema",
+                data=summary_schema.encode(),
             )
 
             # Write pre-encoded messages — sequential I/O, no serialization overhead
@@ -255,15 +271,20 @@ def run_mcap_convert(
                 topic = f"/dicom/series/{snum}_{desc}".replace(" ", "_")
 
                 ch_id = writer.register_channel(
-                    topic=topic, message_encoding="json", schema_id=record_schema_id,
+                    topic=topic,
+                    message_encoding="json",
+                    schema_id=record_schema_id,
                     metadata={
-                        "series_uid": uid, "series_number": str(snum),
-                        "series_description": desc, "modality": r0.get("_modality", ""),
+                        "series_uid": uid,
+                        "series_number": str(snum),
+                        "series_description": desc,
+                        "modality": r0.get("_modality", ""),
                         "file_count": str(len(recs)),
                     },
                 )
                 summary_ch_id = writer.register_channel(
-                    topic=f"{topic}/summary", message_encoding="json",
+                    topic=f"{topic}/summary",
+                    message_encoding="json",
                     schema_id=summary_schema_id,
                 )
 
@@ -271,37 +292,53 @@ def run_mcap_convert(
                 for seq, data in enumerate(encoded_messages[uid]):
                     now = time_ns()
                     writer.add_message(
-                        channel_id=ch_id, log_time=now, publish_time=now,
-                        data=data, sequence=seq,
+                        channel_id=ch_id,
+                        log_time=now,
+                        publish_time=now,
+                        data=data,
+                        sequence=seq,
                     )
                     msg_count += 1
 
                 # Series summary
                 now = time_ns()
                 writer.add_message(
-                    channel_id=summary_ch_id, log_time=now, publish_time=now,
-                    data=json.dumps({
-                        "series_uid": uid, "series_number": snum,
-                        "series_description": desc, "modality": r0.get("_modality", ""),
-                        "file_count": len(recs),
-                    }).encode(), sequence=0,
+                    channel_id=summary_ch_id,
+                    log_time=now,
+                    publish_time=now,
+                    data=json.dumps(
+                        {
+                            "series_uid": uid,
+                            "series_number": snum,
+                            "series_description": desc,
+                            "modality": r0.get("_modality", ""),
+                            "file_count": len(recs),
+                        }
+                    ).encode(),
+                    sequence=0,
                 )
                 msg_count += 1
 
             # Metadata
             if all_records:
                 r0 = all_records[0]
-                writer.add_metadata(name="patient_info", data={
-                    "patient_id": str(r0.get("_patient_id", "")),
-                    "patient_name": str(r0.get("_patient_name", "")),
-                    "study_date": str(r0.get("_study_date", "")),
-                    "institution": str(r0.get("_institution", "")),
-                })
-                writer.add_metadata(name="conversion_info", data={
-                    "total_files": str(len(all_records)),
-                    "total_series": str(len(series_groups)),
-                    "extraction_time_s": f"{t_extract:.1f}",
-                })
+                writer.add_metadata(
+                    name="patient_info",
+                    data={
+                        "patient_id": str(r0.get("_patient_id", "")),
+                        "patient_name": str(r0.get("_patient_name", "")),
+                        "study_date": str(r0.get("_study_date", "")),
+                        "institution": str(r0.get("_institution", "")),
+                    },
+                )
+                writer.add_metadata(
+                    name="conversion_info",
+                    data={
+                        "total_files": str(len(all_records)),
+                        "total_series": str(len(series_groups)),
+                        "extraction_time_s": f"{t_extract:.1f}",
+                    },
+                )
 
             writer.finish()
     finally:
@@ -311,14 +348,17 @@ def run_mcap_convert(
     mcap_size = out_path.stat().st_size
     from ..compression import format_size
 
-    console.print(Panel(
-        f"[bold]MCAP conversion complete[/bold] in [bold]{t_total:.1f}s[/bold]\n"
-        f"  Files:     {len(all_records)}\n"
-        f"  Series:    {len(series_groups)}\n"
-        f"  Messages:  {msg_count}\n"
-        f"  Size:      {format_size(mcap_size)} (zstd-7)\n"
-        f"  Output:    {out_path}",
-        title="Summary", border_style="cyan",
-    ))
+    console.print(
+        Panel(
+            f"[bold]MCAP conversion complete[/bold] in [bold]{t_total:.1f}s[/bold]\n"
+            f"  Files:     {len(all_records)}\n"
+            f"  Series:    {len(series_groups)}\n"
+            f"  Messages:  {msg_count}\n"
+            f"  Size:      {format_size(mcap_size)} (zstd-7)\n"
+            f"  Output:    {out_path}",
+            title="Summary",
+            border_style="cyan",
+        )
+    )
 
     return out_path

@@ -10,13 +10,13 @@ from pathlib import Path
 from rich.console import Console
 from rich.panel import Panel
 
+from ..extraction import shm_cleanup
+from .analyze import run_ai_analysis
 from .discover import discover_files
 from .extract import extract_files
-from ..extraction import shm_cleanup
-from .save import save_data
 from .process import process_series
 from .reporting import generate_reports
-from .analyze import run_ai_analysis
+from .save import save_data
 from .summary import display_results, print_summary
 
 console = Console()
@@ -43,19 +43,23 @@ def run_pipeline(
     n_workers = workers or multiprocessing.cpu_count()
 
     from ..metal import gpu_available
+
     features = "Multi-threaded · recursive · overlapping stages · HTML report"
     if gpu_available():
         features += " · Metal GPU"
     if compress:
         features += " · compression (gzip+zlib+lzma+webp)"
         from .. import exports
+
         exports.compress_images = True
 
-    console.print(Panel.fit(
-        f"[bold cyan]DICOM Extractor v5[/bold cyan]  [dim]({n_workers} workers)[/dim]\n"
-        f"[dim]{features}[/dim]",
-        border_style="cyan",
-    ))
+    console.print(
+        Panel.fit(
+            f"[bold cyan]DICOM Extractor v5[/bold cyan]  [dim]({n_workers} workers)[/dim]\n"
+            f"[dim]{features}[/dim]",
+            border_style="cyan",
+        )
+    )
 
     out_dir = Path(out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -71,9 +75,15 @@ def run_pipeline(
         save_fut = stage_pool.submit(save_data, state["all_records"], out_dir, compress)
         proc_fut = stage_pool.submit(
             process_series,
-            state["sorted_uids"], state["groups"], state["series_meta"],
-            out_dir, export_nii, n_workers,
-            folder, state["all_records"], state["conformance_issues"],
+            state["sorted_uids"],
+            state["groups"],
+            state["series_meta"],
+            out_dir,
+            export_nii,
+            n_workers,
+            folder,
+            state["all_records"],
+            state["conformance_issues"],
             mcap_only,
         )
         save_fut.result()
@@ -101,13 +111,15 @@ def run_pipeline(
         return
 
     # Stages 5+6+7 — Reports, Display, and HIPAA scan all overlap
-    from ..hipaa import run_hipaa_scan, compliance_report_to_dict
     import json as _json
+
+    from ..hipaa import compliance_report_to_dict, run_hipaa_scan
 
     de_id_tags = None
     study_label = folder.name if hasattr(folder, "name") else str(folder)
     if "redacted" in study_label.lower():
-        from ..redaction import PHI_TAGS_HASH, PHI_TAGS_DATE, PHI_TAGS_BLANK, PHI_TAGS_REMOVE
+        from ..redaction import PHI_TAGS_BLANK, PHI_TAGS_DATE, PHI_TAGS_HASH, PHI_TAGS_REMOVE
+
         de_id_tags = PHI_TAGS_HASH | PHI_TAGS_DATE | PHI_TAGS_BLANK | PHI_TAGS_REMOVE
 
     hipaa_file_paths = [r.get("_filepath", "") for r in state["all_records"] if r.get("_filepath")]
@@ -115,16 +127,25 @@ def run_pipeline(
     with ThreadPoolExecutor(max_workers=3) as report_pool:
         html_fut = report_pool.submit(
             generate_reports,
-            state["patient_info"], proc["series_info"], state["conformance_issues"],
-            proc["series_data_for_comparison"], proc["image_paths"],
-            out_dir, n_workers, compress,
+            state["patient_info"],
+            proc["series_info"],
+            state["conformance_issues"],
+            proc["series_data_for_comparison"],
+            proc["image_paths"],
+            out_dir,
+            n_workers,
+            compress,
         )
         display_fut = report_pool.submit(
-            display_results, state["patient_info"], proc["series_info"],
+            display_results,
+            state["patient_info"],
+            proc["series_info"],
         )
         hipaa_fut = report_pool.submit(
-            run_hipaa_scan, hipaa_file_paths,
-            study_name=study_label, n_workers=n_workers,
+            run_hipaa_scan,
+            hipaa_file_paths,
+            study_name=study_label,
+            n_workers=n_workers,
             de_identified_tags=de_id_tags,
         )
         display_fut.result()
@@ -171,7 +192,11 @@ def run_pipeline(
     # Stage 8 — AI analysis (optional)
     if analyze:
         run_ai_analysis(
-            proc["series_results"], state["all_records"],
-            state["patient_info"], proc["series_info"],
-            state["conformance_issues"], out_dir, n_workers,
+            proc["series_results"],
+            state["all_records"],
+            state["patient_info"],
+            proc["series_info"],
+            state["conformance_issues"],
+            out_dir,
+            n_workers,
         )

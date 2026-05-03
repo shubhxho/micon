@@ -46,6 +46,7 @@ def _infer_plane(description: str | None) -> str | None:
 # Single-file parser
 # ---------------------------------------------------------------------------
 
+
 def _parse_detail(path: Path, root: Path) -> dict[str, Any] | None:
     """Parse one detail JSON into a flat dict suitable for a DataFrame row."""
     try:
@@ -170,6 +171,7 @@ _SERIES_SCHEMA: dict[str, pl.DataType] = {
 # Public API
 # ---------------------------------------------------------------------------
 
+
 def build_series_manifest(root: Path) -> pl.DataFrame:
     """Crawl root for detail JSON files; return one row per series."""
     root = Path(root)
@@ -288,12 +290,15 @@ def write_manifests(root: Path, out_dir: Path) -> dict[str, int]:
 # CLI
 # ---------------------------------------------------------------------------
 
+
 def main() -> None:
     parser = argparse.ArgumentParser(
         description="Generate manifest.parquet and study_manifest.parquet for Speall MRI data."
     )
     parser.add_argument("--root", required=True, type=Path, help="Root directory to crawl")
-    parser.add_argument("--out", required=True, type=Path, help="Output directory for parquet files")
+    parser.add_argument(
+        "--out", required=True, type=Path, help="Output directory for parquet files"
+    )
     args = parser.parse_args()
 
     counts = write_manifests(args.root, args.out)

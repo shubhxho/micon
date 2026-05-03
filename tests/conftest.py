@@ -21,6 +21,7 @@ if _SRC_DIR not in sys.path:
 # Marker declarations
 # ---------------------------------------------------------------------------
 
+
 def pytest_configure(config: pytest.Config) -> None:
     config.addinivalue_line(
         "markers",
@@ -31,6 +32,7 @@ def pytest_configure(config: pytest.Config) -> None:
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------
+
 
 @pytest.fixture()
 def tmp_output_dir(tmp_path: Path) -> Path:

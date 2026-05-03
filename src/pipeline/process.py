@@ -40,17 +40,19 @@ def process_series(
         meta = series_meta.get(uid, {})
         sop_uid = meta.get("sop_class_uid", "")
         if sop_uid in NON_IMAGE_SOP:
-            ps_series_info.append({
-                "series_uid": uid,
-                "series_number": meta.get("series_number", ""),
-                "series_description": meta.get("series_description", ""),
-                "modality": meta.get("modality", ""),
-                "sop_class": SOP_CLASS_NAMES.get(sop_uid, sop_uid),
-                "sop_class_uid": sop_uid,
-                "file_count": len(groups[uid]),
-                "has_pixels": False,
-                "note": "Presentation state — skipped",
-            })
+            ps_series_info.append(
+                {
+                    "series_uid": uid,
+                    "series_number": meta.get("series_number", ""),
+                    "series_description": meta.get("series_description", ""),
+                    "modality": meta.get("modality", ""),
+                    "sop_class": SOP_CLASS_NAMES.get(sop_uid, sop_uid),
+                    "sop_class_uid": sop_uid,
+                    "file_count": len(groups[uid]),
+                    "has_pixels": False,
+                    "note": "Presentation state — skipped",
+                }
+            )
         else:
             image_uids.append(uid)
 
@@ -98,24 +100,37 @@ def process_series(
                 series_conformance[uid].append(c)
 
     t_series = time.time()
-    console.print(f"[bold cyan]Processing {len(image_uids)} image series with {n_workers} threads…[/bold cyan]")
+    console.print(
+        f"[bold cyan]Processing {len(image_uids)} image series with {n_workers} threads…[/bold cyan]"
+    )
 
     reset_sitk_probe()  # Fresh probe for this study
 
     series_results = []
     with Progress(
-        SpinnerColumn(), TextColumn("[cyan]{task.description}"),
-        BarColumn(), TextColumn("{task.completed}/{task.total}"),
-        TimeElapsedColumn(), console=console,
+        SpinnerColumn(),
+        TextColumn("[cyan]{task.description}"),
+        BarColumn(),
+        TextColumn("{task.completed}/{task.total}"),
+        TimeElapsedColumn(),
+        console=console,
     ) as progress:
         task = progress.add_task("Processing series", total=len(image_uids))
         with ThreadPoolExecutor(max_workers=n_workers) as pool:
             futures = {
                 pool.submit(
-                    process_one_series, uid, groups[uid], series_meta.get(uid, {}),
-                    str(out_dir), export_nii, idx + 1, series_subdirs.get(uid, ""),
-                    series_records.get(uid, []), series_conformance.get(uid, []),
-                    n_workers, mcap_only,
+                    process_one_series,
+                    uid,
+                    groups[uid],
+                    series_meta.get(uid, {}),
+                    str(out_dir),
+                    export_nii,
+                    idx + 1,
+                    series_subdirs.get(uid, ""),
+                    series_records.get(uid, []),
+                    series_conformance.get(uid, []),
+                    n_workers,
+                    mcap_only,
                 ): uid
                 for idx, uid in enumerate(image_uids)
             }
@@ -125,13 +140,19 @@ def process_series(
                 vs = result.vstats
                 if vs:
                     grade = vs.get("quality_grade", "?")
-                    grade_color = {"A": "green", "B": "cyan", "C": "yellow", "D": "red", "F": "red"}.get(grade, "dim")
+                    grade_color = {
+                        "A": "green",
+                        "B": "cyan",
+                        "C": "yellow",
+                        "D": "red",
+                        "F": "red",
+                    }.get(grade, "dim")
                     console.print(
-                        f"  [cyan]{result.info.get('series_number','?')}[/cyan] "
-                        f"{result.info.get('series_description','')}: "
-                        f"{vs.get('volume_shape',[])} "
-                        f"SNR={vs.get('volume_snr_estimate',0):.2f} "
-                        f"CNR={vs.get('volume_cnr',0):.2f} "
+                        f"  [cyan]{result.info.get('series_number', '?')}[/cyan] "
+                        f"{result.info.get('series_description', '')}: "
+                        f"{vs.get('volume_shape', [])} "
+                        f"SNR={vs.get('volume_snr_estimate', 0):.2f} "
+                        f"CNR={vs.get('volume_cnr', 0):.2f} "
                         f"[{grade_color}]Grade={grade}[/{grade_color}]"
                     )
                 progress.advance(task)
@@ -149,15 +170,16 @@ def process_series(
 
     series_info = [r.info for r in series_results] + ps_series_info
     series_data_for_comparison = {
-        r.uid: {"label": r.label, "vstats": r.vstats}
-        for r in series_results if r.vstats
+        r.uid: {"label": r.label, "vstats": r.vstats} for r in series_results if r.vstats
     }
     image_paths = {
-        f"{r.info.get('series_number','?')}_{r.info.get('series_description','')}": {
-            "montage": r.montage_path, "histogram": r.histogram_path,
+        f"{r.info.get('series_number', '?')}_{r.info.get('series_description', '')}": {
+            "montage": r.montage_path,
+            "histogram": r.histogram_path,
             "enhanced": r.enhanced_path,
         }
-        for r in series_results if r.montage_path
+        for r in series_results
+        if r.montage_path
     }
 
     return {

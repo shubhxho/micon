@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import json
 import os
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path, PurePosixPath
 
 import modal
@@ -29,7 +29,9 @@ volume = modal.Volume.from_name(VOLUME_NAME, create_if_missing=True, version=2)
 @app.function(
     image=image,
     volumes={str(MOUNT_POINT): volume},
-    timeout=120, memory=512, cpu=1.0,
+    timeout=120,
+    memory=512,
+    cpu=1.0,
     retries=modal.Retries(max_retries=2, initial_delay=5.0, backoff_coefficient=2.0),
 )
 def backfill_one(detail_path_str: str, output_dir_str: str) -> dict:
@@ -58,7 +60,7 @@ def backfill_one(detail_path_str: str, output_dir_str: str) -> dict:
 
         detail["study_id"] = study_id
         detail["pipeline_version"] = {
-            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
             "git_sha": os.environ.get("GIT_SHA", "unknown"),
         }
 
@@ -74,7 +76,9 @@ def backfill_one(detail_path_str: str, output_dir_str: str) -> dict:
 @app.function(
     image=image,
     volumes={str(MOUNT_POINT): volume},
-    timeout=3600, memory=2048, cpu=2.0,
+    timeout=3600,
+    memory=2048,
+    cpu=2.0,
 )
 def run_backfill(repo_dir: str = "akai_mri") -> dict:
     """Scan volume for detail.json files and fan out backfill_one via starmap."""
@@ -115,13 +119,15 @@ def run_backfill(repo_dir: str = "akai_mri") -> dict:
 def main(repo_dir: str = "akai_mri"):
     """Scan /vol/output/<repo_dir>/**/*_detail.json and backfill metadata."""
     call = run_backfill.spawn(repo_dir=repo_dir)
-    print(f"Spawned backfill job -- runs on Modal even if you disconnect.")
-    print(f"Check: https://modal.com/apps/shubhxho/main")
+    print("Spawned backfill job -- runs on Modal even if you disconnect.")
+    print("Check: https://modal.com/apps/shubhxho/main")
     try:
         result = call.get(timeout=3600)
         print(json.dumps(result, indent=2))
-        print(f"\nSummary: {result.get('ok', 0)} ok / "
-              f"{result.get('skipped', 0)} skipped / "
-              f"{result.get('failed', 0)} failed")
+        print(
+            f"\nSummary: {result.get('ok', 0)} ok / "
+            f"{result.get('skipped', 0)} skipped / "
+            f"{result.get('failed', 0)} failed"
+        )
     except KeyboardInterrupt:
         print("Disconnected -- backfill continues on Modal.")

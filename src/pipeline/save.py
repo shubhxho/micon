@@ -12,77 +12,114 @@ import polars as pl
 from rich.console import Console
 
 from ..compression import (
-    format_size, compression_ratio, compress_file_multi,
+    compress_file_multi,
+    compression_ratio,
+    format_size,
 )
 from ..helpers import to_json
 
 console = Console()
 
 _CSV_PRIORITY_COLS = [
-    "_filename", "_series_number", "_series_description", "_modality",
-    "PatientID", "PatientName", "PatientSex", "PatientBirthDate",
-    "StudyDate", "StudyDescription", "Modality", "BodyPartExamined",
-    "SeriesNumber", "SeriesDescription",
-    "MagneticFieldStrength", "Manufacturer", "ManufacturerModelName",
-    "RepetitionTime", "EchoTime", "FlipAngle", "InversionTime",
-    "SliceThickness", "SpacingBetweenSlices", "PixelSpacing",
-    "Rows", "Columns", "BitsAllocated",
-    "ImageOrientationPatient", "ImagePositionPatient",
-    "PhotometricInterpretation", "WindowCenter", "WindowWidth",
-    "pixel_shape", "pixel_min", "pixel_max", "pixel_mean", "pixel_std",
-    "pixel_median", "pixel_p5", "pixel_p95", "nonzero_ratio",
-    "pixel_entropy", "pixel_skewness", "pixel_kurtosis",
+    "_filename",
+    "_series_number",
+    "_series_description",
+    "_modality",
+    "PatientID",
+    "PatientName",
+    "PatientSex",
+    "PatientBirthDate",
+    "StudyDate",
+    "StudyDescription",
+    "Modality",
+    "BodyPartExamined",
+    "SeriesNumber",
+    "SeriesDescription",
+    "MagneticFieldStrength",
+    "Manufacturer",
+    "ManufacturerModelName",
+    "RepetitionTime",
+    "EchoTime",
+    "FlipAngle",
+    "InversionTime",
+    "SliceThickness",
+    "SpacingBetweenSlices",
+    "PixelSpacing",
+    "Rows",
+    "Columns",
+    "BitsAllocated",
+    "ImageOrientationPatient",
+    "ImagePositionPatient",
+    "PhotometricInterpretation",
+    "WindowCenter",
+    "WindowWidth",
+    "pixel_shape",
+    "pixel_min",
+    "pixel_max",
+    "pixel_mean",
+    "pixel_std",
+    "pixel_median",
+    "pixel_p5",
+    "pixel_p95",
+    "nonzero_ratio",
+    "pixel_entropy",
+    "pixel_skewness",
+    "pixel_kurtosis",
 ]
 
 # MCAP JSON schema for per-file DICOM records
-_DICOM_RECORD_SCHEMA = json.dumps({
-    "type": "object",
-    "properties": {
-        "filename": {"type": "string"},
-        "filepath": {"type": "string"},
-        "series_uid": {"type": "string"},
-        "series_number": {"type": ["string", "number"]},
-        "series_description": {"type": "string"},
-        "modality": {"type": "string"},
-        "sop_class_uid": {"type": "string"},
-        "pixel_stats": {
-            "type": "object",
-            "properties": {
-                "shape": {"type": "array", "items": {"type": "integer"}},
-                "min": {"type": "number"},
-                "max": {"type": "number"},
-                "mean": {"type": "number"},
-                "std": {"type": "number"},
-                "entropy": {"type": "number"},
-                "snr": {"type": "number"},
+_DICOM_RECORD_SCHEMA = json.dumps(
+    {
+        "type": "object",
+        "properties": {
+            "filename": {"type": "string"},
+            "filepath": {"type": "string"},
+            "series_uid": {"type": "string"},
+            "series_number": {"type": ["string", "number"]},
+            "series_description": {"type": "string"},
+            "modality": {"type": "string"},
+            "sop_class_uid": {"type": "string"},
+            "pixel_stats": {
+                "type": "object",
+                "properties": {
+                    "shape": {"type": "array", "items": {"type": "integer"}},
+                    "min": {"type": "number"},
+                    "max": {"type": "number"},
+                    "mean": {"type": "number"},
+                    "std": {"type": "number"},
+                    "entropy": {"type": "number"},
+                    "snr": {"type": "number"},
+                },
             },
-        },
-        "sequence_params": {
-            "type": "object",
-            "properties": {
-                "tr": {"type": ["number", "null"]},
-                "te": {"type": ["number", "null"]},
-                "ti": {"type": ["number", "null"]},
-                "fa": {"type": ["number", "null"]},
-                "b_value": {"type": ["number", "null"]},
+            "sequence_params": {
+                "type": "object",
+                "properties": {
+                    "tr": {"type": ["number", "null"]},
+                    "te": {"type": ["number", "null"]},
+                    "ti": {"type": ["number", "null"]},
+                    "fa": {"type": ["number", "null"]},
+                    "b_value": {"type": ["number", "null"]},
+                },
             },
+            "tags": {"type": "object"},
         },
-        "tags": {"type": "object"},
-    },
-})
+    }
+)
 
 # MCAP JSON schema for series-level summary
-_SERIES_SUMMARY_SCHEMA = json.dumps({
-    "type": "object",
-    "properties": {
-        "series_uid": {"type": "string"},
-        "series_number": {"type": ["string", "number"]},
-        "series_description": {"type": "string"},
-        "modality": {"type": "string"},
-        "file_count": {"type": "integer"},
-        "volume_stats": {"type": "object"},
-    },
-})
+_SERIES_SUMMARY_SCHEMA = json.dumps(
+    {
+        "type": "object",
+        "properties": {
+            "series_uid": {"type": "string"},
+            "series_number": {"type": ["string", "number"]},
+            "series_description": {"type": "string"},
+            "modality": {"type": "string"},
+            "file_count": {"type": "integer"},
+            "volume_stats": {"type": "object"},
+        },
+    }
+)
 
 
 def save_data(all_records: list[dict], out_dir: Path, compress: bool = False) -> None:
@@ -140,7 +177,9 @@ def save_data(all_records: list[dict], out_dir: Path, compress: bool = False) ->
 
     n_rows, n_cols = df.shape
     console.print(f"[green]✓[/green] JSON → {json_path} ({format_size(json_size)})")
-    console.print(f"[green]✓[/green] CSV  → {csv_path} ({n_rows} rows × {n_cols} cols, {format_size(csv_size)})")
+    console.print(
+        f"[green]✓[/green] CSV  → {csv_path} ({n_rows} rows × {n_cols} cols, {format_size(csv_size)})"
+    )
     console.print(
         f"[green]✓[/green] MCAP → {mcap_path} "
         f"({mcap_msg_count} msgs, {mcap_ch_count} channels, "
@@ -163,7 +202,7 @@ def _write_mcap(all_records: list[dict], out_dir: Path) -> tuple[Path, int, int,
       - Metadata: patient info, study info
     """
     import zstandard
-    from mcap.writer import Writer, CompressionType
+    from mcap.writer import CompressionType, Writer
 
     mcap_path = out_dir / "dicom_study.mcap"
 
@@ -199,6 +238,7 @@ def _write_mcap(all_records: list[dict], out_dir: Path) -> tuple[Path, int, int,
 
             # Group records by series, register a channel per series
             from collections import defaultdict
+
             series_groups: dict[str, list[dict]] = defaultdict(list)
             for r in all_records:
                 uid = r.get("_series_uid", "unknown")
@@ -324,9 +364,11 @@ def _write_mcap(all_records: list[dict], out_dir: Path) -> tuple[Path, int, int,
                     data={
                         "total_files": str(len(all_records)),
                         "total_series": str(len(series_groups)),
-                        "unique_modalities": ",".join(sorted({
-                            r.get("_modality", "") for r in all_records if r.get("_modality")
-                        })),
+                        "unique_modalities": ",".join(
+                            sorted(
+                                {r.get("_modality", "") for r in all_records if r.get("_modality")}
+                            )
+                        ),
                     },
                 )
 
@@ -352,4 +394,6 @@ def _compress_outputs(json_path: Path, json_size: int, csv_path: Path, csv_size:
     ]:
         console.print(f"  [cyan]Compressed {label}[/cyan] ({format_size(orig_size)}):")
         for fmt, (_, compressed_size) in sorted(results.items()):
-            console.print(f"    {fmt} → {format_size(compressed_size)} ({compression_ratio(orig_size, compressed_size)})")
+            console.print(
+                f"    {fmt} → {format_size(compressed_size)} ({compression_ratio(orig_size, compressed_size)})"
+            )

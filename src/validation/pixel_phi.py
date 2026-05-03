@@ -54,9 +54,9 @@ def _extract_corners(pixel_array: np.ndarray) -> list[tuple[str, np.ndarray]]:
 
     return [
         ("top_left", pixel_array[:cy, :cx]),
-        ("top_right", pixel_array[:cy, w - cx:]),
-        ("bottom_left", pixel_array[h - cy:, :cx]),
-        ("bottom_right", pixel_array[h - cy:, w - cx:]),
+        ("top_right", pixel_array[:cy, w - cx :]),
+        ("bottom_left", pixel_array[h - cy :, :cx]),
+        ("bottom_right", pixel_array[h - cy :, w - cx :]),
     ]
 
 
@@ -93,17 +93,17 @@ def _ocr_region(region: np.ndarray) -> list[tuple[str, float]]:
 def _is_phi_text(text: str) -> bool:
     """Check if OCR'd text looks like PHI (not just noise)."""
     # At least 3 alphanumeric chars
-    alpha = re.sub(r'[^a-zA-Z0-9]', '', text)
+    alpha = re.sub(r"[^a-zA-Z0-9]", "", text)
     if len(alpha) < 3:
         return False
 
     # Check against PHI patterns
     phi_patterns = [
-        re.compile(r'[A-Z][a-z]{2,}'),  # capitalized name
-        re.compile(r'\d{2}[-/]\d{2}[-/]\d{2,4}'),  # date
-        re.compile(r'\b\d{4,}\b'),  # MRN-like number
-        re.compile(r'(?:Dr|Mr|Mrs|Ms|Prof)', re.IGNORECASE),
-        re.compile(r'(?:hosp|clinic|med|inst)', re.IGNORECASE),
+        re.compile(r"[A-Z][a-z]{2,}"),  # capitalized name
+        re.compile(r"\d{2}[-/]\d{2}[-/]\d{2,4}"),  # date
+        re.compile(r"\b\d{4,}\b"),  # MRN-like number
+        re.compile(r"(?:Dr|Mr|Mrs|Ms|Prof)", re.IGNORECASE),
+        re.compile(r"(?:hosp|clinic|med|inst)", re.IGNORECASE),
     ]
     return any(p.search(text) for p in phi_patterns)
 
@@ -141,19 +141,23 @@ def scan_file_pixels(filepath: str, max_slices: int = 5) -> list[PixelPHIFinding
             texts = _ocr_region(corner_region)
             for text, conf in texts:
                 if _is_phi_text(text):
-                    findings.append(PixelPHIFinding(
-                        filename=filename,
-                        slice_index=slice_idx,
-                        corner=corner_name,
-                        detected_text=text,
-                        confidence=conf,
-                    ))
+                    findings.append(
+                        PixelPHIFinding(
+                            filename=filename,
+                            slice_index=slice_idx,
+                            corner=corner_name,
+                            detected_text=text,
+                            confidence=conf,
+                        )
+                    )
 
     return findings
 
 
 def scan_pixel_phi(
-    file_paths: list[str], n_workers: int = 4, max_slices: int = 5,
+    file_paths: list[str],
+    n_workers: int = 4,
+    max_slices: int = 5,
 ) -> PixelPHIReport:
     """Scan all files for burned-in pixel PHI."""
     report = PixelPHIReport(total_files=len(file_paths))

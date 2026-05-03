@@ -15,6 +15,7 @@ import pytest
 from hypothesis import given, settings
 from hypothesis import strategies as st
 
+from src.schema_utils import load_detail, validate_directory
 from src.schemas import (
     AnnotationConsensus,
     AnnotationRecord,
@@ -29,7 +30,6 @@ from src.schemas import (
     StudyManifestRow,
     VolumeStats,
 )
-from src.schema_utils import load_detail, validate_directory
 
 # ---------------------------------------------------------------------------
 # Paths
@@ -134,7 +134,7 @@ def test_round_trip_flat_study_entry() -> None:
     entry = data["series"][0]
 
     detail = SeriesDetail.model_validate(entry)
-    dumped = detail.model_dump(mode="python")
+    detail.model_dump(mode="python")
 
     # Identity was hoisted correctly
     assert detail.series.uid is not None
@@ -170,16 +170,16 @@ _pixel_spacing = st.one_of(
 )
 @settings(max_examples=200)
 def test_sequence_params_any_subset(
-    tr: Optional[float],
-    te: Optional[float],
-    ti: Optional[float],
-    fa: Optional[float],
-    b_value: Optional[float],
-    slice_thickness: Optional[float],
-    spacing_between_slices: Optional[float],
-    rows: Optional[int],
-    columns: Optional[int],
-    field_strength: Optional[float],
+    tr: float | None,
+    te: float | None,
+    ti: float | None,
+    fa: float | None,
+    b_value: float | None,
+    slice_thickness: float | None,
+    spacing_between_slices: float | None,
+    rows: int | None,
+    columns: int | None,
+    field_strength: float | None,
     pixel_spacing: object,
 ) -> None:
     """Any subset of SequenceParams fields (including none) should validate."""

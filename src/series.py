@@ -17,9 +17,13 @@ import SimpleITK as sitk
 sitk.ProcessObject.SetGlobalWarningDisplay(False)
 
 from .constants import NON_IMAGE_SOP, SOP_CLASS_NAMES
-from .extraction import classify_sequence, volume_stats
-from .exports import export_multiplane_montage, export_histogram, export_nifti, export_enhanced_views
-from .extraction import shm_read
+from .exports import (
+    export_enhanced_views,
+    export_histogram,
+    export_multiplane_montage,
+    export_nifti,
+)
+from .extraction import classify_sequence, shm_read, volume_stats
 from .helpers import safe_getfloat, safe_squeeze, to_json
 from .quality import analyze_volume_quality
 
@@ -88,7 +92,9 @@ def _read_one_slice(fp: str, shm_rec: dict | None) -> tuple[str, np.ndarray | No
     try:
         if shm_rec is not None:
             arr = shm_read(
-                shm_rec["_shm_name"], shm_rec["_shm_shape"], shm_rec["_shm_dtype"],
+                shm_rec["_shm_name"],
+                shm_rec["_shm_shape"],
+                shm_rec["_shm_dtype"],
             )
             return fp, arr
 
@@ -103,7 +109,8 @@ def _read_one_slice(fp: str, shm_rec: dict | None) -> tuple[str, np.ndarray | No
 
 
 def _stack_pydicom_volume(
-    sorted_paths: list[str], desc: str,
+    sorted_paths: list[str],
+    desc: str,
     file_records: list[dict] | None = None,
     n_workers: int = 8,
 ) -> np.ndarray | None:
@@ -125,10 +132,7 @@ def _stack_pydicom_volume(
     slice_map: dict[str, np.ndarray] = {}
 
     with ThreadPoolExecutor(max_workers=n_readers) as pool:
-        futures = [
-            pool.submit(_read_one_slice, fp, shm_by_path.get(fp))
-            for fp in sorted_paths
-        ]
+        futures = [pool.submit(_read_one_slice, fp, shm_by_path.get(fp)) for fp in sorted_paths]
         for fut in futures:
             fp, arr = fut.result()
             if arr is not None:
@@ -140,7 +144,8 @@ def _stack_pydicom_volume(
     # Determine reference shape from first valid slice
     ref_shape = next(iter(slice_map.values())).shape
     valid_indices = [
-        i for i, fp in enumerate(sorted_paths)
+        i
+        for i, fp in enumerate(sorted_paths)
         if fp in slice_map and slice_map[fp].shape == ref_shape
     ]
 
@@ -171,13 +176,19 @@ class SeriesResult:
     series_folder: str | None = None
 
 
-def process_one_series(uid: str, file_paths: list[str], meta: dict,
-                       out_dir: str, do_export_nii: bool,
-                       seq_index: int = 0, source_subdir: str = "",
-                       file_records: list[dict] | None = None,
-                       conformance_issues: list[dict] | None = None,
-                       n_workers: int = 8,
-                       mcap_only: bool = False) -> SeriesResult:
+def process_one_series(
+    uid: str,
+    file_paths: list[str],
+    meta: dict,
+    out_dir: str,
+    do_export_nii: bool,
+    seq_index: int = 0,
+    source_subdir: str = "",
+    file_records: list[dict] | None = None,
+    conformance_issues: list[dict] | None = None,
+    n_workers: int = 8,
+    mcap_only: bool = False,
+) -> SeriesResult:
     """Process a single series: load volume, compute stats, export outputs.
 
     When mcap_only=True, skips montages, histograms, enhanced views, and
@@ -228,8 +239,12 @@ def process_one_series(uid: str, file_paths: list[str], meta: dict,
     seq_params = _extract_seq_params(file_records, file_paths)
     info["sequence_params"] = seq_params
     info["sequence_classification"] = classify_sequence(
-        desc, seq_params.get("tr"), seq_params.get("te"),
-        seq_params.get("ti"), seq_params.get("fa"), seq_params.get("b_value"),
+        desc,
+        seq_params.get("tr"),
+        seq_params.get("te"),
+        seq_params.get("ti"),
+        seq_params.get("fa"),
+        seq_params.get("b_value"),
     )
 
     # Sort files by slice position for correct spatial ordering.
@@ -278,6 +293,7 @@ def process_one_series(uid: str, file_paths: list[str], meta: dict,
                 qa = analyze_volume_quality(vol, vs, desc)
             else:
                 from .quality import grade_series
+
                 qa = {
                     "quality_grade": grade_series(vs, desc),
                     "anomaly_detection": {"n_anomalous": 0, "anomalous_slices": []},
@@ -296,11 +312,20 @@ def process_one_series(uid: str, file_paths: list[str], meta: dict,
             # Lightweight path: only MCAP + detail JSON, no image exports
             with ThreadPoolExecutor(max_workers=2) as export_pool:
                 detail_fut = export_pool.submit(
-                    _write_series_detail, series_folder, safe_name, info,
-                    file_paths, file_records or [], conformance_issues or [],
+                    _write_series_detail,
+                    series_folder,
+                    safe_name,
+                    info,
+                    file_paths,
+                    file_records or [],
+                    conformance_issues or [],
                 )
                 mcap_fut = export_pool.submit(
-                    _write_series_mcap, series_folder, safe_name, uid, info,
+                    _write_series_mcap,
+                    series_folder,
+                    safe_name,
+                    uid,
+                    info,
                     file_records or [],
                 )
                 detail_fut.result()
@@ -310,23 +335,42 @@ def process_one_series(uid: str, file_paths: list[str], meta: dict,
             do_enhanced = vol.ndim >= 3 and vol.shape[0] >= 3
             with ThreadPoolExecutor(max_workers=6) as export_pool:
                 montage_fut = export_pool.submit(
-                    export_multiplane_montage, vol, safe_name, str(series_folder),
-                    6, vs,
+                    export_multiplane_montage,
+                    vol,
+                    safe_name,
+                    str(series_folder),
+                    6,
+                    vs,
                 )
                 hist_fut = export_pool.submit(
-                    export_histogram, vol, safe_name, str(series_folder), vs,
+                    export_histogram,
+                    vol,
+                    safe_name,
+                    str(series_folder),
+                    vs,
                 )
                 if do_enhanced:
                     enhanced_fut = export_pool.submit(
-                        export_enhanced_views, vol, safe_name, str(series_folder), vs,
+                        export_enhanced_views,
+                        vol,
+                        safe_name,
+                        str(series_folder),
+                        vs,
                     )
                 detail_fut = export_pool.submit(
-                    _write_series_detail, series_folder, safe_name, info,
-                    file_paths, file_records or [], conformance_issues or [],
+                    _write_series_detail,
+                    series_folder,
+                    safe_name,
+                    info,
+                    file_paths,
+                    file_records or [],
+                    conformance_issues or [],
                 )
                 if do_export_nii and sitk_img:
                     export_pool.submit(
-                        _safe_export_nifti, file_paths, str(series_folder / f"{safe_name}.nii.gz"),
+                        _safe_export_nifti,
+                        file_paths,
+                        str(series_folder / f"{safe_name}.nii.gz"),
                     )
 
                 # Wait for images first so we can embed them in MCAP
@@ -342,8 +386,13 @@ def process_one_series(uid: str, file_paths: list[str], meta: dict,
                     "enhanced": result.enhanced_path,
                 }
                 mcap_fut = export_pool.submit(
-                    _write_series_mcap, series_folder, safe_name, uid, info,
-                    file_records or [], image_paths,
+                    _write_series_mcap,
+                    series_folder,
+                    safe_name,
+                    uid,
+                    info,
+                    file_records or [],
+                    image_paths,
                 )
                 mcap_fut.result()
 
@@ -351,8 +400,11 @@ def process_one_series(uid: str, file_paths: list[str], meta: dict,
 
 
 def _write_series_detail(
-    series_out: Path, safe_name: str, info: dict,
-    file_paths: list[str], file_records: list[dict],
+    series_out: Path,
+    safe_name: str,
+    info: dict,
+    file_paths: list[str],
+    file_records: list[dict],
     conformance_issues: list[dict],
 ) -> None:
     """Write detailed per-series JSON into the series folder.
@@ -380,9 +432,7 @@ def _write_series_detail(
         "conformance_summary": {
             "total_files": len(file_paths),
             "files_with_issues": len(conformance_issues),
-            "pass_rate": round(
-                100 * (1 - len(conformance_issues) / max(len(file_paths), 1)), 1
-            ),
+            "pass_rate": round(100 * (1 - len(conformance_issues) / max(len(file_paths), 1)), 1),
         },
     }
 
@@ -407,7 +457,10 @@ def _write_series_detail(
 
 
 def _write_series_mcap(
-    series_out: Path, safe_name: str, uid: str, info: dict,
+    series_out: Path,
+    safe_name: str,
+    uid: str,
+    info: dict,
     file_records: list[dict],
     image_paths: dict[str, str | None] | None = None,
 ) -> Path | None:
@@ -427,32 +480,37 @@ def _write_series_mcap(
         return None
 
     try:
-        import zstandard
-        from mcap.writer import Writer, CompressionType
         from time import time_ns
+
+        import zstandard
+        from mcap.writer import CompressionType, Writer
 
         mcap_path = series_out / f"{safe_name}.mcap"
 
-        record_schema = json.dumps({
-            "type": "object",
-            "properties": {
-                "filename": {"type": "string"},
-                "series_uid": {"type": "string"},
-                "modality": {"type": "string"},
-                "pixel_stats": {"type": "object"},
-                "sequence_params": {"type": "object"},
-                "tags": {"type": "object"},
-            },
-        })
-        summary_schema = json.dumps({
-            "type": "object",
-            "properties": {
-                "series_uid": {"type": "string"},
-                "series_description": {"type": "string"},
-                "file_count": {"type": "integer"},
-                "volume_stats": {"type": "object"},
-            },
-        })
+        record_schema = json.dumps(
+            {
+                "type": "object",
+                "properties": {
+                    "filename": {"type": "string"},
+                    "series_uid": {"type": "string"},
+                    "modality": {"type": "string"},
+                    "pixel_stats": {"type": "object"},
+                    "sequence_params": {"type": "object"},
+                    "tags": {"type": "object"},
+                },
+            }
+        )
+        summary_schema = json.dumps(
+            {
+                "type": "object",
+                "properties": {
+                    "series_uid": {"type": "string"},
+                    "series_description": {"type": "string"},
+                    "file_count": {"type": "integer"},
+                    "volume_stats": {"type": "object"},
+                },
+            }
+        )
 
         _orig_compress = zstandard.compress
         _zctx = zstandard.ZstdCompressor(level=7)
@@ -464,11 +522,13 @@ def _write_series_mcap(
                 writer.start(profile="dicom-series", library="micom-series-mcap")
 
                 rec_schema_id = writer.register_schema(
-                    name="dicom_record", encoding="jsonschema",
+                    name="dicom_record",
+                    encoding="jsonschema",
                     data=record_schema.encode(),
                 )
                 sum_schema_id = writer.register_schema(
-                    name="series_summary", encoding="jsonschema",
+                    name="series_summary",
+                    encoding="jsonschema",
                     data=summary_schema.encode(),
                 )
 
@@ -477,7 +537,8 @@ def _write_series_mcap(
                 topic = f"/dicom/series/{snum}_{desc}".replace(" ", "_")
 
                 ch_id = writer.register_channel(
-                    topic=topic, message_encoding="json",
+                    topic=topic,
+                    message_encoding="json",
                     schema_id=rec_schema_id,
                     metadata={
                         "series_uid": uid,
@@ -488,7 +549,8 @@ def _write_series_mcap(
                     },
                 )
                 sum_ch_id = writer.register_channel(
-                    topic=f"{topic}/summary", message_encoding="json",
+                    topic=f"{topic}/summary",
+                    message_encoding="json",
                     schema_id=sum_schema_id,
                 )
 
@@ -506,19 +568,24 @@ def _write_series_mcap(
                             "std": r.get("pixel_std"),
                         },
                         "sequence_params": {
-                            "tr": r.get("_tr"), "te": r.get("_te"),
-                            "ti": r.get("_ti"), "fa": r.get("_fa"),
+                            "tr": r.get("_tr"),
+                            "te": r.get("_te"),
+                            "ti": r.get("_ti"),
+                            "fa": r.get("_fa"),
                             "b_value": r.get("_b_value"),
                         },
                         "tags": {
-                            k: to_json(v) for k, v in r.items()
+                            k: to_json(v)
+                            for k, v in r.items()
                             if not k.startswith("_")
                             and k not in ("histogram_counts", "histogram_edges")
                         },
                     }
                     now = time_ns()
                     writer.add_message(
-                        channel_id=ch_id, log_time=now, publish_time=now,
+                        channel_id=ch_id,
+                        log_time=now,
+                        publish_time=now,
                         data=json.dumps(msg, default=str).encode(),
                         sequence=seq,
                     )
@@ -526,21 +593,28 @@ def _write_series_mcap(
                 # Summary message with volume stats
                 now = time_ns()
                 writer.add_message(
-                    channel_id=sum_ch_id, log_time=now, publish_time=now,
-                    data=json.dumps({
-                        "series_uid": uid,
-                        "series_description": desc,
-                        "file_count": len(file_records),
-                        "volume_stats": info.get("volume_stats", {}),
-                        "quality_analysis": info.get("quality_analysis", {}),
-                    }, default=str).encode(),
+                    channel_id=sum_ch_id,
+                    log_time=now,
+                    publish_time=now,
+                    data=json.dumps(
+                        {
+                            "series_uid": uid,
+                            "series_description": desc,
+                            "file_count": len(file_records),
+                            "volume_stats": info.get("volume_stats", {}),
+                            "quality_analysis": info.get("quality_analysis", {}),
+                        },
+                        default=str,
+                    ).encode(),
                     sequence=0,
                 )
 
                 # ── Embed images as raw PNG messages ──────────────────────
                 if image_paths:
                     img_schema_id = writer.register_schema(
-                        name="png_image", encoding="octet-stream", data=b"",
+                        name="png_image",
+                        encoding="octet-stream",
+                        data=b"",
                     )
                     for img_type, img_path in image_paths.items():
                         if not img_path or not Path(img_path).exists():
@@ -559,19 +633,25 @@ def _write_series_mcap(
                         )
                         now = time_ns()
                         writer.add_message(
-                            channel_id=img_ch_id, log_time=now, publish_time=now,
-                            data=png_data, sequence=0,
+                            channel_id=img_ch_id,
+                            log_time=now,
+                            publish_time=now,
+                            data=png_data,
+                            sequence=0,
                         )
 
                 # Metadata
-                writer.add_metadata(name="series_info", data={
-                    "series_uid": uid,
-                    "series_number": str(snum),
-                    "series_description": desc,
-                    "modality": info.get("modality", ""),
-                    "sop_class": info.get("sop_class", ""),
-                    "file_count": str(len(file_records)),
-                })
+                writer.add_metadata(
+                    name="series_info",
+                    data={
+                        "series_uid": uid,
+                        "series_number": str(snum),
+                        "series_description": desc,
+                        "modality": info.get("modality", ""),
+                        "sop_class": info.get("sop_class", ""),
+                        "file_count": str(len(file_records)),
+                    },
+                )
 
                 writer.finish()
         finally:
@@ -593,12 +673,17 @@ def _extract_seq_params(file_records: list[dict] | None, file_paths: list[str]) 
             te = r.get("_te")
             if tr is not None or te is not None:
                 return {
-                    "tr": tr, "te": te,
-                    "ti": r.get("_ti"), "fa": r.get("_fa"),
+                    "tr": tr,
+                    "te": te,
+                    "ti": r.get("_ti"),
+                    "fa": r.get("_fa"),
                     "b_value": r.get("_b_value"),
-                    "slice_thickness": None, "spacing_between_slices": None,
-                    "rows": None, "columns": None,
-                    "field_strength": None, "pixel_spacing": "",
+                    "slice_thickness": None,
+                    "spacing_between_slices": None,
+                    "rows": None,
+                    "columns": None,
+                    "field_strength": None,
+                    "pixel_spacing": "",
                 }
 
     # Fallback: read first file (only if no records available)

@@ -44,14 +44,14 @@ _lm_config = None
 _model_lock = threading.Lock()
 
 _DERIVATIVE_RE = re.compile(
-    r'\b(d{0,2}REG\b|d{0,2}ADC\w*|d?ISO\w*|ISOTROPIC|FILT_PHA|COL:|PJN:|MIP|MinIP'
-    r'|REFORMATT?ED|SUBTRACT)',
+    r"\b(d{0,2}REG\b|d{0,2}ADC\w*|d?ISO\w*|ISOTROPIC|FILT_PHA|COL:|PJN:|MIP|MinIP"
+    r"|REFORMATT?ED|SUBTRACT)",
     re.IGNORECASE,
 )
 _HEDGING_RE = re.compile(
-    r'\b(possibly|potentially|may\s+be|cannot\s+(?:fully|entirely|clearly)\s+(?:determine|assess|evaluate)'
-    r'|uncertain|equivocal|borderline|subtle|faint|questionable|difficult\s+to\s+assess'
-    r'|limited\s+(?:by|due)|cannot\s+(?:rule\s+out|exclude)|warrants?\s+(?:further|additional))\b',
+    r"\b(possibly|potentially|may\s+be|cannot\s+(?:fully|entirely|clearly)\s+(?:determine|assess|evaluate)"
+    r"|uncertain|equivocal|borderline|subtle|faint|questionable|difficult\s+to\s+assess"
+    r"|limited\s+(?:by|due)|cannot\s+(?:rule\s+out|exclude)|warrants?\s+(?:further|additional))\b",
     re.IGNORECASE,
 )
 
@@ -72,7 +72,7 @@ def _load_vlm():
         console.print(f"[dim]Loading VLM: {_VLM_MODEL_ID}…[/dim]")
         _vlm_model, _vlm_processor = vlm_load(_VLM_MODEL_ID)
         _vlm_config = load_config(_VLM_MODEL_ID)
-        console.print(f"[green]✓[/green] VLM loaded")
+        console.print("[green]✓[/green] VLM loaded")
         return _vlm_model, _vlm_processor, _vlm_config
 
 
@@ -100,11 +100,12 @@ def _load_lm():
         console.print(f"[dim]Loading LM: {_LM_MODEL_ID}…[/dim]")
         _lm_model, _lm_tokenizer = lm_load(_LM_MODEL_ID)
         _lm_config = None
-        console.print(f"[green]✓[/green] LM loaded")
+        console.print("[green]✓[/green] LM loaded")
         return _lm_model, _lm_tokenizer, _lm_config
 
 
 # ── Inference helpers ────────────────────────────────────────────────────────
+
 
 def _vlm_generate(prompt: str, image_paths: list[str], max_tokens: int = 4096) -> str:
     """Run vision-language inference on local GPU."""
@@ -116,12 +117,18 @@ def _vlm_generate(prompt: str, image_paths: list[str], max_tokens: int = 4096) -
     with _model_lock:
         try:
             formatted = apply_chat_template(
-                processor, config, prompt, num_images=len(image_paths),
+                processor,
+                config,
+                prompt,
+                num_images=len(image_paths),
             )
             result = vlm_generate(
-                model, processor, formatted,
+                model,
+                processor,
+                formatted,
                 image=image_paths or None,
-                max_tokens=max_tokens, verbose=False,
+                max_tokens=max_tokens,
+                verbose=False,
             )
             # generate() returns GenerationResult with .text attribute
             return result.text if hasattr(result, "text") else str(result)
@@ -145,12 +152,18 @@ def _lm_generate(prompt: str, max_tokens: int = 4096) -> str:
         with _model_lock:
             try:
                 formatted = apply_chat_template(
-                    tokenizer, config, prompt, num_images=0,
+                    tokenizer,
+                    config,
+                    prompt,
+                    num_images=0,
                 )
                 result = vlm_generate(
-                    model, tokenizer, formatted,
+                    model,
+                    tokenizer,
+                    formatted,
                     image=None,
-                    max_tokens=max_tokens, verbose=False,
+                    max_tokens=max_tokens,
+                    verbose=False,
                 )
                 return result.text if hasattr(result, "text") else str(result)
             except Exception as e:
@@ -162,11 +175,17 @@ def _lm_generate(prompt: str, max_tokens: int = 4096) -> str:
         try:
             messages = [{"role": "user", "content": prompt}]
             formatted = tokenizer.apply_chat_template(
-                messages, tokenize=False, add_generation_prompt=True,
+                messages,
+                tokenize=False,
+                add_generation_prompt=True,
             )
             output = lm_generate(
-                model, tokenizer, prompt=formatted,
-                max_tokens=max_tokens, temp=0.7, verbose=False,
+                model,
+                tokenizer,
+                prompt=formatted,
+                max_tokens=max_tokens,
+                temp=0.7,
+                verbose=False,
             )
             return output
         except Exception as e:
@@ -174,6 +193,7 @@ def _lm_generate(prompt: str, max_tokens: int = 4096) -> str:
 
 
 # ── Shared utilities ─────────────────────────────────────────────────────────
+
 
 def _is_derivative(label: str) -> bool:
     return bool(_DERIVATIVE_RE.search(label))
@@ -193,14 +213,14 @@ def _parse_json_array(text: str) -> list[str]:
         except json.JSONDecodeError:
             pass
 
-    code_match = re.search(r'```(?:json)?\s*(\[.*?\])\s*```', text, re.DOTALL)
+    code_match = re.search(r"```(?:json)?\s*(\[.*?\])\s*```", text, re.DOTALL)
     if code_match:
         try:
             return [str(x) for x in json.loads(code_match.group(1)) if x]
         except json.JSONDecodeError:
             pass
 
-    for match in re.finditer(r'\[.*?\]', text, re.DOTALL):
+    for match in re.finditer(r"\[.*?\]", text, re.DOTALL):
         try:
             result = json.loads(match.group())
             if isinstance(result, list) and all(isinstance(x, str) for x in result):
@@ -210,13 +230,14 @@ def _parse_json_array(text: str) -> list[str]:
 
     lines = []
     for line in text.split("\n"):
-        line = re.sub(r'^\s*\d+[\.\)]\s*', '', line).strip().strip('"').strip("'")
+        line = re.sub(r"^\s*\d+[\.\)]\s*", "", line).strip().strip('"').strip("'")
         if len(line) > 20:
             lines.append(line)
     return lines[:3]
 
 
 # ── Stage 1: Initial analysis ────────────────────────────────────────────────
+
 
 def _build_quality_context(quality_analysis: dict | None) -> str:
     if not quality_analysis:
@@ -254,8 +275,7 @@ def _build_quality_context(quality_analysis: dict | None) -> str:
     if anomaly and anomaly.get("n_anomalous", 0) > 0:
         slices = anomaly["anomalous_slices"]
         desc = ", ".join(
-            f"slice {s['slice_index']} ({s['direction']}, z={s['z_score']:.1f})"
-            for s in slices[:5]
+            f"slice {s['slice_index']} ({s['direction']}, z={s['z_score']:.1f})" for s in slices[:5]
         )
         parts.append(f"- Anomalous slices: {desc}")
 
@@ -307,7 +327,7 @@ Produce these sections, each labeled with the heading verbatim:
    - SNR: adequate / marginal / poor.
    - Artifacts: motion (ghosting/blur), susceptibility, chemical shift, wrap, Gibbs ringing, zipper, RF spikes, parallel-imaging g-factor, EPI distortion, banding (B-FFE), N/2 ghosting (DWI). Note severity and location.
    - Coverage gaps or truncation.
-   - Diagnostic adequacy (yes / limited / non-diagnostic) with rationale.{'  The automated quantitative metrics above flagged specific issues — for each flag, explicitly confirm or refute it from what you see.' if quality_ctx else ''}
+   - Diagnostic adequacy (yes / limited / non-diagnostic) with rationale.{"  The automated quantitative metrics above flagged specific issues — for each flag, explicitly confirm or refute it from what you see." if quality_ctx else ""}
    - Letter grade (A/B/C/D/F) with one-line justification.
 
 5. **Notable Findings & Incidentals**
@@ -345,6 +365,7 @@ If nothing abnormal: state "No focal abnormality on this derived map."""
 
 # ── Stage 2: Targeted follow-ups ─────────────────────────────────────────────
 
+
 def _generate_followups(
     initial: str,
     series_label: str,
@@ -381,8 +402,10 @@ Return a JSON array of strings.
 
 
 def _run_followups(
-    montage_path: str, series_label: str,
-    initial: str, prompts: list[str],
+    montage_path: str,
+    series_label: str,
+    initial: str,
+    prompts: list[str],
 ) -> list[dict]:
     results = []
     for prompt in prompts:
@@ -403,6 +426,7 @@ Answer specifically based on what you see in the image."""
 
 # ── Combined per-series pipeline ─────────────────────────────────────────────
 
+
 def analyze_and_chain(
     montage_path: str,
     series_label: str,
@@ -411,24 +435,39 @@ def analyze_and_chain(
     quality_analysis: dict | None = None,
 ) -> dict:
     if not Path(montage_path).exists():
-        return {"initial": f"[{series_label}]: montage not found",
-                "followups": [], "merged": "", "skipped_chain": True,
-                "chain_reason": "error"}
+        return {
+            "initial": f"[{series_label}]: montage not found",
+            "followups": [],
+            "merged": "",
+            "skipped_chain": True,
+            "chain_reason": "error",
+        }
 
     if _is_derivative(series_label):
         initial = analyze_derivative(montage_path, series_label)
-        return {"initial": initial, "followups": [], "merged": initial,
-                "skipped_chain": True, "chain_reason": "derivative"}
+        return {
+            "initial": initial,
+            "followups": [],
+            "merged": initial,
+            "skipped_chain": True,
+            "chain_reason": "derivative",
+        }
 
     initial = analyze_montage(
-        montage_path, series_label,
+        montage_path,
+        series_label,
         enhanced_path=enhanced_path,
         quality_analysis=quality_analysis,
     )
 
     if initial.startswith("[") or initial.startswith("Error"):
-        return {"initial": initial, "followups": [], "merged": initial,
-                "skipped_chain": True, "chain_reason": "error"}
+        return {
+            "initial": initial,
+            "followups": [],
+            "merged": initial,
+            "skipped_chain": True,
+            "chain_reason": "error",
+        }
 
     has_quality_flags = False
     if quality_analysis:
@@ -444,13 +483,23 @@ def analyze_and_chain(
     needs_chain = _has_uncertainty(initial) or has_quality_flags
 
     if not needs_chain:
-        return {"initial": initial, "followups": [], "merged": initial,
-                "skipped_chain": True, "chain_reason": "confident"}
+        return {
+            "initial": initial,
+            "followups": [],
+            "merged": initial,
+            "skipped_chain": True,
+            "chain_reason": "confident",
+        }
 
     prompts = _generate_followups(initial, series_label, quality_analysis)
     if not prompts:
-        return {"initial": initial, "followups": [], "merged": initial,
-                "skipped_chain": True, "chain_reason": "no_followups_generated"}
+        return {
+            "initial": initial,
+            "followups": [],
+            "merged": initial,
+            "skipped_chain": True,
+            "chain_reason": "no_followups_generated",
+        }
 
     followups = _run_followups(montage_path, series_label, initial, prompts)
 
@@ -471,6 +520,7 @@ def analyze_and_chain(
 
 # ── Cross-series comparison ──────────────────────────────────────────────────
 
+
 def cross_series_comparison(analyses: dict[str, str], series_info: list[dict]) -> str:
     series_summary = []
     for s in series_info:
@@ -480,7 +530,7 @@ def cross_series_comparison(analyses: dict[str, str], series_info: list[dict]) -
         qa = s.get("quality_analysis", {})
         grade = qa.get("quality_grade", {}).get("grade", "?") if qa else "?"
         series_summary.append(
-            f"- Series {s.get('series_number','?')} ({s.get('series_description','')}) — {seq}, Grade={grade}"
+            f"- Series {s.get('series_number', '?')} ({s.get('series_description', '')}) — {seq}, Grade={grade}"
         )
 
     findings = []
@@ -527,6 +577,7 @@ Produce these sections, exactly in this order, with the headings verbatim:
 
 # ── Synthesis ────────────────────────────────────────────────────────────────
 
+
 def synthesize_report(payload: dict, image_analyses: dict[str, str], cross_series: str = "") -> str:
     image_section = "\n\n".join(
         f"### {label}\n{analysis}"
@@ -537,8 +588,11 @@ def synthesize_report(payload: dict, image_analyses: dict[str, str], cross_serie
     compact_payload = {
         "patient": payload.get("patient", {}),
         "series": [
-            {k: v for k, v in s.items()
-             if k not in ("series_uid", "volume_stats", "quality_analysis")}
+            {
+                k: v
+                for k, v in s.items()
+                if k not in ("series_uid", "volume_stats", "quality_analysis")
+            }
             for s in payload.get("series", [])
         ],
         "conformance_issues_count": payload.get("conformance_issues_count", 0),

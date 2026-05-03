@@ -9,7 +9,7 @@ from pathlib import Path
 
 from rich.console import Console
 
-from ..compression import format_size, compression_ratio, compress_file_multi
+from ..compression import compress_file_multi, compression_ratio, format_size
 from ..exports import export_cross_series_comparison
 from ..report import generate_html_report
 
@@ -31,13 +31,19 @@ def generate_reports(
 
     with ThreadPoolExecutor(max_workers=n_workers) as pool:
         cross_fut = pool.submit(
-            export_cross_series_comparison, series_data_for_comparison, str(out_dir),
+            export_cross_series_comparison,
+            series_data_for_comparison,
+            str(out_dir),
         )
-        stats_text = json.dumps({
-            "patient": patient_info,
-            "series": series_info,
-            "conformance_issues": conformance_issues,
-        }, indent=2, default=str)
+        stats_text = json.dumps(
+            {
+                "patient": patient_info,
+                "series": series_info,
+                "conformance_issues": conformance_issues,
+            },
+            indent=2,
+            default=str,
+        )
         stats_path = out_dir / "series_stats.json"
         stats_fut = pool.submit(stats_path.write_text, stats_text)
 
@@ -46,8 +52,13 @@ def generate_reports(
             console.print(f"[green]✓[/green] Cross-series comparison → {cross_path}")
 
         html_path = generate_html_report(
-            patient_info, series_info, conformance_issues,
-            image_paths, cross_path, out_dir, pool,
+            patient_info,
+            series_info,
+            conformance_issues,
+            image_paths,
+            cross_path,
+            out_dir,
+            pool,
         )
 
         stats_fut.result()
@@ -79,4 +90,6 @@ def _compress_reports(html_path: Path, stats_path: Path, stats_text: str) -> Non
     ]:
         console.print(f"  [cyan]Compressed {label}[/cyan] ({format_size(orig_size)}):")
         for fmt, (_, compressed_size) in sorted(results.items()):
-            console.print(f"    {fmt} → {format_size(compressed_size)} ({compression_ratio(orig_size, compressed_size)})")
+            console.print(
+                f"    {fmt} → {format_size(compressed_size)} ({compression_ratio(orig_size, compressed_size)})"
+            )

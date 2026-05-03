@@ -13,9 +13,9 @@ import argparse
 import sys
 from pathlib import Path
 
+from rich import box
 from rich.console import Console
 from rich.table import Table
-from rich import box
 
 from src.dry_run import plan
 
@@ -37,12 +37,21 @@ def _build_table(data: dict) -> Table:
     _row("Series total (detail.json)", str(data["n_series_total"]))
     table.add_section()
 
-    _row("Stage 2 quality pending", str(data["n_series_quality_pending"]),
-         style="yellow" if data["n_series_quality_pending"] else "")
-    _row("Stage 3 annotation pending", str(data["n_series_annotation_pending"]),
-         style="yellow" if data["n_series_annotation_pending"] else "")
-    _row("Stage 4 pack pending (studies)", str(data["n_studies_pack_pending"]),
-         style="yellow" if data["n_studies_pack_pending"] else "")
+    _row(
+        "Stage 2 quality pending",
+        str(data["n_series_quality_pending"]),
+        style="yellow" if data["n_series_quality_pending"] else "",
+    )
+    _row(
+        "Stage 3 annotation pending",
+        str(data["n_series_annotation_pending"]),
+        style="yellow" if data["n_series_annotation_pending"] else "",
+    )
+    _row(
+        "Stage 4 pack pending (studies)",
+        str(data["n_studies_pack_pending"]),
+        style="yellow" if data["n_studies_pack_pending"] else "",
+    )
     table.add_section()
 
     modal_val = f"${data['est_modal_dollars']:.4f}"
@@ -50,16 +59,17 @@ def _build_table(data: dict) -> Table:
     total = data["est_modal_dollars"] + data["est_openrouter_dollars"]
     total_val = f"${total:.4f}"
 
-    _row("Est. Modal cost", modal_val,
-         style="red" if data["est_modal_dollars"] > 5 else "green")
-    _row("Est. OpenRouter cost", or_val,
-         style="red" if data["est_openrouter_dollars"] > 2 else "green")
-    _row("Est. total cost", total_val,
-         style="bold red" if total > 10 else "bold green")
+    _row("Est. Modal cost", modal_val, style="red" if data["est_modal_dollars"] > 5 else "green")
+    _row(
+        "Est. OpenRouter cost",
+        or_val,
+        style="red" if data["est_openrouter_dollars"] > 2 else "green",
+    )
+    _row("Est. total cost", total_val, style="bold red" if total > 10 else "bold green")
     table.add_section()
 
     wall = data["est_wall_minutes"]
-    wall_str = f"{wall:.1f} min" if wall < 60 else f"{wall/60:.1f} h"
+    wall_str = f"{wall:.1f} min" if wall < 60 else f"{wall / 60:.1f} h"
     _row("Est. wall time (rough)", wall_str)
 
     return table
@@ -71,7 +81,9 @@ def main() -> None:
         description="Dry-run plan: how much work and cost would the next run incur?",
     )
     parser.add_argument(
-        "--root", required=True, metavar="OUTPUT_DIR",
+        "--root",
+        required=True,
+        metavar="OUTPUT_DIR",
         help="Path to the pipeline output directory (same as output_dir in resume_pipeline.py)",
     )
     args = parser.parse_args()

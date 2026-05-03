@@ -30,6 +30,7 @@ from pathlib import Path, PurePosixPath
 
 try:
     from dotenv import load_dotenv
+
     load_dotenv()
 except ImportError:
     pass
@@ -98,7 +99,15 @@ _VOL_OUTPUT = PurePosixPath("output")
 job_tracker = modal.Dict.from_name("micom-jobs", create_if_missing=True)
 
 PIPELINE_STAGES = {
-    "extraction": ["extract", "conformance", "series_gpu", "reports", "grade", "hipaa", "hf_upload"],
+    "extraction": [
+        "extract",
+        "conformance",
+        "series_gpu",
+        "reports",
+        "grade",
+        "hipaa",
+        "hf_upload",
+    ],
     "redaction": ["pre_scan", "redact", "post_scan", "register"],
 }
 
@@ -109,12 +118,14 @@ def _update_job(call_id: str, *, stage: str = "", detail: str = "", status: str 
         existing = job_tracker[call_id]
     except KeyError:
         existing = {}
-    existing.update({
-        "stage": stage,
-        "detail": detail,
-        "status": status,
-        "updated_at": time.time(),
-    })
+    existing.update(
+        {
+            "stage": stage,
+            "detail": detail,
+            "status": status,
+            "updated_at": time.time(),
+        }
+    )
     job_tracker[call_id] = existing
 
 
@@ -148,6 +159,7 @@ def _get_hf_token() -> str:
     """Read HF token from local cache (set by `hf auth login`)."""
     try:
         from huggingface_hub import HfFolder
+
         return HfFolder.get_token() or ""
     except Exception:
         token_path = Path.home() / ".cache" / "huggingface" / "token"
@@ -220,16 +232,27 @@ def _ensure_uploaded(local_dir: str, study_name: str = "") -> tuple[str, dict]:
     # Check if tars already uploaded
     existing_tars = _volume_has_tars(study_name)
     if existing_tars >= n_tars:
-        print(f"Study '{study_name}' already on volume ({existing_tars} tar archives) — skipping", flush=True)
-        return study_name, {"uploaded": 0, "skipped": len(dcm_files), "failed": 0,
-                            "total_bytes": total_bytes, "elapsed": 0}
+        print(
+            f"Study '{study_name}' already on volume ({existing_tars} tar archives) — skipping",
+            flush=True,
+        )
+        return study_name, {
+            "uploaded": 0,
+            "skipped": len(dcm_files),
+            "failed": 0,
+            "total_bytes": total_bytes,
+            "elapsed": 0,
+        }
 
-    print(f"Packing {len(dcm_files)} files ({total_bytes / 1024**2:.1f} MB) into {n_tars} tar archives", flush=True)
+    print(
+        f"Packing {len(dcm_files)} files ({total_bytes / 1024**2:.1f} MB) into {n_tars} tar archives",
+        flush=True,
+    )
     t0 = time.time()
     uploaded = 0
 
     for i in range(0, len(dcm_files), TAR_CHUNK_FILES):
-        chunk = dcm_files[i:i + TAR_CHUNK_FILES]
+        chunk = dcm_files[i : i + TAR_CHUNK_FILES]
         chunk_idx = i // TAR_CHUNK_FILES
         tar_name = f"chunk_{chunk_idx:04d}.tar"
         remote_path = str(_VOL_STUDIES / study_name / tar_name)
@@ -248,19 +271,26 @@ def _ensure_uploaded(local_dir: str, study_name: str = "") -> tuple[str, dict]:
 
             uploaded += len(chunk)
             elapsed = time.time() - t0
-            rate = tar_size / max(elapsed - (t0 - t0), 0.01) / 1024**2
+            tar_size / max(elapsed - (t0 - t0), 0.01) / 1024**2
             print(f" done [{uploaded}/{len(dcm_files)}]", flush=True)
 
     elapsed = time.time() - t0
-    print(f"Upload: {n_tars} tar archives ({total_bytes / 1024**2:.0f} MB) in {elapsed:.1f}s", flush=True)
+    print(
+        f"Upload: {n_tars} tar archives ({total_bytes / 1024**2:.0f} MB) in {elapsed:.1f}s",
+        flush=True,
+    )
     return study_name, {
-        "uploaded": uploaded, "skipped": 0, "failed": 0,
-        "total_bytes": total_bytes, "elapsed": round(elapsed, 1),
+        "uploaded": uploaded,
+        "skipped": 0,
+        "failed": 0,
+        "total_bytes": total_bytes,
+        "elapsed": round(elapsed, 1),
         "tar_count": n_tars,
     }
 
 
 # ── Download helpers ─────────────────────────────────────────────────────────
+
 
 def _download_one_file(vol_path: str, local_path: Path) -> int:
     """Download a single file from volume, streaming to disk."""
@@ -277,14 +307,17 @@ def _download_one_file(vol_path: str, local_path: Path) -> int:
 
 
 def _parallel_download(
-    vol_dir: str, local: Path, max_workers: int = DOWNLOAD_WORKERS,
+    vol_dir: str,
+    local: Path,
+    max_workers: int = DOWNLOAD_WORKERS,
 ) -> tuple[int, int]:
     """Download all files in parallel. vol_dir is volume-relative (no /data prefix)."""
     from concurrent.futures import ThreadPoolExecutor, as_completed
 
     try:
         entries = [
-            e for e in volume.listdir(vol_dir, recursive=True)
+            e
+            for e in volume.listdir(vol_dir, recursive=True)
             if not e.path.endswith("/") and getattr(e, "type", None) != "directory"
         ]
     except Exception:
@@ -313,10 +346,13 @@ def _parallel_download(
 
 # ── Modal functions ──────────────────────────────────────────────────────────
 
+
 @app.function(
     image=cpu_image,
     volumes={str(MOUNT_POINT): volume},
-    timeout=120, memory=512, cpu=0.5,
+    timeout=120,
+    memory=512,
+    cpu=0.5,
     region="us-east",
     scaledown_window=300,
 )
@@ -330,8 +366,11 @@ def extract_file_cloud(fpath: str) -> dict:
     only, skip_pixels=True). target_inputs=48 keeps headroom so the autoscaler
     spins up a new container before any single one saturates.
     """
-    import sys; sys.path.insert(0, "/root")
+    import sys
+
+    sys.path.insert(0, "/root")
     from src.extraction import extract_single_file
+
     try:
         return extract_single_file(fpath, skip_pixels=True)
     except Exception as e:
@@ -344,10 +383,13 @@ def extract_file_cloud(fpath: str) -> dict:
 # processes 4 series concurrently (CPU-bound: numpy stats, PIL montages).
 # Modal auto-scales containers based on demand.
 
+
 @app.function(
     image=cpu_image,
     volumes={str(MOUNT_POINT): volume},
-    timeout=600, memory=8192, cpu=4.0,
+    timeout=600,
+    memory=8192,
+    cpu=4.0,
     region="us-east",
     scaledown_window=300,
     retries=modal.Retries(
@@ -358,9 +400,15 @@ def extract_file_cloud(fpath: str) -> dict:
 )
 @modal.concurrent(max_inputs=4)
 def process_one_series_gpu(
-    uid: str, files: list[str], meta: dict,
-    out_dir: str, export_nii: bool, idx: int,
-    subdir: str, records: list[dict], conformance: list[dict],
+    uid: str,
+    files: list[str],
+    meta: dict,
+    out_dir: str,
+    export_nii: bool,
+    idx: int,
+    subdir: str,
+    records: list[dict],
+    conformance: list[dict],
 ) -> dict:
     """Process a single series on a CPU container.
 
@@ -368,33 +416,51 @@ def process_one_series_gpu(
     max_inputs=4 means 4 series run concurrently per container.
     Modal auto-scales the number of containers based on demand.
     """
-    import sys; sys.path.insert(0, "/root")
+    import sys
+
+    sys.path.insert(0, "/root")
     import traceback
+
     from src.series import process_one_series, reset_sitk_probe
+
     reset_sitk_probe()
 
     desc = meta.get("series_description", uid[:12])
     try:
-        r = process_one_series(uid, files, meta, out_dir, export_nii, idx, subdir, records, conformance)
+        r = process_one_series(
+            uid, files, meta, out_dir, export_nii, idx, subdir, records, conformance
+        )
     except Exception as e:
         tb = traceback.format_exc()
         print(f"  [ERROR] Series {idx} '{desc}' failed: {e}\n{tb}")
         return {
-            "uid": uid, "label": desc, "info": meta, "vstats": None,
-            "montage_path": None, "histogram_path": None,
-            "enhanced_path": None, "series_folder": None,
-            "error": str(e), "traceback": tb,
+            "uid": uid,
+            "label": desc,
+            "info": meta,
+            "vstats": None,
+            "montage_path": None,
+            "histogram_path": None,
+            "enhanced_path": None,
+            "series_folder": None,
+            "error": str(e),
+            "traceback": tb,
         }
 
     vs = r.vstats
     if vs:
-        print(f"  s{r.info.get('series_number','?')} {r.info.get('series_description','')}: "
-              f"{vs.get('volume_shape',[])} SNR={vs.get('volume_snr_estimate',0):.2f} "
-              f"Grade={vs.get('quality_grade','?')}")
+        print(
+            f"  s{r.info.get('series_number', '?')} {r.info.get('series_description', '')}: "
+            f"{vs.get('volume_shape', [])} SNR={vs.get('volume_snr_estimate', 0):.2f} "
+            f"Grade={vs.get('quality_grade', '?')}"
+        )
 
     return {
-        "uid": r.uid, "label": r.label, "info": r.info, "vstats": r.vstats,
-        "montage_path": r.montage_path, "histogram_path": r.histogram_path,
+        "uid": r.uid,
+        "label": r.label,
+        "info": r.info,
+        "vstats": r.vstats,
+        "montage_path": r.montage_path,
+        "histogram_path": r.histogram_path,
         "enhanced_path": getattr(r, "enhanced_path", None),
         "series_folder": getattr(r, "series_folder", None),
         "error": None,
@@ -404,7 +470,9 @@ def process_one_series_gpu(
 @app.function(
     image=cpu_image,
     volumes={str(MOUNT_POINT): volume},
-    timeout=1800, memory=4096, cpu=2.0,
+    timeout=1800,
+    memory=4096,
+    cpu=2.0,
     region="us-east",
     scaledown_window=300,
 )
@@ -442,9 +510,13 @@ def extract_tar_cloud(tar_path: str, extract_dir: str) -> dict:
 @app.function(
     image=cpu_image,
     volumes={str(MOUNT_POINT): volume},
-    timeout=86400, memory=16384, cpu=8.0,
+    timeout=86400,
+    memory=16384,
+    cpu=8.0,
     region="us-east",
-    secrets=[modal.Secret.from_dict({"HF_TOKEN": os.environ.get("HF_TOKEN", "") or _get_hf_token()})],
+    secrets=[
+        modal.Secret.from_dict({"HF_TOKEN": os.environ.get("HF_TOKEN", "") or _get_hf_token()})
+    ],
 )
 def run_extraction_pipeline(
     study_name: str,
@@ -469,8 +541,9 @@ def run_extraction_pipeline(
     For a study with 15 series, all 15 dispatch to GPU containers simultaneously.
     Modal scales up to 10 containers in parallel = 10 CPUs at once.
     """
-    import sys; sys.path.insert(0, "/root")
-    HAS_GPU = True  # GPU work happens on separate containers via .map()
+    import sys
+
+    sys.path.insert(0, "/root")
 
     # Reload volume to see files uploaded from the local machine
     volume.reload()
@@ -494,7 +567,10 @@ def run_extraction_pipeline(
             print(f"Using previously extracted files in {extract_dir}", flush=True)
         else:
             extract_dir.mkdir(parents=True, exist_ok=True)
-            print(f"Extracting {len(tar_files)} tar archives in parallel → {extract_dir}...", flush=True)
+            print(
+                f"Extracting {len(tar_files)} tar archives in parallel → {extract_dir}...",
+                flush=True,
+            )
             t_untar = time.time()
             tar_args = [(str(tf), str(extract_dir)) for tf in tar_files]
             results = list(extract_tar_cloud.starmap(tar_args))
@@ -521,13 +597,14 @@ def run_extraction_pipeline(
     print(f"Found {n_files} DICOM files in {study_dir}", flush=True)
     t0 = time.time()
 
-    from src.extraction import extract_single_file, check_conformance
-    from src.quality import grade_study
-    from src.exports import export_cross_series_comparison
-    from src.report import generate_html_report
-    from src.constants import NON_IMAGE_SOP, SOP_CLASS_NAMES
     from collections import defaultdict
     from concurrent.futures import ThreadPoolExecutor, as_completed
+
+    from src.constants import NON_IMAGE_SOP, SOP_CLASS_NAMES
+    from src.exports import export_cross_series_comparison
+    from src.extraction import check_conformance, extract_single_file
+    from src.quality import grade_study
+    from src.report import generate_html_report
 
     n_workers = 8
     file_paths = [str(f) for f in dcm_files]
@@ -568,22 +645,29 @@ def run_extraction_pipeline(
 
     if all_records is None:
         if not files_are_local and n_files >= PARALLEL_EXTRACTION_THRESHOLD:
-            print(f"Distributed extraction (.map) for {n_files} files in chunks of {MAP_CHUNK}...", flush=True)
+            print(
+                f"Distributed extraction (.map) for {n_files} files in chunks of {MAP_CHUNK}...",
+                flush=True,
+            )
             all_records = []
             for chunk_start in range(0, n_files, MAP_CHUNK):
-                chunk = file_paths[chunk_start:chunk_start + MAP_CHUNK]
+                chunk = file_paths[chunk_start : chunk_start + MAP_CHUNK]
                 chunk_results = list(extract_file_cloud.map(chunk))
                 all_records.extend(chunk_results)
                 elapsed = time.time() - t_ext
                 rate = len(all_records) / max(elapsed, 0.01)
                 eta = (n_files - len(all_records)) / max(rate, 0.01)
-                print(f"  [{len(all_records)}/{n_files}] {rate:.0f} files/s, ETA {eta:.0f}s", flush=True)
+                print(
+                    f"  [{len(all_records)}/{n_files}] {rate:.0f} files/s, ETA {eta:.0f}s",
+                    flush=True,
+                )
                 _progress("extract", f"{len(all_records)}/{n_files} files ({rate:.0f}/s)")
         else:
             if files_are_local:
                 print(f"Local extraction (threaded) for {n_files} files...", flush=True)
             all_records = []
             _last_log = [0]
+
             def _safe_extract(fp):
                 try:
                     return extract_single_file(fp, True)
@@ -608,15 +692,20 @@ def run_extraction_pipeline(
     all_records = [r for r in all_records if not r.get("_error")]
     all_records.sort(key=lambda r: r.get("_filename", ""))
     t_extract = time.time() - t_ext
-    print(f"Extracted {len(all_records)} files in {t_extract:.1f}s"
-          + (f" ({len(errored)} failed)" if errored else ""), flush=True)
+    print(
+        f"Extracted {len(all_records)} files in {t_extract:.1f}s"
+        + (f" ({len(errored)} failed)" if errored else ""),
+        flush=True,
+    )
 
     # Cache extraction results on volume for next run
     if not cache_path.exists() and all_records:
         try:
-            cache_path.write_text(json.dumps({"_n_files": n_files, "records": all_records}, default=str))
+            cache_path.write_text(
+                json.dumps({"_n_files": n_files, "records": all_records}, default=str)
+            )
             volume.commit()
-            print(f"  Cached extraction results for next run", flush=True)
+            print("  Cached extraction results for next run", flush=True)
         except Exception as e:
             print(f"  Cache write failed (non-fatal): {e}", flush=True)
 
@@ -627,11 +716,24 @@ def run_extraction_pipeline(
 
     # Patient info
     r0 = all_records[0]
-    patient_info = {k: r0.get(f"_{k}", "") for k in (
-        "patient_id", "patient_name", "patient_sex", "patient_birth_date",
-        "patient_weight", "study_date", "study_description", "institution",
-        "manufacturer", "model", "field_strength", "software_versions", "station_name",
-    )}
+    patient_info = {
+        k: r0.get(f"_{k}", "")
+        for k in (
+            "patient_id",
+            "patient_name",
+            "patient_sex",
+            "patient_birth_date",
+            "patient_weight",
+            "study_date",
+            "study_description",
+            "institution",
+            "manufacturer",
+            "model",
+            "field_strength",
+            "software_versions",
+            "station_name",
+        )
+    }
 
     # Group by series
     groups: dict[str, list[str]] = defaultdict(list)
@@ -648,8 +750,10 @@ def run_extraction_pipeline(
             }
 
     def _sort_key(uid):
-        try: return (0, int(series_meta.get(uid, {}).get("series_number", 0)))
-        except (ValueError, TypeError): return (1, str(series_meta.get(uid, {}).get("series_number", "")))
+        try:
+            return (0, int(series_meta.get(uid, {}).get("series_number", 0)))
+        except (ValueError, TypeError):
+            return (1, str(series_meta.get(uid, {}).get("series_number", "")))
 
     sorted_uids = sorted(groups.keys(), key=_sort_key)
     image_records = [r for r in all_records if r.get("_sop_class_uid", "") not in NON_IMAGE_SOP]
@@ -657,15 +761,28 @@ def run_extraction_pipeline(
     # ── Stage 2: Conformance + save (concurrent) ─────────────────────────
     with ThreadPoolExecutor(max_workers=3) as pool:
         conf_fut = pool.submit(check_conformance, image_records)
-        json_fut = pool.submit(lambda: (out_dir / "dicom_full_dump.json").write_text(
-            json.dumps(all_records, indent=2, default=str)))
+        json_fut = pool.submit(
+            lambda: (out_dir / "dicom_full_dump.json").write_text(
+                json.dumps(all_records, indent=2, default=str)
+            )
+        )
 
         def _save_csv():
             try:
                 import polars as pl
-                prio = ["_filename", "_series_number", "_series_description", "_modality",
-                        "PatientID", "StudyDate", "Modality", "SeriesDescription",
-                        "MagneticFieldStrength", "Manufacturer"]
+
+                prio = [
+                    "_filename",
+                    "_series_number",
+                    "_series_description",
+                    "_modality",
+                    "PatientID",
+                    "StudyDate",
+                    "Modality",
+                    "SeriesDescription",
+                    "MagneticFieldStrength",
+                    "Manufacturer",
+                ]
                 all_keys = {k for r in all_records for k in r}
                 cols = [c for c in prio if c in all_keys] + sorted(all_keys - set(prio))
                 rows = [{c: str(r.get(c, "")) for c in cols} for r in all_records]
@@ -675,7 +792,8 @@ def run_extraction_pipeline(
 
         csv_fut = pool.submit(_save_csv)
         conformance_issues = conf_fut.result()
-        json_fut.result(); csv_fut.result()
+        json_fut.result()
+        csv_fut.result()
 
     print(f"Conformance: {len(conformance_issues)} issues")
 
@@ -684,7 +802,11 @@ def run_extraction_pipeline(
 
     # ── Stage 3: Process series ──────────────────────────────────────────
     t_series = time.time()
-    image_uids = [u for u in sorted_uids if series_meta.get(u, {}).get("sop_class_uid", "") not in NON_IMAGE_SOP]
+    image_uids = [
+        u
+        for u in sorted_uids
+        if series_meta.get(u, {}).get("sop_class_uid", "") not in NON_IMAGE_SOP
+    ]
     ps_uids = [u for u in sorted_uids if u not in set(image_uids)]
 
     filepath_to_uid: dict[str, str] = {}
@@ -706,7 +828,8 @@ def run_extraction_pipeline(
 
     for r in all_records:
         uid = filepath_to_uid.get(r.get("_filepath", ""))
-        if uid: series_records[uid].append(r)
+        if uid:
+            series_records[uid].append(r)
 
     for c in conformance_issues:
         for uid in filename_to_uids.get(c.get("filename", ""), ()):
@@ -718,17 +841,27 @@ def run_extraction_pipeline(
     _progress("series_gpu", f"Processing {len(image_uids)} series")
 
     series_args = [
-        (uid, groups[uid], series_meta.get(uid, {}), str(out_dir), export_nii,
-         idx + 1, series_subdirs.get(uid, ""),
-         series_records.get(uid, []), series_conformance.get(uid, []))
+        (
+            uid,
+            groups[uid],
+            series_meta.get(uid, {}),
+            str(out_dir),
+            export_nii,
+            idx + 1,
+            series_subdirs.get(uid, ""),
+            series_records.get(uid, []),
+            series_conformance.get(uid, []),
+        )
         for idx, uid in enumerate(image_uids)
     ]
 
     if files_are_local:
         # Process locally — files are in /tmp, not visible to workers
-        import sys; sys.path.insert(0, "/root")
-        import traceback as _tb
+        import sys
+
+        sys.path.insert(0, "/root")
         from src.series import process_one_series, reset_sitk_probe
+
         reset_sitk_probe()
 
         gpu_results = []
@@ -737,26 +870,42 @@ def run_extraction_pipeline(
             desc = meta.get("series_description", uid[:12])
             try:
                 r = process_one_series(uid, files, meta, od, nii, idx, subdir, recs, conf)
-                gpu_results.append({
-                    "uid": r.uid, "label": r.label, "info": r.info, "vstats": r.vstats,
-                    "montage_path": r.montage_path, "histogram_path": r.histogram_path,
-                    "enhanced_path": getattr(r, "enhanced_path", None),
-                    "series_folder": getattr(r, "series_folder", None),
-                    "error": None,
-                })
+                gpu_results.append(
+                    {
+                        "uid": r.uid,
+                        "label": r.label,
+                        "info": r.info,
+                        "vstats": r.vstats,
+                        "montage_path": r.montage_path,
+                        "histogram_path": r.histogram_path,
+                        "enhanced_path": getattr(r, "enhanced_path", None),
+                        "series_folder": getattr(r, "series_folder", None),
+                        "error": None,
+                    }
+                )
                 vs = r.vstats
                 if vs:
-                    print(f"  s{r.info.get('series_number','?')} {r.info.get('series_description','')}: "
-                          f"{vs.get('volume_shape',[])} SNR={vs.get('volume_snr_estimate',0):.2f} "
-                          f"Grade={vs.get('quality_grade','?')}", flush=True)
+                    print(
+                        f"  s{r.info.get('series_number', '?')} {r.info.get('series_description', '')}: "
+                        f"{vs.get('volume_shape', [])} SNR={vs.get('volume_snr_estimate', 0):.2f} "
+                        f"Grade={vs.get('quality_grade', '?')}",
+                        flush=True,
+                    )
             except Exception as e:
                 print(f"  [ERROR] Series {idx} '{desc}': {e}", flush=True)
-                gpu_results.append({
-                    "uid": uid, "label": desc, "info": meta, "vstats": None,
-                    "montage_path": None, "histogram_path": None,
-                    "enhanced_path": None, "series_folder": None,
-                    "error": str(e),
-                })
+                gpu_results.append(
+                    {
+                        "uid": uid,
+                        "label": desc,
+                        "info": meta,
+                        "vstats": None,
+                        "montage_path": None,
+                        "histogram_path": None,
+                        "enhanced_path": None,
+                        "series_folder": None,
+                        "error": str(e),
+                    }
+                )
     else:
         gpu_results = list(process_one_series_gpu.starmap(series_args))
 
@@ -774,20 +923,33 @@ def run_extraction_pipeline(
         return {"error": "cancelled", "stage": "series_gpu"}
 
     # Build info dicts from GPU results (dicts, not SeriesResult objects)
-    ps_info = [{
-        "series_uid": uid, "series_number": series_meta[uid].get("series_number", ""),
-        "series_description": series_meta[uid].get("series_description", ""),
-        "modality": series_meta[uid].get("modality", ""),
-        "sop_class": SOP_CLASS_NAMES.get(series_meta[uid].get("sop_class_uid", ""), ""),
-        "file_count": len(groups[uid]), "has_pixels": False, "note": "Presentation state",
-    } for uid in ps_uids]
+    ps_info = [
+        {
+            "series_uid": uid,
+            "series_number": series_meta[uid].get("series_number", ""),
+            "series_description": series_meta[uid].get("series_description", ""),
+            "modality": series_meta[uid].get("modality", ""),
+            "sop_class": SOP_CLASS_NAMES.get(series_meta[uid].get("sop_class_uid", ""), ""),
+            "file_count": len(groups[uid]),
+            "has_pixels": False,
+            "note": "Presentation state",
+        }
+        for uid in ps_uids
+    ]
 
     series_info = [r["info"] for r in gpu_results] + ps_info
-    comparison_data = {r["uid"]: {"label": r["label"], "vstats": r["vstats"]} for r in gpu_results if r.get("vstats")}
+    comparison_data = {
+        r["uid"]: {"label": r["label"], "vstats": r["vstats"]}
+        for r in gpu_results
+        if r.get("vstats")
+    }
     image_paths = {
-        f"{r['info'].get('series_number','?')}_{r['info'].get('series_description','')}":
-        {"montage": r["montage_path"], "histogram": r["histogram_path"]}
-        for r in gpu_results if r.get("montage_path")
+        f"{r['info'].get('series_number', '?')}_{r['info'].get('series_description', '')}": {
+            "montage": r["montage_path"],
+            "histogram": r["histogram_path"],
+        }
+        for r in gpu_results
+        if r.get("montage_path")
     }
 
     # ── Stage 4: Reports ─────────────────────────────────────────────────
@@ -795,10 +957,18 @@ def run_extraction_pipeline(
     t_report = time.time()
     with ThreadPoolExecutor(max_workers=n_workers) as pool:
         cross_fut = pool.submit(export_cross_series_comparison, comparison_data, str(out_dir))
-        stats = {"patient": patient_info, "series": series_info, "conformance_issues": conformance_issues}
-        stats_fut = pool.submit((out_dir / "series_stats.json").write_text, json.dumps(stats, indent=2, default=str))
+        stats = {
+            "patient": patient_info,
+            "series": series_info,
+            "conformance_issues": conformance_issues,
+        }
+        stats_fut = pool.submit(
+            (out_dir / "series_stats.json").write_text, json.dumps(stats, indent=2, default=str)
+        )
         cross_path = cross_fut.result()
-        html_path = generate_html_report(patient_info, series_info, conformance_issues, image_paths, cross_path, out_dir, pool)
+        generate_html_report(
+            patient_info, series_info, conformance_issues, image_paths, cross_path, out_dir, pool
+        )
         stats_fut.result()
     print(f"Reports in {time.time() - t_report:.1f}s")
 
@@ -807,7 +977,11 @@ def run_extraction_pipeline(
 
     # ── Stage 5: Grade + AI ──────────────────────────────────────────────
     _progress("grade", "Grading study quality")
-    all_grades = [s.get("quality_analysis", {}).get("quality_grade", {}) for s in series_info if s.get("has_pixels") and s.get("quality_analysis")]
+    all_grades = [
+        s.get("quality_analysis", {}).get("quality_grade", {})
+        for s in series_info
+        if s.get("has_pixels") and s.get("quality_analysis")
+    ]
     study_grade = grade_study(all_grades)
 
     if analyze or annotate:
@@ -815,16 +989,21 @@ def run_extraction_pipeline(
             _progress("annotate", "Multi-model OpenRouter annotation + Gemma 4 / Claude synthesis")
             try:
                 from src.cloud_analysis import annotate_study_multi
+
                 ann_report = annotate_study_multi(
-                    gpu_results, series_info, out_dir,
+                    gpu_results,
+                    series_info,
+                    out_dir,
                     synthesize=True,
                     patient_info=patient_info,
                 )
                 n_ann = ann_report.get("series_annotated", 0)
                 summary = ann_report.get("summary", {})
-                print(f"  Annotated {n_ann} series, "
-                      f"{summary.get('pathology_detected', 0)} with pathology, "
-                      f"{summary.get('disagreements', 0)} disagreements")
+                print(
+                    f"  Annotated {n_ann} series, "
+                    f"{summary.get('pathology_detected', 0)} with pathology, "
+                    f"{summary.get('disagreements', 0)} disagreements"
+                )
                 if ann_report.get("narrative_path"):
                     print(f"  Final report → {ann_report['narrative_path']}")
             except Exception as e:
@@ -837,21 +1016,28 @@ def run_extraction_pipeline(
 
     # ── Stage 6: HIPAA scan ──────────────────────────────────────────────
     _progress("hipaa", f"Scanning {n_files} files for HIPAA compliance")
-    from src.hipaa import run_hipaa_scan, compliance_report_to_dict
+    from src.hipaa import compliance_report_to_dict, run_hipaa_scan
 
     # If processing redacted data, tell scanner which tags are de-identified
     de_id_tags = None
     if "redacted" in study_name.lower():
-        from src.redaction import PHI_TAGS_HASH, PHI_TAGS_DATE, PHI_TAGS_BLANK, PHI_TAGS_REMOVE
+        from src.redaction import PHI_TAGS_BLANK, PHI_TAGS_DATE, PHI_TAGS_HASH, PHI_TAGS_REMOVE
+
         de_id_tags = PHI_TAGS_HASH | PHI_TAGS_DATE | PHI_TAGS_BLANK | PHI_TAGS_REMOVE
 
     hipaa_report = run_hipaa_scan(
-        file_paths, study_name=study_name, n_workers=n_workers,
+        file_paths,
+        study_name=study_name,
+        n_workers=n_workers,
         de_identified_tags=de_id_tags,
     )
-    (out_dir / "hipaa_compliance.json").write_text(json.dumps(compliance_report_to_dict(hipaa_report), indent=2))
-    print(f"HIPAA: score {hipaa_report.compliance_score:.0f}/100, {hipaa_report.total_phi_findings} PHI, "
-          f"{hipaa_report.risk_summary.get('high', 0)} high-risk")
+    (out_dir / "hipaa_compliance.json").write_text(
+        json.dumps(compliance_report_to_dict(hipaa_report), indent=2)
+    )
+    print(
+        f"HIPAA: score {hipaa_report.compliance_score:.0f}/100, {hipaa_report.total_phi_findings} PHI, "
+        f"{hipaa_report.risk_summary.get('high', 0)} high-risk"
+    )
 
     volume.commit()
 
@@ -861,17 +1047,23 @@ def run_extraction_pipeline(
     # ── Stage 7: HF upload (optional — server-side, no download needed) ──
     hf_url = None
     if upload_hf:
-        _progress("hf_upload", f"Uploading to Hugging Face")
-        print(f"\n=== Uploading to Hugging Face (server-side) ===")
+        _progress("hf_upload", "Uploading to Hugging Face")
+        print("\n=== Uploading to Hugging Face (server-side) ===")
         try:
             import os
+
             from src.hf_upload import upload_to_huggingface
+
             hipaa_dict = compliance_report_to_dict(hipaa_report)
             hf_url = upload_to_huggingface(
-                out_dir, study_name=study_name,
-                repo_id=hf_repo, patient_info=patient_info,
-                series_info=series_info, hipaa_report=hipaa_dict,
-                study_grade=study_grade, private=hf_private,
+                out_dir,
+                study_name=study_name,
+                repo_id=hf_repo,
+                patient_info=patient_info,
+                series_info=series_info,
+                hipaa_report=hipaa_dict,
+                study_grade=study_grade,
+                private=hf_private,
                 token=os.environ.get("HF_TOKEN", ""),
                 source_dir=study_dir,
             )
@@ -883,29 +1075,41 @@ def run_extraction_pipeline(
     n_with_vol = sum(1 for r in gpu_results if r.get("vstats"))
     grade_dist = study_grade.get("grade_distribution", {})
 
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print(f"Pipeline complete in {total:.1f}s")
-    print(f"  GPU: 2x CPU per container (auto-scaled via .starmap)")
+    print("  GPU: 2x CPU per container (auto-scaled via .starmap)")
     print(f"  Files: {n_files} | Series: {len(image_uids)} image + {len(ps_uids)} PS")
     if failed_series:
         print(f"  Failed: {len(failed_series)} series")
-    print(f"  Grade: {study_grade.get('grade','?')} ({study_grade.get('score',0):.0f}/100)")
+    print(f"  Grade: {study_grade.get('grade', '?')} ({study_grade.get('score', 0):.0f}/100)")
     print(f"  HIPAA: {hipaa_report.compliance_score:.0f}/100")
     if hf_url:
         print(f"  HF: {hf_url}")
-    print(f"  Timing: extract {t_extract:.1f}s + process {t_proc:.1f}s + reports {time.time()-t_report:.1f}s")
-    print(f"{'='*60}")
+    print(
+        f"  Timing: extract {t_extract:.1f}s + process {t_proc:.1f}s + reports {time.time() - t_report:.1f}s"
+    )
+    print(f"{'=' * 60}")
 
     result = {
-        "study": study_name, "files": n_files,
-        "image_series": len(image_uids), "with_volumes": n_with_vol,
-        "series_succeeded": len(ok_series), "series_failed": len(failed_series),
-        "failed_series_details": [{"label": r.get("label"), "error": r.get("error")} for r in failed_series],
-        "ps_series": len(ps_uids), "conformance_issues": len(conformance_issues),
-        "study_grade": study_grade.get("grade", "?"), "study_score": study_grade.get("score", 0),
+        "study": study_name,
+        "files": n_files,
+        "image_series": len(image_uids),
+        "with_volumes": n_with_vol,
+        "series_succeeded": len(ok_series),
+        "series_failed": len(failed_series),
+        "failed_series_details": [
+            {"label": r.get("label"), "error": r.get("error")} for r in failed_series
+        ],
+        "ps_series": len(ps_uids),
+        "conformance_issues": len(conformance_issues),
+        "study_grade": study_grade.get("grade", "?"),
+        "study_score": study_grade.get("score", 0),
         "grade_distribution": grade_dist,
-        "time_s": round(total, 1), "extract_time_s": round(t_extract, 1), "process_time_s": round(t_proc, 1),
-        "gpu": "CPU (auto-scaled)", "storage": "modal_volume",
+        "time_s": round(total, 1),
+        "extract_time_s": round(t_extract, 1),
+        "process_time_s": round(t_proc, 1),
+        "gpu": "CPU (auto-scaled)",
+        "storage": "modal_volume",
         "hipaa_score": hipaa_report.compliance_score,
         "hipaa_phi_findings": hipaa_report.total_phi_findings,
         "hipaa_high_risk_files": hipaa_report.risk_summary.get("high", 0),
@@ -914,36 +1118,51 @@ def run_extraction_pipeline(
     }
 
     if _call_id:
-        _finish_job(_call_id, detail=f"Grade {study_grade.get('grade','?')}, {len(ok_series)} series")
+        _finish_job(
+            _call_id, detail=f"Grade {study_grade.get('grade', '?')}, {len(ok_series)} series"
+        )
 
     return result
 
 
 # ── Redaction ────────────────────────────────────────────────────────────────
 
+
 @app.function(
     image=cpu_image,
     volumes={str(MOUNT_POINT): volume},
-    timeout=120, memory=512,
+    timeout=120,
+    memory=512,
     region="us-east",
     scaledown_window=300,
 )
 @modal.concurrent(max_inputs=32, target_inputs=24)
 def redact_single_file_cloud(fpath: str, out_dir: str, salt: str, date_shift_days: int) -> dict:
     """Redact PHI from a single DICOM file. 66 rules, single-pass verify."""
-    import sys; sys.path.insert(0, "/root")
+    import sys
+
+    sys.path.insert(0, "/root")
     from src.redaction import redact_single_file
+
     r = redact_single_file(fpath, out_dir, salt, date_shift_days, verify=True)
     return {
-        "filepath": r.filepath, "output": r.output_path, "error": r.error,
-        "removed": r.tags_removed, "blanked": r.tags_blanked,
-        "hashed": r.tags_hashed, "shifted": r.tags_date_shifted,
+        "filepath": r.filepath,
+        "output": r.output_path,
+        "error": r.error,
+        "removed": r.tags_removed,
+        "blanked": r.tags_blanked,
+        "hashed": r.tags_hashed,
+        "shifted": r.tags_date_shifted,
         "verified_clean": r.verified_clean,
     }
 
 
-@app.function(image=cpu_image, volumes={str(MOUNT_POINT): volume}, timeout=86400, memory=32768, cpu=8.0)
-def run_redaction_pipeline(study_name: str, salt: str = "", date_shift: int = -90, _call_id: str = "") -> dict:
+@app.function(
+    image=cpu_image, volumes={str(MOUNT_POINT): volume}, timeout=86400, memory=32768, cpu=8.0
+)
+def run_redaction_pipeline(
+    study_name: str, salt: str = "", date_shift: int = -90, _call_id: str = ""
+) -> dict:
     """Full HIPAA pipeline: scan → redact → verify → scan → copy redacted to studies.
 
     After redaction, copies the clean files into STUDIES_DIR/{study}_redacted
@@ -958,9 +1177,13 @@ def run_redaction_pipeline(study_name: str, salt: str = "", date_shift: int = -9
       4. Copy redacted .dcm files → volume:/data/studies/{study}_redacted/
          so `extract --study {study}_redacted` works
     """
-    import sys; sys.path.insert(0, "/root")
-    import hashlib, os, shutil
-    from src.hipaa import run_hipaa_scan, compliance_report_to_dict
+    import sys
+
+    sys.path.insert(0, "/root")
+    import hashlib
+    import os
+
+    from src.hipaa import compliance_report_to_dict, run_hipaa_scan
 
     # Reload volume to see files uploaded from the local machine
     volume.reload()
@@ -974,6 +1197,7 @@ def run_redaction_pipeline(study_name: str, salt: str = "", date_shift: int = -9
 
     # Extract tar archives if present
     import tarfile as _tarfile
+
     tar_files = sorted(study_dir.glob("*.tar"))
     if tar_files:
         extract_dir = Path("/tmp/dicom_study") / study_name
@@ -1020,6 +1244,7 @@ def run_redaction_pipeline(study_name: str, salt: str = "", date_shift: int = -9
 
     # Progress callback — prints every 5000 files
     _last_progress = [0]
+
     def _on_progress(done, total):
         if done - _last_progress[0] >= 5000 or done == total:
             elapsed = time.time() - t0
@@ -1031,25 +1256,38 @@ def run_redaction_pipeline(study_name: str, salt: str = "", date_shift: int = -9
 
     if files_are_local:
         from src.redaction import redact_files
+
         redact_out_local = Path("/tmp/redacted_out") / study_name
         redact_out_local.mkdir(parents=True, exist_ok=True)
         summary = redact_files(
-            file_paths, str(redact_out_local), n_workers=n_threads,
-            salt=salt, date_shift_days=date_shift, verify=True,
+            file_paths,
+            str(redact_out_local),
+            n_workers=n_threads,
+            salt=salt,
+            date_shift_days=date_shift,
+            verify=True,
             on_progress=_on_progress,
         )
         results = []
         for r in summary.results:
-            results.append({
-                "filepath": r.filepath, "output": r.output_path, "error": r.error,
-                "removed": r.tags_removed, "blanked": r.tags_blanked,
-                "hashed": r.tags_hashed, "shifted": r.tags_date_shifted,
-                "verified_clean": r.verified_clean,
-            })
+            results.append(
+                {
+                    "filepath": r.filepath,
+                    "output": r.output_path,
+                    "error": r.error,
+                    "removed": r.tags_removed,
+                    "blanked": r.tags_blanked,
+                    "hashed": r.tags_hashed,
+                    "shifted": r.tags_date_shifted,
+                    "verified_clean": r.verified_clean,
+                }
+            )
     else:
-        results = list(redact_single_file_cloud.starmap(
-            [(str(f), str(redact_out), salt, date_shift) for f in dcm_files]
-        ))
+        results = list(
+            redact_single_file_cloud.starmap(
+                [(str(f), str(redact_out), salt, date_shift) for f in dcm_files]
+            )
+        )
 
     processed = sum(1 for r in results if not r.get("error"))
     failed = sum(1 for r in results if r.get("error"))
@@ -1059,29 +1297,46 @@ def run_redaction_pipeline(study_name: str, salt: str = "", date_shift: int = -9
     hashed = sum(r.get("hashed", 0) for r in results)
     shifted = sum(r.get("shifted", 0) for r in results)
     t_redact = time.time() - t0
-    print(f"  Done: {processed} files in {t_redact:.1f}s ({removed} removed, {blanked} blanked, "
-          f"{hashed} hashed, {shifted} shifted, {verified}/{processed} verified)", flush=True)
+    print(
+        f"  Done: {processed} files in {t_redact:.1f}s ({removed} removed, {blanked} blanked, "
+        f"{hashed} hashed, {shifted} shifted, {verified}/{processed} verified)",
+        flush=True,
+    )
 
     if _rcheck_cancel():
         return {"error": "cancelled", "stage": "redact"}
 
     # Step 2: Post-scan (sample 1000 files, not all 355K — much faster)
-    _rprogress("post_scan", f"Verifying redacted files")
+    _rprogress("post_scan", "Verifying redacted files")
     redacted_paths = [r["output"] for r in results if r.get("output") and r["output"]]
 
     import random as _rnd
-    sample_size = min(1000, len(redacted_paths))
-    sample_paths = _rnd.sample(redacted_paths, sample_size) if len(redacted_paths) > sample_size else redacted_paths
-    print(f"Step 2: HIPAA post-scan (sampling {sample_size}/{len(redacted_paths)} files)...", flush=True)
 
-    from src.redaction import PHI_TAGS_HASH, PHI_TAGS_DATE, PHI_TAGS_BLANK, PHI_TAGS_REMOVE
+    sample_size = min(1000, len(redacted_paths))
+    sample_paths = (
+        _rnd.sample(redacted_paths, sample_size)
+        if len(redacted_paths) > sample_size
+        else redacted_paths
+    )
+    print(
+        f"Step 2: HIPAA post-scan (sampling {sample_size}/{len(redacted_paths)} files)...",
+        flush=True,
+    )
+
+    from src.redaction import PHI_TAGS_BLANK, PHI_TAGS_DATE, PHI_TAGS_HASH, PHI_TAGS_REMOVE
+
     de_identified = PHI_TAGS_HASH | PHI_TAGS_DATE | PHI_TAGS_BLANK | PHI_TAGS_REMOVE
 
     post = run_hipaa_scan(
-        sample_paths, study_name=f"{study_name}_post", n_workers=n_threads,
+        sample_paths,
+        study_name=f"{study_name}_post",
+        n_workers=n_threads,
         de_identified_tags=de_identified,
     )
-    print(f"  Post: score {post.compliance_score:.0f}/100, {post.total_phi_findings} PHI (from {sample_size} sample)", flush=True)
+    print(
+        f"  Post: score {post.compliance_score:.0f}/100, {post.total_phi_findings} PHI (from {sample_size} sample)",
+        flush=True,
+    )
 
     if _rcheck_cancel():
         return {"error": "cancelled", "stage": "post_scan"}
@@ -1104,7 +1359,7 @@ def run_redaction_pipeline(study_name: str, salt: str = "", date_shift: int = -9
     redacted_study_dir.mkdir(parents=True, exist_ok=True)
     n_packed = 0
     for i in range(0, len(redacted_files), TAR_CHUNK_FILES):
-        chunk = redacted_files[i:i + TAR_CHUNK_FILES]
+        chunk = redacted_files[i : i + TAR_CHUNK_FILES]
         chunk_idx = i // TAR_CHUNK_FILES
         tar_path = redacted_study_dir / f"chunk_{chunk_idx:04d}.tar"
         with _tarfile.open(str(tar_path), "w") as tf:
@@ -1112,16 +1367,23 @@ def run_redaction_pipeline(study_name: str, salt: str = "", date_shift: int = -9
                 tf.add(str(f), arcname=f.name)
         n_packed += len(chunk)
 
-    print(f"  Packed {n_packed} redacted files into {(len(redacted_files) + TAR_CHUNK_FILES - 1) // TAR_CHUNK_FILES} tar archives", flush=True)
+    print(
+        f"  Packed {n_packed} redacted files into {(len(redacted_files) + TAR_CHUNK_FILES - 1) // TAR_CHUNK_FILES} tar archives",
+        flush=True,
+    )
 
     combined = {
         "post_redaction": compliance_report_to_dict(post),
         "redacted_study": f"{study_name}_redacted",
         "improvement": {
-            "files_redacted": processed, "files_failed": failed,
-            "tags_removed": removed, "tags_blanked": blanked,
-            "tags_hashed": hashed, "tags_date_shifted": shifted,
-            "verified_clean": verified, "redaction_time_s": round(t_redact, 1),
+            "files_redacted": processed,
+            "files_failed": failed,
+            "tags_removed": removed,
+            "tags_blanked": blanked,
+            "tags_hashed": hashed,
+            "tags_date_shifted": shifted,
+            "verified_clean": verified,
+            "redaction_time_s": round(t_redact, 1),
             "post_score": post.compliance_score,
             "post_phi": post.total_phi_findings,
         },
@@ -1130,12 +1392,16 @@ def run_redaction_pipeline(study_name: str, salt: str = "", date_shift: int = -9
     volume.commit()
 
     if _call_id:
-        _finish_job(_call_id, detail=f"{processed} files redacted, post-score {post.compliance_score:.0f}/100")
+        _finish_job(
+            _call_id,
+            detail=f"{processed} files redacted, post-score {post.compliance_score:.0f}/100",
+        )
 
     return combined
 
 
 # ── CLI entrypoints ──────────────────────────────────────────────────────────
+
 
 @app.local_entrypoint()
 def upload(local_dir: str = DEFAULT_LOCAL_INPUT, study_name: str = ""):
@@ -1192,8 +1458,13 @@ def extract(
             print(f"Extracting redacted study: {extract_study}")
 
     result = run_extraction_pipeline.remote(
-        extract_study, analyze, export_nii, compress,
-        upload_hf=upload_hf, hf_repo=hf_repo, annotate=annotate,
+        extract_study,
+        analyze,
+        export_nii,
+        compress,
+        upload_hf=upload_hf,
+        hf_repo=hf_repo,
+        annotate=annotate,
     )
     print(json.dumps(result, indent=2))
 
@@ -1222,7 +1493,9 @@ def download(study: str = "", local_dir: str = "./output"):
     n, total_bytes = _parallel_download(remote_dir, local)
     elapsed = time.time() - t0
     rate = total_bytes / max(elapsed, 0.01) / 1024 / 1024
-    print(f"Downloaded {n} files ({total_bytes / 1024**2:.1f} MB) in {elapsed:.1f}s ({rate:.1f} MB/s)")
+    print(
+        f"Downloaded {n} files ({total_bytes / 1024**2:.1f} MB) in {elapsed:.1f}s ({rate:.1f} MB/s)"
+    )
 
 
 @app.local_entrypoint()
@@ -1254,9 +1527,9 @@ def run(
     t_start = time.time()
 
     # Step 1: Upload
-    print(f"{'='*60}")
-    print(f"=== Step 1: Upload ===")
-    print(f"{'='*60}")
+    print(f"{'=' * 60}")
+    print("=== Step 1: Upload ===")
+    print(f"{'=' * 60}")
     study_name, upload_stats = _ensure_uploaded(local_dir)
 
     # Step 2: Redact (optional — runs BEFORE extraction so output is clean)
@@ -1264,9 +1537,9 @@ def run(
     extract_study = study_name  # which study to extract — original or redacted
 
     if do_redact:
-        print(f"\n{'='*60}")
-        print(f"=== Step 2: Redact (HIPAA scan → redact → verify → scan) ===")
-        print(f"{'='*60}")
+        print(f"\n{'=' * 60}")
+        print("=== Step 2: Redact (HIPAA scan → redact → verify → scan) ===")
+        print(f"{'=' * 60}")
         redact_result = run_redaction_pipeline.remote(study_name)
         print(json.dumps(redact_result, indent=2, default=str))
 
@@ -1278,14 +1551,19 @@ def run(
             print(f"Redaction failed, extracting original: {study_name}")
 
     # Step 3: Extract (on redacted files if --do-redact, otherwise original)
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     step_n = 3 if do_redact else 2
     print(f"=== Step {step_n}: Extract '{extract_study}' (2x CPU per container, auto-scaled) ===")
-    print(f"{'='*60}")
+    print(f"{'=' * 60}")
     # HF upload happens server-side inside the pipeline — no separate step needed
     result = run_extraction_pipeline.remote(
-        extract_study, analyze, export_nii, compress,
-        upload_hf=upload_hf, hf_repo=hf_repo, hf_private=hf_private,
+        extract_study,
+        analyze,
+        export_nii,
+        compress,
+        upload_hf=upload_hf,
+        hf_repo=hf_repo,
+        hf_private=hf_private,
         annotate=annotate,
     )
     print(json.dumps(result, indent=2))
@@ -1295,10 +1573,10 @@ def run(
         return
 
     # Download
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     step_n += 1
     print(f"=== Step {step_n}: Download ===")
-    print(f"{'='*60}")
+    print(f"{'=' * 60}")
     dl_local = Path(out_dir)
     dl_local.mkdir(parents=True, exist_ok=True)
 
@@ -1310,27 +1588,31 @@ def run(
         redact_remote = str(_VOL_OUTPUT / f"{study_name}_redacted")
         hipaa_dl = dl_local / "redaction"
         hipaa_dl.mkdir(parents=True, exist_ok=True)
-        n2, b2 = _parallel_download(redact_remote, hipaa_dl)
+        n2, _b2 = _parallel_download(redact_remote, hipaa_dl)
         if n2:
             print(f"Downloaded {n2} redaction files → {hipaa_dl}")
 
     # Summary
     total_time = time.time() - t_start
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print(f"Done in {total_time:.1f}s")
     print(f"  Study:     {study_name}" + (f" → {extract_study} (redacted)" if do_redact else ""))
     print(f"  GPU:       {result.get('gpu', '?')}")
     print(f"  Grade:     {result.get('study_grade', '?')} ({result.get('study_score', 0):.0f}/100)")
-    print(f"  HIPAA:     {result.get('hipaa_score', '?')}/100 ({result.get('hipaa_phi_findings', '?')} PHI)")
+    print(
+        f"  HIPAA:     {result.get('hipaa_score', '?')}/100 ({result.get('hipaa_phi_findings', '?')} PHI)"
+    )
     print(f"  Upload:    {upload_stats.get('uploaded', 0)} new")
     if do_redact and redact_result and not redact_result.get("error"):
         imp = redact_result.get("improvement", {})
-        print(f"  Redaction: {imp.get('files_redacted', '?')} files, "
-              f"post-score {imp.get('post_score', '?')}/100")
+        print(
+            f"  Redaction: {imp.get('files_redacted', '?')} files, "
+            f"post-score {imp.get('post_score', '?')}/100"
+        )
     if result.get("hf_url"):
         print(f"  HF:        {result['hf_url']}")
     print(f"  Output:    {out_dir}")
-    print(f"{'='*60}")
+    print(f"{'=' * 60}")
 
 
 @app.local_entrypoint()
@@ -1343,7 +1625,11 @@ def list_studies():
             for entry in volume.listdir(remote):
                 name = PurePosixPath(entry.path).name
                 try:
-                    files = [f for f in volume.listdir(entry.path, recursive=True) if not f.path.endswith("/")]
+                    files = [
+                        f
+                        for f in volume.listdir(entry.path, recursive=True)
+                        if not f.path.endswith("/")
+                    ]
                     print(f"  {name:30s}  ({len(files)} files)")
                 except Exception:
                     print(f"  {name}")
@@ -1407,6 +1693,5 @@ def cleanup(nuke_all: bool = False):
                 deleted += prefix_deleted
         except Exception:
             pass
-
 
     print(f"Cleanup done: {deleted} files removed")

@@ -27,15 +27,22 @@ from pathlib import Path, PurePosixPath
 
 import modal
 
-
 VOLUME_NAME = "micom-v2"
 MOUNT_POINT = PurePosixPath("/vol")
 
 _PIP_DEPS = [
-    "pydicom>=3.0", "SimpleITK>=2.4", "nibabel>=5.3",
-    "polars>=1.17", "numpy>=2.1", "rich>=13.9",
-    "matplotlib>=3.10", "scipy>=1.14", "pillow>=11.0",
-    "python-dotenv>=1.0", "huggingface_hub>=0.25", "openai>=1.50",
+    "pydicom>=3.0",
+    "SimpleITK>=2.4",
+    "nibabel>=5.3",
+    "polars>=1.17",
+    "numpy>=2.1",
+    "rich>=13.9",
+    "matplotlib>=3.10",
+    "scipy>=1.14",
+    "pillow>=11.0",
+    "python-dotenv>=1.0",
+    "huggingface_hub>=0.25",
+    "openai>=1.50",
 ]
 
 image = (
@@ -56,15 +63,23 @@ volume = modal.Volume.from_name(VOLUME_NAME, create_if_missing=True, version=2)
 # We do NOT add a generic "*.tar" exclusion -- the slice tar shards are
 # exactly what we want to ship.
 _IGNORE_PATTERNS = [
-    "*.dcm", "*.dicom",
-    "*.html", "*.htm",
-    "*.tar.gz", "*.zip",
-    ".*", ".*/**",
-    "_internal/**", "**/_internal/**",
-    ".hf_cache/**", "**/.hf_cache/**",
+    "*.dcm",
+    "*.dicom",
+    "*.html",
+    "*.htm",
+    "*.tar.gz",
+    "*.zip",
+    ".*",
+    ".*/**",
+    "_internal/**",
+    "**/_internal/**",
+    ".hf_cache/**",
+    "**/.hf_cache/**",
     # Raw per-slice PNGs -- replaced by *.slices.tar shards
-    "slices/**", "**/slices/**",
-    "*_slices/**", "**/*_slices/**",
+    "slices/**",
+    "**/slices/**",
+    "*_slices/**",
+    "**/*_slices/**",
 ]
 
 
@@ -72,7 +87,9 @@ _IGNORE_PATTERNS = [
     image=image,
     volumes={str(MOUNT_POINT): volume},
     secrets=[modal.Secret.from_name("huggingface")],
-    timeout=86400, memory=16384, cpu=8.0,
+    timeout=86400,
+    memory=16384,
+    cpu=8.0,
 )
 def upload(
     hf_repo: str = "shubhxho/speall-mri",
@@ -94,6 +111,7 @@ def upload(
         Dict with keys: hf_url, manifest (counts or None), time_min.
     """
     import sys
+
     sys.path.insert(0, "/root")
 
     import os
@@ -110,11 +128,12 @@ def upload(
     # ── Step 1: Generate fresh manifests ─────────────────────────────────────
     manifest_counts: dict | None = None
     if generate_manifest:
-        print(f"{'='*60}")
+        print(f"{'=' * 60}")
         print("Generating manifests from volume contents...")
-        print(f"{'='*60}")
+        print(f"{'=' * 60}")
         try:
             from src.build_manifest import write_manifests
+
             manifest_counts = write_manifests(output_dir, output_dir)
             print(f"  manifest.parquet       -> {manifest_counts['series_rows']} series rows")
             print(f"  study_manifest.parquet -> {manifest_counts['study_rows']} study rows")
@@ -134,9 +153,9 @@ def upload(
     create_repo(hf_repo, repo_type="dataset", private=False, exist_ok=True, token=token)
 
     if super_squash:
-        print(f"\n{'='*60}")
+        print(f"\n{'=' * 60}")
         print("Squashing HF commit history...")
-        print(f"{'='*60}")
+        print(f"{'=' * 60}")
         try:
             api.super_squash_history(repo_id=hf_repo, repo_type="dataset")
             print("  History squashed.")
@@ -144,9 +163,9 @@ def upload(
             print(f"  Squash failed (continuing): {exc}")
 
     # ── Step 3: Upload from volume mount ─────────────────────────────────────
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print("Starting upload_large_folder...")
-    print(f"{'='*60}")
+    print(f"{'=' * 60}")
 
     top_level = sorted(p.name for p in output_dir.iterdir())
     print(f"  Source path:       {output_dir}")
@@ -165,10 +184,12 @@ def upload(
     hf_url = f"https://huggingface.co/datasets/{hf_repo}"
 
     total_elapsed = time.time() - t0
-    print(f"\n{'='*60}")
-    print(f"UPLOAD DONE in {upload_elapsed / 60:.1f} min (total wall time {total_elapsed / 60:.1f} min)")
+    print(f"\n{'=' * 60}")
+    print(
+        f"UPLOAD DONE in {upload_elapsed / 60:.1f} min (total wall time {total_elapsed / 60:.1f} min)"
+    )
     print(f"  -> {hf_url}")
-    print(f"{'='*60}")
+    print(f"{'=' * 60}")
 
     return {
         "hf_url": hf_url,

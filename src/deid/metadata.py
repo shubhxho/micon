@@ -47,162 +47,265 @@ log = logging.getLogger(__name__)
 # All odd-numbered groups are private by DICOM standard.
 # These are the known GE, Siemens, Philips groups + catch-all odd groups.
 
-PRIVATE_GROUPS_TO_STRIP: frozenset[int] = frozenset({
-    0x0009, 0x0011, 0x0013, 0x0019, 0x0021, 0x0023, 0x0025, 0x0027,
-    0x0029, 0x0033, 0x0035, 0x0037, 0x0039, 0x0041, 0x0043, 0x0045,
-    0x0050, 0x0051, 0x0053, 0x0055, 0x0057, 0x0059, 0x0061, 0x0065,
-    0x0067, 0x0069, 0x0071, 0x0073, 0x0075, 0x0077, 0x0079,
-})
+PRIVATE_GROUPS_TO_STRIP: frozenset[int] = frozenset(
+    {
+        0x0009,
+        0x0011,
+        0x0013,
+        0x0019,
+        0x0021,
+        0x0023,
+        0x0025,
+        0x0027,
+        0x0029,
+        0x0033,
+        0x0035,
+        0x0037,
+        0x0039,
+        0x0041,
+        0x0043,
+        0x0045,
+        0x0050,
+        0x0051,
+        0x0053,
+        0x0055,
+        0x0057,
+        0x0059,
+        0x0061,
+        0x0065,
+        0x0067,
+        0x0069,
+        0x0071,
+        0x0073,
+        0x0075,
+        0x0077,
+        0x0079,
+    }
+)
 
 # ── PS3.15 Annex E: tags to remove (D action) ──────────────────────────────
 
-TAGS_REMOVE: frozenset[str] = frozenset({
-    # ── HIPAA Safe Harbor identifiers ──
-    "PatientAddress", "PatientTelephoneNumbers",
-    "PatientInsurancePlanCodeSequence", "MilitaryRank",
-    "BranchOfService", "PatientReligiousPreference",
-    "MedicalRecordLocator", "ReferencedPatientPhotoSequence",
-    "ResponsiblePerson", "ResponsibleOrganization",
-    "ClinicalTrialSponsorName", "ClinicalTrialProtocolID",
-    "ClinicalTrialSubjectID", "ClinicalTrialSiteID",
-    "ClinicalTrialSiteName", "RequestingPhysician",
-    "ScheduledPerformingPhysicianName", "RequestAttributesSequence",
-    "ContentSequence", "DistributionAddress", "DistributionName",
-    "FillerOrderNumberImagingServiceRequest",
-    "PlacerOrderNumberImagingServiceRequest",
-    "OrderCallbackPhoneNumber", "OrderCallbackTelecomInformation",
-    "OrderEnteredBy", "OrderEntererLocation",
-    "IssuerOfPatientID", "IssuerOfPatientIDQualifiersSequence",
-    "PatientBirthTime", "PatientAge",
-    "EthnicGroup", "Occupation", "SmokingStatus",
-    "PregnancyStatus", "PatientSexNeutered",
-    "ConfidentialityConstraintOnPatientDataDescription",
-    "ReferencedStudySequence", "ReferencedPerformedProcedureStepSequence",
-    "SourceImageSequence", "ReferencedImageSequence",
-    "OriginalAttributesSequence",
-    "ImageComments", "StudyComments",
-    "InterpretationAuthor", "InterpretationText", "ResultsComments",
-    # ── Indian DPDPA / IT Act — additional sensitive fields ──
-    "PatientWeight", "PatientSize",  # body metrics — identifiable with other data
-    "MedicalAlerts", "Allergies", "AdditionalPatientHistory",
-    "PatientState", "PatientTransportArrangements",
-    "CountryOfResidence", "RegionOfResidence",
-    "CurrentPatientLocation", "PatientInstitutionResidence",
-    "VisitComments", "DischargeDate", "DischargeDiagnosisDescription",
-    "ServiceEpisodeDescription", "ServiceEpisodeID",
-    # ── Sequences that may embed PHI in nested items ──
-    "VerifyingObserverSequence", "AuthorObserverSequence",
-    "ParticipantSequence", "CustodialOrganizationSequence",
-    "ReasonForStudy", "RequestedProcedureCodeSequence",
-    "ReferencedPatientSequence",
-})
+TAGS_REMOVE: frozenset[str] = frozenset(
+    {
+        # ── HIPAA Safe Harbor identifiers ──
+        "PatientAddress",
+        "PatientTelephoneNumbers",
+        "PatientInsurancePlanCodeSequence",
+        "MilitaryRank",
+        "BranchOfService",
+        "PatientReligiousPreference",
+        "MedicalRecordLocator",
+        "ReferencedPatientPhotoSequence",
+        "ResponsiblePerson",
+        "ResponsibleOrganization",
+        "ClinicalTrialSponsorName",
+        "ClinicalTrialProtocolID",
+        "ClinicalTrialSubjectID",
+        "ClinicalTrialSiteID",
+        "ClinicalTrialSiteName",
+        "RequestingPhysician",
+        "ScheduledPerformingPhysicianName",
+        "RequestAttributesSequence",
+        "ContentSequence",
+        "DistributionAddress",
+        "DistributionName",
+        "FillerOrderNumberImagingServiceRequest",
+        "PlacerOrderNumberImagingServiceRequest",
+        "OrderCallbackPhoneNumber",
+        "OrderCallbackTelecomInformation",
+        "OrderEnteredBy",
+        "OrderEntererLocation",
+        "IssuerOfPatientID",
+        "IssuerOfPatientIDQualifiersSequence",
+        "PatientBirthTime",
+        "PatientAge",
+        "EthnicGroup",
+        "Occupation",
+        "SmokingStatus",
+        "PregnancyStatus",
+        "PatientSexNeutered",
+        "ConfidentialityConstraintOnPatientDataDescription",
+        "ReferencedStudySequence",
+        "ReferencedPerformedProcedureStepSequence",
+        "SourceImageSequence",
+        "ReferencedImageSequence",
+        "OriginalAttributesSequence",
+        "ImageComments",
+        "StudyComments",
+        "InterpretationAuthor",
+        "InterpretationText",
+        "ResultsComments",
+        # ── Indian DPDPA / IT Act — additional sensitive fields ──
+        "PatientWeight",
+        "PatientSize",  # body metrics — identifiable with other data
+        "MedicalAlerts",
+        "Allergies",
+        "AdditionalPatientHistory",
+        "PatientState",
+        "PatientTransportArrangements",
+        "CountryOfResidence",
+        "RegionOfResidence",
+        "CurrentPatientLocation",
+        "PatientInstitutionResidence",
+        "VisitComments",
+        "DischargeDate",
+        "DischargeDiagnosisDescription",
+        "ServiceEpisodeDescription",
+        "ServiceEpisodeID",
+        # ── Sequences that may embed PHI in nested items ──
+        "VerifyingObserverSequence",
+        "AuthorObserverSequence",
+        "ParticipantSequence",
+        "CustodialOrganizationSequence",
+        "ReasonForStudy",
+        "RequestedProcedureCodeSequence",
+        "ReferencedPatientSequence",
+    }
+)
 
 # ── PS3.15 Annex E: tags to blank (Z action) ───────────────────────────────
 
-TAGS_BLANK: frozenset[str] = frozenset({
-    "PatientName", "PatientID", "OtherPatientIDs",
-    "OtherPatientNames", "PatientBirthName",
-    "PatientMotherBirthName", "PatientComments",
-    "AdditionalPatientHistory", "InstitutionName",
-    "InstitutionAddress", "InstitutionalDepartmentName",
-    "StationName", "ReferringPhysicianName",
-    "PerformingPhysicianName", "NameOfPhysiciansReadingStudy",
-    "OperatorsName", "PhysiciansOfRecord",
-    "AdmittingDiagnosesDescription", "AdmittingDiagnosesCodeSequence",
-    "AccessionNumber", "StudyID", "DeviceSerialNumber",
-    "InstitutionalDepartmentTypeCodeSequence",
-    "RequestedProcedureDescription",
-    "PerformedProcedureStepDescription",
-    "PerformedProcedureStepID",
-    "RequestedProcedureID",
-    "ScheduledProcedureStepDescription",
-})
+TAGS_BLANK: frozenset[str] = frozenset(
+    {
+        "PatientName",
+        "PatientID",
+        "OtherPatientIDs",
+        "OtherPatientNames",
+        "PatientBirthName",
+        "PatientMotherBirthName",
+        "PatientComments",
+        "AdditionalPatientHistory",
+        "InstitutionName",
+        "InstitutionAddress",
+        "InstitutionalDepartmentName",
+        "StationName",
+        "ReferringPhysicianName",
+        "PerformingPhysicianName",
+        "NameOfPhysiciansReadingStudy",
+        "OperatorsName",
+        "PhysiciansOfRecord",
+        "AdmittingDiagnosesDescription",
+        "AdmittingDiagnosesCodeSequence",
+        "AccessionNumber",
+        "StudyID",
+        "DeviceSerialNumber",
+        "InstitutionalDepartmentTypeCodeSequence",
+        "RequestedProcedureDescription",
+        "PerformedProcedureStepDescription",
+        "PerformedProcedureStepID",
+        "RequestedProcedureID",
+        "ScheduledProcedureStepDescription",
+    }
+)
 
 # ── PS3.15 Annex E: UIDs to replace (U action) ─────────────────────────────
 
-TAGS_UID: frozenset[str] = frozenset({
-    "StudyInstanceUID", "SeriesInstanceUID",
-    "SOPInstanceUID", "FrameOfReferenceUID",
-    "MediaStorageSOPInstanceUID",
-    "ReferencedSOPInstanceUID",
-    "RelatedFrameOfReferenceUID",
-})
+TAGS_UID: frozenset[str] = frozenset(
+    {
+        "StudyInstanceUID",
+        "SeriesInstanceUID",
+        "SOPInstanceUID",
+        "FrameOfReferenceUID",
+        "MediaStorageSOPInstanceUID",
+        "ReferencedSOPInstanceUID",
+        "RelatedFrameOfReferenceUID",
+    }
+)
 
 # ── Date/time tags to shift (consistent per-patient) ───────────────────────
 
-TAGS_DATE: frozenset[str] = frozenset({
-    "PatientBirthDate", "StudyDate", "SeriesDate",
-    "AcquisitionDate", "ContentDate", "InstanceCreationDate",
-    "PerformedProcedureStepStartDate",
-})
+TAGS_DATE: frozenset[str] = frozenset(
+    {
+        "PatientBirthDate",
+        "StudyDate",
+        "SeriesDate",
+        "AcquisitionDate",
+        "ContentDate",
+        "InstanceCreationDate",
+        "PerformedProcedureStepStartDate",
+    }
+)
 
-TAGS_TIME: frozenset[str] = frozenset({
-    "StudyTime", "SeriesTime", "AcquisitionTime",
-    "ContentTime", "InstanceCreationTime",
-    "PerformedProcedureStepStartTime",
-})
+TAGS_TIME: frozenset[str] = frozenset(
+    {
+        "StudyTime",
+        "SeriesTime",
+        "AcquisitionTime",
+        "ContentTime",
+        "InstanceCreationTime",
+        "PerformedProcedureStepStartTime",
+    }
+)
 
-TAGS_DATETIME: frozenset[str] = frozenset({
-    "AcquisitionDateTime",
-})
+TAGS_DATETIME: frozenset[str] = frozenset(
+    {
+        "AcquisitionDateTime",
+    }
+)
 
 # ── Clean Descriptors: tags to scrub free-text ──────────────────────────────
 
-TAGS_SCRUB_TEXT: frozenset[str] = frozenset({
-    "StudyDescription", "SeriesDescription", "ProtocolName",
-    "PerformedProcedureStepDescription", "RequestedProcedureDescription",
-    "ScheduledProcedureStepDescription", "InstitutionName",
-    "InstitutionalDepartmentName",
-})
+TAGS_SCRUB_TEXT: frozenset[str] = frozenset(
+    {
+        "StudyDescription",
+        "SeriesDescription",
+        "ProtocolName",
+        "PerformedProcedureStepDescription",
+        "RequestedProcedureDescription",
+        "ScheduledProcedureStepDescription",
+        "InstitutionName",
+        "InstitutionalDepartmentName",
+    }
+)
 
 # ── Indian identifier patterns (Aadhaar Act §29, DPDPA 2023) ────────────────
 
 # Aadhaar: 12 digits, often formatted as XXXX XXXX XXXX or XXXX-XXXX-XXXX
-_AADHAAR_RE = re.compile(r'\b\d{4}[\s-]?\d{4}[\s-]?\d{4}\b')
+_AADHAAR_RE = re.compile(r"\b\d{4}[\s-]?\d{4}[\s-]?\d{4}\b")
 
 # PAN: ABCDE1234F (5 letters, 4 digits, 1 letter — Indian tax ID)
-_PAN_RE = re.compile(r'\b[A-Z]{5}\d{4}[A-Z]\b')
+_PAN_RE = re.compile(r"\b[A-Z]{5}\d{4}[A-Z]\b")
 
 # Indian Voter ID (EPIC): 3 letters + 7 digits (e.g., ABC1234567)
-_VOTER_ID_RE = re.compile(r'\b[A-Z]{3}\d{7}\b')
+_VOTER_ID_RE = re.compile(r"\b[A-Z]{3}\d{7}\b")
 
 # Indian Driving License: XX-XXXXXXXXXX or XX/XXXXXXXXXX (state code + number)
-_DL_RE = re.compile(r'\b[A-Z]{2}[-/]\d{10,13}\b')
+_DL_RE = re.compile(r"\b[A-Z]{2}[-/]\d{10,13}\b")
 
 # Indian passport: single letter + 7 digits (e.g., J1234567)
-_PASSPORT_RE = re.compile(r'\b[A-Z]\d{7}\b')
+_PASSPORT_RE = re.compile(r"\b[A-Z]\d{7}\b")
 
 # UHID / Hospital MRN: common Indian hospital formats
-_UHID_RE = re.compile(r'\b(?:UHID|MRN|HRN|HOSP)[-:/]?\s*\d{4,12}\b', re.IGNORECASE)
+_UHID_RE = re.compile(r"\b(?:UHID|MRN|HRN|HOSP)[-:/]?\s*\d{4,12}\b", re.IGNORECASE)
 
 # Indian phone: +91, 0-prefixed landlines, mobile patterns
-_PHONE_IN_RE = re.compile(r'(?<!\d)(?:\+91[\s-]?|0)\d{10}(?!\d)')
-_PHONE_LANDLINE_RE = re.compile(r'\b0\d{2,4}[-\s]?\d{6,8}\b')
+_PHONE_IN_RE = re.compile(r"(?<!\d)(?:\+91[\s-]?|0)\d{10}(?!\d)")
+_PHONE_LANDLINE_RE = re.compile(r"\b0\d{2,4}[-\s]?\d{6,8}\b")
 
 # Indian name patterns: Shri/Smt/Kumar/Singh/Devi etc.
 _INDIAN_NAME_TITLES = re.compile(
-    r'\b(?:Shri|Smt|Kumari?|Sri|Thiru|Selvi|Dr|Prof|Mr|Mrs|Ms)\.?\s+'
-    r'[A-Z][a-z]+(?:\s+[A-Z][a-z]+){0,3}\b'
+    r"\b(?:Shri|Smt|Kumari?|Sri|Thiru|Selvi|Dr|Prof|Mr|Mrs|Ms)\.?\s+"
+    r"[A-Z][a-z]+(?:\s+[A-Z][a-z]+){0,3}\b"
 )
 
 # Common Indian surname patterns (for catch-all sweep)
 _INDIAN_SURNAMES = re.compile(
-    r'\b(?:Kumar|Singh|Sharma|Verma|Gupta|Patel|Shah|Jain|Mishra|Pandey'
-    r'|Reddy|Rao|Nair|Menon|Pillai|Iyer|Iyengar|Mukherjee|Banerjee'
-    r'|Chatterjee|Bose|Sen|Das|Dey|Ghosh|Roy|Sinha|Thakur|Chauhan'
-    r'|Yadav|Tiwari|Dubey|Tripathi|Dwivedi|Shukla|Saxena|Agarwal'
-    r'|Joshi|Kulkarni|Deshmukh|Patil|Jadhav|Pawar|Shinde|More'
-    r'|Kaur|Gill|Dhillon|Bajwa|Sidhu|Randhawa|Bhatia|Sethi'
-    r'|Fernandes|D\'Souza|Lobo|Sequeira|Pereira|George|Thomas'
-    r'|Rajan|Krishnan|Subramaniam|Venkatesh|Naidu|Choudhury)\b',
+    r"\b(?:Kumar|Singh|Sharma|Verma|Gupta|Patel|Shah|Jain|Mishra|Pandey"
+    r"|Reddy|Rao|Nair|Menon|Pillai|Iyer|Iyengar|Mukherjee|Banerjee"
+    r"|Chatterjee|Bose|Sen|Das|Dey|Ghosh|Roy|Sinha|Thakur|Chauhan"
+    r"|Yadav|Tiwari|Dubey|Tripathi|Dwivedi|Shukla|Saxena|Agarwal"
+    r"|Joshi|Kulkarni|Deshmukh|Patil|Jadhav|Pawar|Shinde|More"
+    r"|Kaur|Gill|Dhillon|Bajwa|Sidhu|Randhawa|Bhatia|Sethi"
+    r"|Fernandes|D\'Souza|Lobo|Sequeira|Pereira|George|Thomas"
+    r"|Rajan|Krishnan|Subramaniam|Venkatesh|Naidu|Choudhury)\b",
     re.IGNORECASE,
 )
 
 # Email addresses
-_EMAIL_RE = re.compile(r'\b[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}\b')
+_EMAIL_RE = re.compile(r"\b[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}\b")
 
 # URLs
-_URL_RE = re.compile(r'https?://\S+|www\.\S+', re.IGNORECASE)
+_URL_RE = re.compile(r"https?://\S+|www\.\S+", re.IGNORECASE)
 
 
 # Patterns to remove from free-text fields — HIPAA + Indian DPDPA combined
@@ -214,37 +317,48 @@ _TEXT_SCRUB_PATTERNS = [
     ("driving_license", _DL_RE),
     ("passport", _PASSPORT_RE),
     ("uhid", _UHID_RE),
-
     # ── Indian names and titles ──
     ("indian_name", _INDIAN_NAME_TITLES),
     ("indian_surname", _INDIAN_SURNAMES),
-
     # ── Contact info ──
     ("phone_india", _PHONE_IN_RE),
     ("phone_landline", _PHONE_LANDLINE_RE),
     ("email", _EMAIL_RE),
     ("url", _URL_RE),
-    ("phone_intl", re.compile(r'\b\d{3}[-.\s]\d{3}[-.\s]\d{4}\b')),
-
+    ("phone_intl", re.compile(r"\b\d{3}[-.\s]\d{3}[-.\s]\d{4}\b")),
     # ── Timestamps ──
-    ("timestamp_ist", re.compile(r'\b\d{1,2}:\d{2}(:\d{2})?\s*(IST|UTC|GMT|AM|PM)\b', re.IGNORECASE)),
-    ("datetime_iso", re.compile(r'\b\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}(:\d{2})?\b')),
-    ("date_slash", re.compile(r'\b\d{2}/\d{2}/\d{4}\b')),
-    ("date_dash", re.compile(r'\b\d{1,2}[-/]\d{1,2}[-/]\d{2,4}\b')),
-    ("date_named", re.compile(r'\b(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\w*\s+\d{1,2},?\s+\d{4}\b', re.IGNORECASE)),
-
+    (
+        "timestamp_ist",
+        re.compile(r"\b\d{1,2}:\d{2}(:\d{2})?\s*(IST|UTC|GMT|AM|PM)\b", re.IGNORECASE),
+    ),
+    ("datetime_iso", re.compile(r"\b\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}(:\d{2})?\b")),
+    ("date_slash", re.compile(r"\b\d{2}/\d{2}/\d{4}\b")),
+    ("date_dash", re.compile(r"\b\d{1,2}[-/]\d{1,2}[-/]\d{2,4}\b")),
+    (
+        "date_named",
+        re.compile(
+            r"\b(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\w*\s+\d{1,2},?\s+\d{4}\b",
+            re.IGNORECASE,
+        ),
+    ),
     # ── Institution patterns ──
-    ("physician", re.compile(r'\b(?:Dr\.?|Prof\.?)\s+[A-Z][a-z]+(?:\s+[A-Z][a-z]+){1,3}\b')),
-    ("institution", re.compile(r'\b[A-Z][a-z]+\s+(?:Hospital|Clinic|Medical|Institute|Centre|Center|Labs?|Diagnostics?|Imaging)\b', re.IGNORECASE)),
-
+    ("physician", re.compile(r"\b(?:Dr\.?|Prof\.?)\s+[A-Z][a-z]+(?:\s+[A-Z][a-z]+){1,3}\b")),
+    (
+        "institution",
+        re.compile(
+            r"\b[A-Z][a-z]+\s+(?:Hospital|Clinic|Medical|Institute|Centre|Center|Labs?|Diagnostics?|Imaging)\b",
+            re.IGNORECASE,
+        ),
+    ),
     # ── Accession / MRN fragments ──
-    ("accession", re.compile(r'\b[A-Z]{2,4}\d{6,12}\b')),
+    ("accession", re.compile(r"\b[A-Z]{2,4}\d{6,12}\b")),
 ]
 
 
 @dataclass
 class DeidResult:
     """Result of de-identifying a single DICOM file."""
+
     filepath: str
     output_path: str = ""
     tags_removed: int = 0
@@ -260,6 +374,7 @@ class DeidResult:
 @dataclass
 class DeidSummary:
     """Aggregate summary of a de-identification run."""
+
     files_processed: int = 0
     files_failed: int = 0
     total_tags_removed: int = 0
@@ -274,6 +389,7 @@ class DeidSummary:
 
 # ── UID replacement ─────────────────────────────────────────────────────────
 
+
 def _replace_uid(original: str, salt: str) -> str:
     """Generate a deterministic replacement UID from SHA-256."""
     h = hashlib.sha256(f"{salt}{original}".encode()).hexdigest()
@@ -282,6 +398,7 @@ def _replace_uid(original: str, salt: str) -> str:
 
 
 # ── Date shifting ──────────────────────────────────────────────────────────
+
 
 class DateShifter:
     """Per-patient consistent date shifting with encrypted mapping.
@@ -351,6 +468,7 @@ class DateShifter:
         path.parent.mkdir(parents=True, exist_ok=True)
         try:
             from cryptography.fernet import Fernet
+
             if self._key is None:
                 self._key = Fernet.generate_key()
             f = Fernet(self._key)
@@ -366,6 +484,7 @@ class DateShifter:
         # Try encrypted first
         try:
             from cryptography.fernet import Fernet
+
             key_path = path.parent / f"{path.stem}.key"
             if path.exists() and key_path.exists():
                 self._key = key_path.read_bytes()
@@ -382,6 +501,7 @@ class DateShifter:
 
 # ── Text scrubbing ──────────────────────────────────────────────────────────
 
+
 def scrub_text(value: str) -> tuple[str, int, list[str]]:
     """Remove PHI patterns from a free-text DICOM field.
 
@@ -390,7 +510,6 @@ def scrub_text(value: str) -> tuple[str, int, list[str]]:
     if not value or not isinstance(value, str):
         return value, 0, []
 
-    original = value
     matched = []
     for name, pattern in _TEXT_SCRUB_PATTERNS:
         new_val = pattern.sub("", value)
@@ -399,32 +518,66 @@ def scrub_text(value: str) -> tuple[str, int, list[str]]:
             value = new_val
 
     # Collapse multiple spaces
-    value = re.sub(r'\s{2,}', ' ', value).strip()
+    value = re.sub(r"\s{2,}", " ", value).strip()
 
     return value, len(matched), matched
 
 
 # Tags that are safe to leave alone (technical/geometric, never contain PHI)
-_SAFE_TAGS: frozenset[str] = frozenset({
-    "Rows", "Columns", "BitsAllocated", "BitsStored", "HighBit",
-    "PixelRepresentation", "SamplesPerPixel", "PhotometricInterpretation",
-    "SmallestImagePixelValue", "LargestImagePixelValue", "NumberOfFrames",
-    "ImageOrientationPatient", "ImagePositionPatient",
-    "PixelSpacing", "SliceThickness", "SpacingBetweenSlices", "SliceLocation",
-    "WindowCenter", "WindowWidth", "RescaleIntercept", "RescaleSlope",
-    "Modality", "BodyPartExamined", "ScanningSequence", "SequenceVariant",
-    "ScanOptions", "MRAcquisitionType", "ImageType",
-    "RepetitionTime", "EchoTime", "InversionTime", "FlipAngle",
-    "MagneticFieldStrength", "NumberOfAverages", "EchoTrainLength",
-    "PixelBandwidth", "DeviceSerialNumber",
-    "TransferSyntaxUID", "SOPClassUID", "MediaStorageSOPClassUID",
-    "ImplementationClassUID", "ImplementationVersionName",
-    "Manufacturer", "ManufacturerModelName", "SoftwareVersions",
-    "SequenceName", "PixelData",
-})
+_SAFE_TAGS: frozenset[str] = frozenset(
+    {
+        "Rows",
+        "Columns",
+        "BitsAllocated",
+        "BitsStored",
+        "HighBit",
+        "PixelRepresentation",
+        "SamplesPerPixel",
+        "PhotometricInterpretation",
+        "SmallestImagePixelValue",
+        "LargestImagePixelValue",
+        "NumberOfFrames",
+        "ImageOrientationPatient",
+        "ImagePositionPatient",
+        "PixelSpacing",
+        "SliceThickness",
+        "SpacingBetweenSlices",
+        "SliceLocation",
+        "WindowCenter",
+        "WindowWidth",
+        "RescaleIntercept",
+        "RescaleSlope",
+        "Modality",
+        "BodyPartExamined",
+        "ScanningSequence",
+        "SequenceVariant",
+        "ScanOptions",
+        "MRAcquisitionType",
+        "ImageType",
+        "RepetitionTime",
+        "EchoTime",
+        "InversionTime",
+        "FlipAngle",
+        "MagneticFieldStrength",
+        "NumberOfAverages",
+        "EchoTrainLength",
+        "PixelBandwidth",
+        "DeviceSerialNumber",
+        "TransferSyntaxUID",
+        "SOPClassUID",
+        "MediaStorageSOPClassUID",
+        "ImplementationClassUID",
+        "ImplementationVersionName",
+        "Manufacturer",
+        "ManufacturerModelName",
+        "SoftwareVersions",
+        "SequenceName",
+        "PixelData",
+    }
+)
 
 
-def sweep_all_tags(ds: "pydicom.Dataset") -> int:
+def sweep_all_tags(ds: pydicom.Dataset) -> int:
     """Full-text sweep: scan EVERY string-valued tag for Indian PHI patterns.
 
     Goes beyond the known text fields — catches PHI leaked into
@@ -461,6 +614,7 @@ def sweep_all_tags(ds: "pydicom.Dataset") -> int:
 
 
 # ── Single-file de-identification ───────────────────────────────────────────
+
 
 def deid_single_file(
     fpath: str,
@@ -612,6 +766,7 @@ def deid_single_file(
 
 
 # ── Batch de-identification ─────────────────────────────────────────────────
+
 
 def deid_files(
     file_paths: list[str],

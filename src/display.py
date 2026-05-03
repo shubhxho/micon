@@ -36,19 +36,24 @@ def _build_series_tree(series_info: list[dict]) -> Tree:
         if seq_type:
             label += f"  [magenta]({seq_type})[/magenta]"
         branch = tree.add(label)
-        branch.add(f"[dim]{s.get('modality','')}[/dim]  |  {s.get('file_count',0)} files  |  {s.get('sop_class','')}")
+        branch.add(
+            f"[dim]{s.get('modality', '')}[/dim]  |  {s.get('file_count', 0)} files  |  {s.get('sop_class', '')}"
+        )
 
         if vs:
             sp = vs.get("spacing_mm", [])
             sp_str = f"[{', '.join(f'{x:.2f}' for x in sp[:3])}]" if sp else "?"
             grade = vs.get("quality_grade", "?")
-            grade_color = {"A": "green", "B": "cyan", "C": "yellow", "D": "red", "F": "red"}.get(grade, "dim")
+            grade_color = {"A": "green", "B": "cyan", "C": "yellow", "D": "red", "F": "red"}.get(
+                grade, "dim"
+            )
             branch.add(
-                f"[dim]Shape:[/dim] {vs.get('volume_shape','?')}  |  [dim]Spacing:[/dim] {sp_str} mm  |  "
-                f"[dim]SNR:[/dim] {vs.get('volume_snr_estimate',0):.2f}  |  "
-                f"[dim]Tissue:[/dim] {vs.get('volume_tissue_pct',0):.1f}%  |  "
-                f"[dim]Uniformity:[/dim] {vs.get('slice_intensity_uniformity',0):.3f}  |  "
-                f"[{grade_color}]Grade: {grade}[/{grade_color}]")
+                f"[dim]Shape:[/dim] {vs.get('volume_shape', '?')}  |  [dim]Spacing:[/dim] {sp_str} mm  |  "
+                f"[dim]SNR:[/dim] {vs.get('volume_snr_estimate', 0):.2f}  |  "
+                f"[dim]Tissue:[/dim] {vs.get('volume_tissue_pct', 0):.1f}%  |  "
+                f"[dim]Uniformity:[/dim] {vs.get('slice_intensity_uniformity', 0):.3f}  |  "
+                f"[{grade_color}]Grade: {grade}[/{grade_color}]"
+            )
 
             # Show quality warnings inline
             qa = s.get("quality_analysis", {})
@@ -61,14 +66,18 @@ def _build_series_tree(series_info: list[dict]) -> Tree:
             if anomaly.get("n_anomalous", 0) > 0:
                 warnings.append(f"[yellow]{anomaly['n_anomalous']} anomalous slices[/yellow]")
             if symmetry.get("symmetry_index", 1) < 0.70:
-                warnings.append(f"[yellow]asymmetry: {symmetry.get('interpretation', '?')}[/yellow]")
+                warnings.append(
+                    f"[yellow]asymmetry: {symmetry.get('interpretation', '?')}[/yellow]"
+                )
             if warnings:
                 branch.add("  ".join(warnings))
 
     if ps_series:
         n_ps = len(ps_series)
         n_ps_files = sum(s.get("file_count", 0) for s in ps_series)
-        tree.add(f"[dim]{n_ps} Presentation State series ({n_ps_files} files) — no pixel data[/dim]")
+        tree.add(
+            f"[dim]{n_ps} Presentation State series ({n_ps_files} files) — no pixel data[/dim]"
+        )
 
     return tree
 
@@ -79,9 +88,12 @@ def _build_protocol_table(series_info: list[dict]) -> Table:
     table.add_column("#", style="bold", width=6)
     table.add_column("Description", width=22)
     table.add_column("Sequence", style="magenta", width=18)
-    table.add_column("TR", width=8); table.add_column("TE", width=8)
-    table.add_column("TI", width=8); table.add_column("FA", width=5)
-    table.add_column("Matrix", width=12); table.add_column("Slices", width=6)
+    table.add_column("TR", width=8)
+    table.add_column("TE", width=8)
+    table.add_column("TI", width=8)
+    table.add_column("FA", width=5)
+    table.add_column("Matrix", width=12)
+    table.add_column("Slices", width=6)
     table.add_column("SNR", width=7)
     table.add_column("Grade", width=5)
 
@@ -104,7 +116,7 @@ def _build_protocol_table(series_info: list[dict]) -> Table:
             f"{p['fa']:.0f}" if p.get("fa") else "",
             f"{shape[1]}x{shape[2]}" if len(shape) >= 3 else "",
             str(shape[0]) if shape else "",
-            f"{vs.get('volume_snr_estimate',0):.1f}" if vs else "",
+            f"{vs.get('volume_snr_estimate', 0):.1f}" if vs else "",
             grade_str,
         )
     return table

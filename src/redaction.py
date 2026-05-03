@@ -28,79 +28,132 @@ log = logging.getLogger(__name__)
 
 # ── PHI tag sets — frozen for O(1) membership test ───────────────────────────
 
-PHI_TAGS_REMOVE: frozenset[str] = frozenset({
-    # Direct identifiers — must be deleted entirely
-    "PatientAddress", "PatientTelephoneNumbers",
-    "PatientInsurancePlanCodeSequence", "MilitaryRank",
-    "BranchOfService", "PatientReligiousPreference",
-    "MedicalRecordLocator", "ReferencedPatientPhotoSequence",
-    "ResponsiblePerson", "ResponsibleOrganization",
-    "ClinicalTrialSponsorName", "ClinicalTrialProtocolID",
-    "ClinicalTrialSubjectID", "ClinicalTrialSiteID",
-    "ClinicalTrialSiteName", "RequestingPhysician",
-    "ScheduledPerformingPhysicianName", "RequestAttributesSequence",
-    "ContentSequence", "DistributionAddress", "DistributionName",
-    "FillerOrderNumberImagingServiceRequest",
-    "PlacerOrderNumberImagingServiceRequest",
-    "OrderCallbackPhoneNumber", "OrderCallbackTelecomInformation",
-    "OrderEnteredBy", "OrderEntererLocation",
-    # DICOM Supplement 142 (Clinical Trial De-identification Profile)
-    "IssuerOfPatientID", "IssuerOfPatientIDQualifiersSequence",
-    "PatientBirthTime", "PatientAge",
-    "EthnicGroup", "Occupation", "SmokingStatus",
-    "PregnancyStatus", "PatientSexNeutered",
-    "ConfidentialityConstraintOnPatientDataDescription",
-    # Sequences that may contain embedded PHI
-    "ReferencedStudySequence", "ReferencedPerformedProcedureStepSequence",
-    "SourceImageSequence", "ReferencedImageSequence",
-    "OriginalAttributesSequence",
-    # Text fields that may contain free-text PHI
-    "ImageComments", "StudyComments",
-    "InterpretationAuthor", "InterpretationText",
-    "ResultsComments",
-})
+PHI_TAGS_REMOVE: frozenset[str] = frozenset(
+    {
+        # Direct identifiers — must be deleted entirely
+        "PatientAddress",
+        "PatientTelephoneNumbers",
+        "PatientInsurancePlanCodeSequence",
+        "MilitaryRank",
+        "BranchOfService",
+        "PatientReligiousPreference",
+        "MedicalRecordLocator",
+        "ReferencedPatientPhotoSequence",
+        "ResponsiblePerson",
+        "ResponsibleOrganization",
+        "ClinicalTrialSponsorName",
+        "ClinicalTrialProtocolID",
+        "ClinicalTrialSubjectID",
+        "ClinicalTrialSiteID",
+        "ClinicalTrialSiteName",
+        "RequestingPhysician",
+        "ScheduledPerformingPhysicianName",
+        "RequestAttributesSequence",
+        "ContentSequence",
+        "DistributionAddress",
+        "DistributionName",
+        "FillerOrderNumberImagingServiceRequest",
+        "PlacerOrderNumberImagingServiceRequest",
+        "OrderCallbackPhoneNumber",
+        "OrderCallbackTelecomInformation",
+        "OrderEnteredBy",
+        "OrderEntererLocation",
+        # DICOM Supplement 142 (Clinical Trial De-identification Profile)
+        "IssuerOfPatientID",
+        "IssuerOfPatientIDQualifiersSequence",
+        "PatientBirthTime",
+        "PatientAge",
+        "EthnicGroup",
+        "Occupation",
+        "SmokingStatus",
+        "PregnancyStatus",
+        "PatientSexNeutered",
+        "ConfidentialityConstraintOnPatientDataDescription",
+        # Sequences that may contain embedded PHI
+        "ReferencedStudySequence",
+        "ReferencedPerformedProcedureStepSequence",
+        "SourceImageSequence",
+        "ReferencedImageSequence",
+        "OriginalAttributesSequence",
+        # Text fields that may contain free-text PHI
+        "ImageComments",
+        "StudyComments",
+        "InterpretationAuthor",
+        "InterpretationText",
+        "ResultsComments",
+    }
+)
 
-PHI_TAGS_BLANK: frozenset[str] = frozenset({
-    # Names — blank to empty string (preserve tag existence for DICOM conformance)
-    "PatientName", "PatientID", "OtherPatientIDs",
-    "OtherPatientNames", "PatientBirthName",
-    "PatientMotherBirthName", "PatientComments",
-    "AdditionalPatientHistory", "InstitutionName",
-    "InstitutionAddress", "InstitutionalDepartmentName",
-    "StationName", "ReferringPhysicianName",
-    "PerformingPhysicianName", "NameOfPhysiciansReadingStudy",
-    "OperatorsName", "PhysiciansOfRecord",
-    "AdmittingDiagnosesDescription", "AdmittingDiagnosesCodeSequence",
-    "AccessionNumber", "StudyID", "DeviceSerialNumber",
-    # Additional identifiers (DICOM PS3.15 Table E.1-1)
-    "InstitutionalDepartmentTypeCodeSequence",
-    "ProtocolName",  # may encode patient info in some sites
-    "RequestedProcedureDescription",
-    "PerformedProcedureStepDescription",
-    "PerformedProcedureStepID",
-    "RequestedProcedureID",
-    "ScheduledProcedureStepDescription",
-})
+PHI_TAGS_BLANK: frozenset[str] = frozenset(
+    {
+        # Names — blank to empty string (preserve tag existence for DICOM conformance)
+        "PatientName",
+        "PatientID",
+        "OtherPatientIDs",
+        "OtherPatientNames",
+        "PatientBirthName",
+        "PatientMotherBirthName",
+        "PatientComments",
+        "AdditionalPatientHistory",
+        "InstitutionName",
+        "InstitutionAddress",
+        "InstitutionalDepartmentName",
+        "StationName",
+        "ReferringPhysicianName",
+        "PerformingPhysicianName",
+        "NameOfPhysiciansReadingStudy",
+        "OperatorsName",
+        "PhysiciansOfRecord",
+        "AdmittingDiagnosesDescription",
+        "AdmittingDiagnosesCodeSequence",
+        "AccessionNumber",
+        "StudyID",
+        "DeviceSerialNumber",
+        # Additional identifiers (DICOM PS3.15 Table E.1-1)
+        "InstitutionalDepartmentTypeCodeSequence",
+        "ProtocolName",  # may encode patient info in some sites
+        "RequestedProcedureDescription",
+        "PerformedProcedureStepDescription",
+        "PerformedProcedureStepID",
+        "RequestedProcedureID",
+        "ScheduledProcedureStepDescription",
+    }
+)
 
-PHI_TAGS_HASH: frozenset[str] = frozenset({
-    # UIDs — deterministic rehash preserves linkability within a salt scope
-    "StudyInstanceUID", "SeriesInstanceUID",
-    "SOPInstanceUID", "FrameOfReferenceUID",
-    "MediaStorageSOPInstanceUID",
-    # Additional UIDs that can link across studies
-    "ReferencedSOPInstanceUID",
-    "RelatedFrameOfReferenceUID",
-})
+PHI_TAGS_HASH: frozenset[str] = frozenset(
+    {
+        # UIDs — deterministic rehash preserves linkability within a salt scope
+        "StudyInstanceUID",
+        "SeriesInstanceUID",
+        "SOPInstanceUID",
+        "FrameOfReferenceUID",
+        "MediaStorageSOPInstanceUID",
+        # Additional UIDs that can link across studies
+        "ReferencedSOPInstanceUID",
+        "RelatedFrameOfReferenceUID",
+    }
+)
 
-PHI_TAGS_DATE: frozenset[str] = frozenset({
-    # Dates — shifted by consistent offset (preserves intervals)
-    "PatientBirthDate", "StudyDate", "SeriesDate",
-    "AcquisitionDate", "ContentDate", "InstanceCreationDate",
-    # Additional date/time fields
-    "AcquisitionDateTime", "StudyTime", "SeriesTime",
-    "AcquisitionTime", "ContentTime", "InstanceCreationTime",
-    "PerformedProcedureStepStartDate", "PerformedProcedureStepStartTime",
-})
+PHI_TAGS_DATE: frozenset[str] = frozenset(
+    {
+        # Dates — shifted by consistent offset (preserves intervals)
+        "PatientBirthDate",
+        "StudyDate",
+        "SeriesDate",
+        "AcquisitionDate",
+        "ContentDate",
+        "InstanceCreationDate",
+        # Additional date/time fields
+        "AcquisitionDateTime",
+        "StudyTime",
+        "SeriesTime",
+        "AcquisitionTime",
+        "ContentTime",
+        "InstanceCreationTime",
+        "PerformedProcedureStepStartDate",
+        "PerformedProcedureStepStartTime",
+    }
+)
 
 # Combined set for single-pass O(1) classification
 _ALL_PHI_TAGS: frozenset[str] = PHI_TAGS_REMOVE | PHI_TAGS_BLANK | PHI_TAGS_HASH | PHI_TAGS_DATE
@@ -109,6 +162,7 @@ _ALL_PHI_TAGS: frozenset[str] = PHI_TAGS_REMOVE | PHI_TAGS_BLANK | PHI_TAGS_HASH
 @dataclass
 class RedactionResult:
     """Result of redacting a single DICOM file."""
+
     filepath: str
     output_path: str = ""
     tags_removed: int = 0
@@ -122,6 +176,7 @@ class RedactionResult:
 @dataclass
 class RedactionSummary:
     """Aggregate summary of a redaction run."""
+
     files_processed: int = 0
     files_failed: int = 0
     total_tags_removed: int = 0

@@ -68,18 +68,18 @@ _ANNOTATE_CPU = 1.0
 _ANNOTATE_COST_PER_SERIES = _ANNOTATE_SECS * _ANNOTATE_CPU * _MODAL_CPU_RATE  # ~$0.00167
 
 # OpenRouter Gemma 4 31B token pricing
-_OR_INPUT_PER_TOK = 0.30 / 1_000_000   # $0.30 / 1M input tokens
+_OR_INPUT_PER_TOK = 0.30 / 1_000_000  # $0.30 / 1M input tokens
 _OR_OUTPUT_PER_TOK = 0.50 / 1_000_000  # $0.50 / 1M output tokens
-_OR_INPUT_TOKS = 3_000                  # estimated input tokens per series
-_OR_OUTPUT_TOKS = 2_000                 # estimated output tokens per series
+_OR_INPUT_TOKS = 3_000  # estimated input tokens per series
+_OR_OUTPUT_TOKS = 2_000  # estimated output tokens per series
 _OR_COST_PER_SERIES = (
     _OR_INPUT_TOKS * _OR_INPUT_PER_TOK + _OR_OUTPUT_TOKS * _OR_OUTPUT_PER_TOK
 )  # ~$0.0019
 
 # Wall-time concurrency assumptions (rough)
-_QUALITY_CONCURRENCY = 50    # ~50 Modal containers for Stage 2
+_QUALITY_CONCURRENCY = 50  # ~50 Modal containers for Stage 2
 _ANNOTATE_CONCURRENCY = 320  # 10 workers × 32 inputs/worker for Stage 3
-_PACK_CONCURRENCY = 20       # ~20 containers for Stage 4
+_PACK_CONCURRENCY = 20  # ~20 containers for Stage 4
 _PACK_SECS_PER_STUDY = 60.0  # ~60 s / study for tarring
 
 
@@ -169,7 +169,8 @@ def plan(output_dir: Path) -> dict:
 
     # Studies: direct non-hidden children that are directories
     study_dirs = [
-        p for p in output_dir.iterdir()
+        p
+        for p in output_dir.iterdir()
         if p.is_dir() and not p.name.startswith(".") and p.name != "_internal"
     ]
     n_studies = len(study_dirs)

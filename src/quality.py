@@ -10,8 +10,8 @@ from concurrent.futures import ThreadPoolExecutor
 
 import numpy as np
 
-
 # ── Quality grade ────────────────────────────────────────────────────────────
+
 
 def grade_series(vstats: dict, series_desc: str = "") -> dict:
     """Compute a quality grade (A/B/C/D/F) for a single series.
@@ -41,10 +41,10 @@ def grade_series(vstats: dict, series_desc: str = "") -> dict:
     # Sequence-aware SNR thresholds
     desc_up = series_desc.upper()
     if any(k in desc_up for k in ("DWI", "DIFF", "DTI", "ADC", "TRACE")):
-        snr_target = 8.0   # DWI inherently has lower SNR
+        snr_target = 8.0  # DWI inherently has lower SNR
         cnr_target = 5.0
     elif any(k in desc_up for k in ("MRS", "SPECTRO", "PRESS", "STEAM")):
-        snr_target = 5.0   # Spectroscopy SNR is very different
+        snr_target = 5.0  # Spectroscopy SNR is very different
         cnr_target = 3.0
     elif any(k in desc_up for k in ("SWI", "SWAN", "PHASE")):
         snr_target = 10.0  # SWI/phase are magnitude-dependent
@@ -147,6 +147,7 @@ def grade_study(series_grades: list[dict]) -> dict:
 
 # ── Anomaly detection ────────────────────────────────────────────────────────
 
+
 def detect_anomalous_slices(vol: np.ndarray, z_threshold: float = 3.0) -> dict:
     """Detect outlier slices based on mean intensity z-score.
 
@@ -169,12 +170,14 @@ def detect_anomalous_slices(vol: np.ndarray, z_threshold: float = 3.0) -> dict:
     anomalous = []
     for i, z in enumerate(z_scores):
         if abs(z) > z_threshold:
-            anomalous.append({
-                "slice_index": int(i),
-                "z_score": round(float(z), 2),
-                "mean_intensity": round(float(slice_means[i]), 2),
-                "direction": "bright" if z > 0 else "dark",
-            })
+            anomalous.append(
+                {
+                    "slice_index": int(i),
+                    "z_score": round(float(z), 2),
+                    "mean_intensity": round(float(slice_means[i]), 2),
+                    "direction": "bright" if z > 0 else "dark",
+                }
+            )
 
     return {
         "n_anomalous": len(anomalous),
@@ -187,6 +190,7 @@ def detect_anomalous_slices(vol: np.ndarray, z_threshold: float = 3.0) -> dict:
 
 # ── Symmetry analysis ───────────────────────────────────────────────────────
 
+
 def compute_symmetry(vol: np.ndarray, series_desc: str = "") -> dict:
     """Compute left-right hemisphere symmetry index.
 
@@ -197,19 +201,24 @@ def compute_symmetry(vol: np.ndarray, series_desc: str = "") -> dict:
     Low symmetry can indicate: stroke, tumor, atrophy, mass effect, artifact.
     """
     if vol.ndim < 3:
-        return {"symmetry_index": 1.0, "asymmetry_map_mean": 0.0,
-                "interpretation": "N/A (2D)"}
+        return {"symmetry_index": 1.0, "asymmetry_map_mean": 0.0, "interpretation": "N/A (2D)"}
 
     # Skip symmetry for non-axial acquisitions — L-R split is meaningless
     desc_up = series_desc.upper()
     if any(k in desc_up for k in ("SAG", "COR", "SAGITTAL", "CORONAL")):
-        return {"symmetry_index": 1.0, "asymmetry_map_mean": 0.0,
-                "interpretation": "N/A (non-axial)"}
+        return {
+            "symmetry_index": 1.0,
+            "asymmetry_map_mean": 0.0,
+            "interpretation": "N/A (non-axial)",
+        }
 
     # Also skip if very few slices (single-slice MIP, projection)
     if vol.shape[0] < 3:
-        return {"symmetry_index": 1.0, "asymmetry_map_mean": 0.0,
-                "interpretation": "N/A (single slice)"}
+        return {
+            "symmetry_index": 1.0,
+            "asymmetry_map_mean": 0.0,
+            "interpretation": "N/A (single slice)",
+        }
 
     # Assume the last axis is left-right (sagittal)
     nx = vol.shape[-1]
@@ -227,8 +236,8 @@ def compute_symmetry(vol: np.ndarray, series_desc: str = "") -> dict:
     # Normalized cross-correlation
     l_centered = left - left.mean()
     r_centered = right_flipped - right_flipped.mean()
-    l_norm = np.sqrt((l_centered ** 2).sum())
-    r_norm = np.sqrt((r_centered ** 2).sum())
+    l_norm = np.sqrt((l_centered**2).sum())
+    r_norm = np.sqrt((r_centered**2).sum())
 
     if l_norm < 1e-6 or r_norm < 1e-6:
         return {"symmetry_index": 0.0, "asymmetry_map_mean": 0.0}
@@ -244,15 +253,19 @@ def compute_symmetry(vol: np.ndarray, series_desc: str = "") -> dict:
         "symmetry_index": round(max(0.0, ncc), 4),
         "asymmetry_map_mean": round(asym_mean, 4),
         "interpretation": (
-            "symmetric" if ncc > 0.90 else
-            "normal" if ncc > 0.80 else
-            "mild asymmetry" if ncc > 0.65 else
-            "significant asymmetry"
+            "symmetric"
+            if ncc > 0.90
+            else "normal"
+            if ncc > 0.80
+            else "mild asymmetry"
+            if ncc > 0.65
+            else "significant asymmetry"
         ),
     }
 
 
 # ── Sharpness scoring ───────────────────────────────────────────────────────
+
 
 def compute_sharpness(vol: np.ndarray) -> dict:
     """Estimate image sharpness via gradient magnitude.
@@ -291,15 +304,19 @@ def compute_sharpness(vol: np.ndarray) -> dict:
         "sharpness_std": round(gstd, 3),
         "sharpness_p95": round(gp95, 3),
         "interpretation": (
-            "very sharp" if gmean > 20 else
-            "sharp" if gmean > 10 else
-            "moderate" if gmean > 5 else
-            "soft/blurry"
+            "very sharp"
+            if gmean > 20
+            else "sharp"
+            if gmean > 10
+            else "moderate"
+            if gmean > 5
+            else "soft/blurry"
         ),
     }
 
 
 # ── Motion artifact detection ────────────────────────────────────────────────
+
 
 def detect_motion_artifacts(vol: np.ndarray) -> dict:
     """Detect motion/ghosting artifacts via directional energy analysis.
@@ -339,9 +356,9 @@ def detect_motion_artifacts(vol: np.ndarray) -> dict:
     band_h = max(h // 8, 2)
 
     # Horizontal energy (phase encode direction for axial scans)
-    horiz_energy = magnitude[center_h - band_h:center_h + band_h, :].sum()
+    horiz_energy = magnitude[center_h - band_h : center_h + band_h, :].sum()
     # Vertical energy
-    vert_energy = magnitude[:, center_w - band_w:center_w + band_w].sum()
+    vert_energy = magnitude[:, center_w - band_w : center_w + band_w].sum()
 
     if min(horiz_energy, vert_energy) < 1e-6:
         ratio = 1.0
@@ -375,18 +392,21 @@ def detect_motion_artifacts(vol: np.ndarray) -> dict:
         "motion_detected": motion_detected,
         "motion_severity_score": motion_score,
         "interpretation": (
-            "no motion" if ratio < 1.5 and slice_corr > 0.90 else
-            "minimal" if ratio < 2.0 and slice_corr > 0.80 else
-            "moderate motion" if ratio < 3.0 else
-            "significant motion/ghosting"
+            "no motion"
+            if ratio < 1.5 and slice_corr > 0.90
+            else "minimal"
+            if ratio < 2.0 and slice_corr > 0.80
+            else "moderate motion"
+            if ratio < 3.0
+            else "significant motion/ghosting"
         ),
     }
 
 
 # ── Combined analysis ────────────────────────────────────────────────────────
 
-def analyze_volume_quality(vol: np.ndarray, vstats: dict,
-                           series_desc: str = "") -> dict:
+
+def analyze_volume_quality(vol: np.ndarray, vstats: dict, series_desc: str = "") -> dict:
     """Run all quality analyses in parallel threads on a single volume.
 
     Returns combined dict with grade, anomalies, symmetry, sharpness, motion.

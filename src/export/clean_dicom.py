@@ -20,8 +20,8 @@ import pydicom
 
 def _sanitize(name: str, max_len: int = 50) -> str:
     """Make a string safe for use as a filename."""
-    s = re.sub(r'[^\w\s\-.]', '', name)
-    s = re.sub(r'\s+', '_', s).strip('_')
+    s = re.sub(r"[^\w\s\-.]", "", name)
+    s = re.sub(r"\s+", "_", s).strip("_")
     return s[:max_len] or "unknown"
 
 

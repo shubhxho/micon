@@ -25,29 +25,37 @@ import json
 import os
 import re
 import time
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path, PurePosixPath
 
 import modal
 
-
 # Single source of truth for sanitising series labels into filenames.
 # Used by both annotate_one (writer) and the orchestrator (existing-set check)
 # so they can never drift.
-_SAFE_NAME_RE = re.compile(r'[^\w\-]')
+_SAFE_NAME_RE = re.compile(r"[^\w\-]")
 
 
 def _safe_name(label: str) -> str:
     return _SAFE_NAME_RE.sub("_", label)
 
+
 VOLUME_NAME = "micom-v2"
 MOUNT_POINT = PurePosixPath("/vol")
 
 _PIP_DEPS = [
-    "pydicom>=3.0", "SimpleITK>=2.4", "nibabel>=5.3",
-    "polars>=1.17", "numpy>=2.1", "rich>=13.9",
-    "matplotlib>=3.10", "scipy>=1.14", "pillow>=11.0",
-    "python-dotenv>=1.0", "huggingface_hub>=0.25", "openai>=1.50",
+    "pydicom>=3.0",
+    "SimpleITK>=2.4",
+    "nibabel>=5.3",
+    "polars>=1.17",
+    "numpy>=2.1",
+    "rich>=13.9",
+    "matplotlib>=3.10",
+    "scipy>=1.14",
+    "pillow>=11.0",
+    "python-dotenv>=1.0",
+    "huggingface_hub>=0.25",
+    "openai>=1.50",
 ]
 
 image = (
@@ -68,10 +76,13 @@ volume = modal.Volume.from_name(VOLUME_NAME, create_if_missing=True, version=2)
 # and writes detail.json back. No volume.commit() per worker — the orchestrator
 # commits once after .map() returns. Failed series log path + exception type.
 
+
 @app.function(
     image=image,
     volumes={str(MOUNT_POINT): volume},
-    timeout=600, memory=4096, cpu=2.0,
+    timeout=600,
+    memory=4096,
+    cpu=2.0,
     retries=modal.Retries(max_retries=2, initial_delay=5.0, backoff_coefficient=2.0),
 )
 @modal.concurrent(max_inputs=2)
@@ -83,14 +94,22 @@ def quality_one_series(detail_path_str: str, output_dir_str: str) -> dict:
     is the dataset root so we can compute a deterministic study_id and rewrite
     file_paths to study-relative form (no /vol/... leaks in published JSON).
     """
-    import sys; sys.path.insert(0, "/root")
+    import sys
+
+    sys.path.insert(0, "/root")
     import numpy as np
     import SimpleITK as sitk
 
     detail_path = Path(detail_path_str)
     output_dir = Path(output_dir_str)
-    out = {"ok": False, "skipped": False, "slices": 0, "bytes": 0,
-           "path": detail_path_str, "error": None}
+    out = {
+        "ok": False,
+        "skipped": False,
+        "slices": 0,
+        "bytes": 0,
+        "path": detail_path_str,
+        "error": None,
+    }
 
     try:
         from src.advanced_quality import full_quality_assessment
@@ -135,7 +154,7 @@ def quality_one_series(detail_path_str: str, output_dir_str: str) -> dict:
 
         # pipeline_version: timestamp + best-effort git sha from env
         detail["pipeline_version"] = {
-            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
             "git_sha": os.environ.get("GIT_SHA", "unknown"),
         }
 
@@ -143,8 +162,12 @@ def quality_one_series(detail_path_str: str, output_dir_str: str) -> dict:
 
         series_dir = detail_path.parent
         sr = export_all_slices(
-            vol, series_dir.name, str(series_dir.parent),
-            windows=["brain"], max_size=512, n_workers=2,
+            vol,
+            series_dir.name,
+            str(series_dir.parent),
+            windows=["brain"],
+            max_size=512,
+            n_workers=2,
         )
         out["slices"] = sr["total_slices"]
         out["bytes"] = sr["total_bytes"]
@@ -169,10 +192,13 @@ def quality_one_series(detail_path_str: str, output_dir_str: str) -> dict:
 # Naming convention: {study_id}.slices.tar at the root of the study directory.
 # Buyers can stream the tarballs with webdataset / tarfile without unpacking.
 
+
 @app.function(
     image=image,
     volumes={str(MOUNT_POINT): volume},
-    timeout=1800, memory=2048, cpu=2.0,
+    timeout=1800,
+    memory=2048,
+    cpu=2.0,
     retries=modal.Retries(max_retries=2, initial_delay=5.0, backoff_coefficient=2.0),
 )
 @modal.concurrent(max_inputs=4)
@@ -186,8 +212,13 @@ def pack_one_study_slices(study_dir_str: str) -> dict:
 
     study_dir = Path(study_dir_str)
     out = {
-        "ok": False, "skipped": False, "study": study_dir.name,
-        "tar_path": None, "n_slices": 0, "bytes": 0, "error": None,
+        "ok": False,
+        "skipped": False,
+        "study": study_dir.name,
+        "tar_path": None,
+        "n_slices": 0,
+        "bytes": 0,
+        "error": None,
     }
 
     tar_path = study_dir / f"{study_dir.name}.slices.tar"
@@ -252,13 +283,16 @@ def pack_one_study_slices(study_dir_str: str) -> dict:
 
 # ── Worker: annotate one series via OpenRouter ───────────────────────────────
 
+
 @app.function(
     image=image,
     volumes={str(MOUNT_POINT): volume},
     secrets=[modal.Secret.from_name("openrouter")],
     # 900s ceiling -- the slowest OpenRouter response we've seen is ~150s,
     # but bursts during peak hours stack. Workers should never hit this.
-    timeout=900, memory=2048, cpu=1.0,
+    timeout=900,
+    memory=2048,
+    cpu=1.0,
     retries=modal.Retries(max_retries=2, initial_delay=4.0, backoff_coefficient=2.0),
 )
 # Higher fan-out -- each worker is mostly waiting on HTTP, so 32 in-flight
@@ -270,12 +304,16 @@ def annotate_one(montage_path: str, series_label: str, quality_ctx: str, ann_dir
     Annotation and tissue passes are fired in parallel within the worker so
     the wall time per series is roughly one OpenRouter call instead of two.
     """
-    import sys; sys.path.insert(0, "/root")
+    import sys
+
+    sys.path.insert(0, "/root")
     from concurrent.futures import ThreadPoolExecutor
 
     from src.cloud_analysis import (
-        annotate_series_multi, tissue_analysis_with_model,
-        _client, _detect_provider,
+        _client,
+        _detect_provider,
+        annotate_series_multi,
+        tissue_analysis_with_model,
     )
 
     def _do_annotation():
@@ -290,9 +328,13 @@ def annotate_one(montage_path: str, series_label: str, quality_ctx: str, ann_dir
             # light context anyway.
             prior = json.dumps({"sequence_hint": "see montage"})
             tissue = tissue_analysis_with_model(
-                client, montage_path, series_label,
-                prior_annotation=prior, quality_ctx=quality_ctx,
-                model_key="gemma4", provider=provider,
+                client,
+                montage_path,
+                series_label,
+                prior_annotation=prior,
+                quality_ctx=quality_ctx,
+                model_key="gemma4",
+                provider=provider,
             )
             return tissue.get("tissue_analysis") if tissue else None
         except Exception:
@@ -326,11 +368,14 @@ def annotate_one(montage_path: str, series_label: str, quality_ctx: str, ann_dir
 
 # ── Main resume function ─────────────────────────────────────────────────────
 
+
 @app.function(
     image=image,
     volumes={str(MOUNT_POINT): volume},
     secrets=[modal.Secret.from_name("huggingface"), modal.Secret.from_name("openrouter")],
-    timeout=86400, memory=16384, cpu=8.0,
+    timeout=86400,
+    memory=16384,
+    cpu=8.0,
 )
 def resume(
     hf_repo: str = "",
@@ -340,8 +385,10 @@ def resume(
     force: bool = False,
 ) -> dict:
     """Resume pipeline -- quality + annotation + slice-pack + HF upload."""
-    import sys; sys.path.insert(0, "/root")
-    from src.stage_sentinels import mark_started, mark_finished, is_done, summarize
+    import sys
+
+    sys.path.insert(0, "/root")
+    from src.stage_sentinels import is_done, mark_finished, mark_started, summarize
     from src.structured_log import log, log_error
 
     volume.reload()
@@ -372,9 +419,9 @@ def resume(
         if not force and is_done(output_dir, "stage2_quality"):
             print("  Stage 2 already done (sentinel ok). Use --force to re-run.")
         else:
-            print(f"\n{'='*60}")
-            print(f"STAGE 2: Advanced quality + per-slice PNGs (parallel .map)")
-            print(f"{'='*60}")
+            print(f"\n{'=' * 60}")
+            print("STAGE 2: Advanced quality + per-slice PNGs (parallel .map)")
+            print(f"{'=' * 60}")
 
             # Pre-filter: skip details that already have advanced_quality.
             # Avoids paying for a container that immediately returns "skipped".
@@ -406,9 +453,16 @@ def resume(
                     # Coerce any worker exceptions into error dicts so the rest of
                     # the summary code (which calls .get() on each result) works.
                     results = [
-                        r if not isinstance(r, BaseException)
-                        else {"ok": False, "skipped": False, "error": f"{type(r).__name__}: {r}",
-                              "slices": 0, "bytes": 0, "path": "?"}
+                        r
+                        if not isinstance(r, BaseException)
+                        else {
+                            "ok": False,
+                            "skipped": False,
+                            "error": f"{type(r).__name__}: {r}",
+                            "slices": 0,
+                            "bytes": 0,
+                            "path": "?",
+                        }
                         for r in results
                     ]
 
@@ -419,40 +473,62 @@ def resume(
                     total_slice_bytes = sum(r.get("bytes", 0) for r in results)
                     elapsed = time.time() - t_q
 
-                    print(f"  Quality done in {elapsed/60:.1f} min: "
-                          f"{ok} processed, {skipped} skipped, {len(errored)} failed")
-                    print(f"  Slices: {total_slices} PNGs ({total_slice_bytes/1024**3:.1f} GB)")
-                    log("stage2_quality", "stage_complete",
-                        elapsed_s=elapsed, ok=ok, skipped=skipped, failed=len(errored))
+                    print(
+                        f"  Quality done in {elapsed / 60:.1f} min: "
+                        f"{ok} processed, {skipped} skipped, {len(errored)} failed"
+                    )
+                    print(f"  Slices: {total_slices} PNGs ({total_slice_bytes / 1024**3:.1f} GB)")
+                    log(
+                        "stage2_quality",
+                        "stage_complete",
+                        elapsed_s=elapsed,
+                        ok=ok,
+                        skipped=skipped,
+                        failed=len(errored),
+                    )
 
                     if errored:
                         # Log a sample of errors for diagnosis (don't spam)
                         from collections import Counter
-                        err_types = Counter(r["error"].split(":")[0] for r in errored if r.get("error"))
+
+                        err_types = Counter(
+                            r["error"].split(":")[0] for r in errored if r.get("error")
+                        )
                         print(f"  Failure breakdown: {dict(err_types.most_common(10))}")
                         for r in errored:
                             err_str = r.get("error") or ""
                             err_class, _, err_msg = err_str.partition(":")
-                            log("stage2_quality", "worker_failed",
+                            log(
+                                "stage2_quality",
+                                "worker_failed",
                                 error_class=err_class.strip(),
                                 error_msg=err_msg.strip(),
-                                path=Path(r.get("path", "?")).name)
+                                path=Path(r.get("path", "?")).name,
+                            )
 
-                    mark_finished(output_dir, "stage2_quality", ok=True,
-                                  errors=len(errored),
-                                  inputs_processed=ok,
-                                  metadata={"processed": ok, "skipped": skipped})
+                    mark_finished(
+                        output_dir,
+                        "stage2_quality",
+                        ok=True,
+                        errors=len(errored),
+                        inputs_processed=ok,
+                        metadata={"processed": ok, "skipped": skipped},
+                    )
                     # Single commit after the whole map completes -- workers don't commit.
                     # Reload so the orchestrator's mount sees the worker writes
                     # before the next stage scans the directory.
                     volume.commit()
                     volume.reload()
                 else:
-                    print(f"  Nothing to do -- all series already processed")
-                    mark_finished(output_dir, "stage2_quality", ok=True,
-                                  errors=0,
-                                  inputs_processed=0,
-                                  metadata={"processed": 0, "skipped": already_done})
+                    print("  Nothing to do -- all series already processed")
+                    mark_finished(
+                        output_dir,
+                        "stage2_quality",
+                        ok=True,
+                        errors=0,
+                        inputs_processed=0,
+                        metadata={"processed": 0, "skipped": already_done},
+                    )
 
             except Exception as e:
                 log_error("stage2_quality", "stage_failed", e)
@@ -468,9 +544,9 @@ def resume(
         if not force and is_done(output_dir, "stage3_annotation"):
             print("  Stage 3 already done (sentinel ok). Use --force to re-run.")
         else:
-            print(f"\n{'='*60}")
-            print(f"STAGE 3: Gemma 4 annotation via OpenRouter")
-            print(f"{'='*60}")
+            print(f"\n{'=' * 60}")
+            print("STAGE 3: Gemma 4 annotation via OpenRouter")
+            print(f"{'=' * 60}")
 
             mark_started(output_dir, "stage3_annotation", metadata={})
             log("stage3_annotation", "stage_started")
@@ -527,13 +603,15 @@ def resume(
                         quality_ctx = _build_quality_context(qa) if qa else ""
                         ann_args.append((str(montage), label, quality_ctx, ann_dir))
 
-                    print(f"  {len(ann_args)} series to annotate "
-                          f"({len(existing_anns)} already done, "
-                          f"{derivative_skips} derivatives skipped)")
+                    print(
+                        f"  {len(ann_args)} series to annotate "
+                        f"({len(existing_anns)} already done, "
+                        f"{derivative_skips} derivatives skipped)"
+                    )
 
                     if ann_args:
                         t_a = time.time()
-                        print(f"  Running 32 concurrent OpenRouter calls per worker...")
+                        print("  Running 32 concurrent OpenRouter calls per worker...")
                         # Iterate the map -- per-input failures don't kill the run.
                         # return_exceptions=True surfaces the failed items as
                         # exception objects we count instead of crashing the whole
@@ -543,50 +621,73 @@ def resume(
                         for r in annotate_one.starmap(ann_args, return_exceptions=True):
                             if isinstance(r, BaseException):
                                 failed += 1
-                                log("stage3_annotation", "worker_failed",
+                                log(
+                                    "stage3_annotation",
+                                    "worker_failed",
                                     error_class=type(r).__name__,
-                                    error_msg=str(r))
+                                    error_msg=str(r),
+                                )
                             else:
                                 ann_results.append(r)
 
                         pathology_count = sum(1 for r in ann_results if r.get("pathology"))
                         tissue_count = sum(1 for r in ann_results if r.get("has_tissue"))
                         elapsed = (time.time() - t_a) / 60
-                        print(f"  Annotated: {len(ann_results)} in {elapsed:.1f} min "
-                              f"(failed {failed}, pathology {pathology_count}, tissue {tissue_count})")
-                        log("stage3_annotation", "stage_complete",
+                        print(
+                            f"  Annotated: {len(ann_results)} in {elapsed:.1f} min "
+                            f"(failed {failed}, pathology {pathology_count}, tissue {tissue_count})"
+                        )
+                        log(
+                            "stage3_annotation",
+                            "stage_complete",
                             elapsed_s=elapsed * 60,
                             ok=len(ann_results),
                             skipped=len(existing_anns),
-                            failed=failed)
-
-                        (Path(ann_dir) / "study_annotations.json").write_text(
-                            json.dumps({
-                                "series_annotated": len(ann_results) + len(existing_anns),
-                                "annotation_failures": failed,
-                                "results": ann_results,
-                            }, indent=2, default=str)
+                            failed=failed,
                         )
 
-                        mark_finished(output_dir, "stage3_annotation", ok=True,
-                                      errors=failed,
-                                      inputs_processed=len(ann_results),
-                                      metadata={"processed": len(ann_results),
-                                                "skipped": len(existing_anns)})
+                        (Path(ann_dir) / "study_annotations.json").write_text(
+                            json.dumps(
+                                {
+                                    "series_annotated": len(ann_results) + len(existing_anns),
+                                    "annotation_failures": failed,
+                                    "results": ann_results,
+                                },
+                                indent=2,
+                                default=str,
+                            )
+                        )
+
+                        mark_finished(
+                            output_dir,
+                            "stage3_annotation",
+                            ok=True,
+                            errors=failed,
+                            inputs_processed=len(ann_results),
+                            metadata={"processed": len(ann_results), "skipped": len(existing_anns)},
+                        )
                         volume.commit()
                         volume.reload()
 
                     else:
-                        mark_finished(output_dir, "stage3_annotation", ok=True,
-                                      errors=0,
-                                      inputs_processed=0,
-                                      metadata={"processed": 0,
-                                                "skipped": len(existing_anns)})
+                        mark_finished(
+                            output_dir,
+                            "stage3_annotation",
+                            ok=True,
+                            errors=0,
+                            inputs_processed=0,
+                            metadata={"processed": 0, "skipped": len(existing_anns)},
+                        )
 
                 else:
-                    print(f"  OPENROUTER_API_KEY not set")
-                    mark_finished(output_dir, "stage3_annotation", ok=True,
-                                  errors=0, metadata={"skipped_reason": "no_api_key"})
+                    print("  OPENROUTER_API_KEY not set")
+                    mark_finished(
+                        output_dir,
+                        "stage3_annotation",
+                        ok=True,
+                        errors=0,
+                        metadata={"skipped_reason": "no_api_key"},
+                    )
 
             except Exception as e:
                 log_error("stage3_annotation", "stage_failed", e)
@@ -606,13 +707,16 @@ def resume(
         if not force and is_done(output_dir, "stage4_pack"):
             print("  Stage 4 already done (sentinel ok). Use --force to re-run.")
         else:
-            print(f"\n{'='*60}")
-            print(f"STAGE 4: Pack per-study slices into tar shards")
-            print(f"{'='*60}")
+            print(f"\n{'=' * 60}")
+            print("STAGE 4: Pack per-study slices into tar shards")
+            print(f"{'=' * 60}")
 
             # Studies are direct children of output_dir.
-            study_dirs = [str(p) for p in output_dir.iterdir()
-                          if p.is_dir() and not p.name.startswith(".") and p.name != "_internal"]
+            study_dirs = [
+                str(p)
+                for p in output_dir.iterdir()
+                if p.is_dir() and not p.name.startswith(".") and p.name != "_internal"
+            ]
             print(f"  {len(study_dirs)} studies to pack")
 
             mark_started(output_dir, "stage4_pack", metadata={"studies": len(study_dirs)})
@@ -627,9 +731,12 @@ def resume(
                     for r in pack_one_study_slices.map(study_dirs, return_exceptions=True):
                         if isinstance(r, BaseException):
                             failed += 1
-                            log("stage4_pack", "worker_failed",
+                            log(
+                                "stage4_pack",
+                                "worker_failed",
                                 error_class=type(r).__name__,
-                                error_msg=str(r))
+                                error_msg=str(r),
+                            )
                             continue
                         if r.get("ok"):
                             packed += 1
@@ -640,24 +747,35 @@ def resume(
                             if r.get("error"):
                                 errors.append(r["error"])
                                 err_class, _, err_msg = r["error"].partition(":")
-                                log("stage4_pack", "worker_failed",
+                                log(
+                                    "stage4_pack",
+                                    "worker_failed",
                                     error_class=err_class.strip(),
                                     error_msg=err_msg.strip(),
-                                    study=r.get("study", "?"))
+                                    study=r.get("study", "?"),
+                                )
                         total_slices += r.get("n_slices", 0)
                         total_bytes += r.get("bytes", 0)
 
                     elapsed = (time.time() - t_p) / 60
-                    print(f"  Packed in {elapsed:.1f} min: {packed} new, {skipped} already done, {failed} failed")
-                    print(f"  Total: {total_slices:,} slices in {total_bytes/1024**3:.1f} GB across study tars")
-                    log("stage4_pack", "stage_complete",
+                    print(
+                        f"  Packed in {elapsed:.1f} min: {packed} new, {skipped} already done, {failed} failed"
+                    )
+                    print(
+                        f"  Total: {total_slices:,} slices in {total_bytes / 1024**3:.1f} GB across study tars"
+                    )
+                    log(
+                        "stage4_pack",
+                        "stage_complete",
                         elapsed_s=elapsed * 60,
                         ok=packed,
                         skipped=skipped,
-                        failed=failed)
+                        failed=failed,
+                    )
 
                     if errors:
                         from collections import Counter
+
                         err_types = Counter(e.split(":")[0] for e in errors)
                         print(f"  Failure breakdown: {dict(err_types.most_common(10))}")
 
@@ -668,16 +786,25 @@ def resume(
                         "total_slices": total_slices,
                         "total_bytes": total_bytes,
                     }
-                    mark_finished(output_dir, "stage4_pack", ok=True,
-                                  errors=failed,
-                                  inputs_processed=packed,
-                                  metadata={"packed": packed, "skipped": skipped})
+                    mark_finished(
+                        output_dir,
+                        "stage4_pack",
+                        ok=True,
+                        errors=failed,
+                        inputs_processed=packed,
+                        metadata={"packed": packed, "skipped": skipped},
+                    )
                     volume.commit()
                     volume.reload()
 
                 else:
-                    mark_finished(output_dir, "stage4_pack", ok=True,
-                                  errors=0, metadata={"packed": 0, "skipped": 0})
+                    mark_finished(
+                        output_dir,
+                        "stage4_pack",
+                        ok=True,
+                        errors=0,
+                        metadata={"packed": 0, "skipped": 0},
+                    )
 
             except Exception as e:
                 log_error("stage4_pack", "stage_failed", e)
@@ -696,24 +823,31 @@ def resume(
         if not force and is_done(output_dir, "stage5_upload"):
             print("  Stage 5 already done (sentinel ok). Use --force to re-run.")
         else:
-            print(f"\n{'='*60}")
-            print(f"STAGE 5: Upload to HF (direct from volume)")
-            print(f"{'='*60}")
+            print(f"\n{'=' * 60}")
+            print("STAGE 5: Upload to HF (direct from volume)")
+            print(f"{'=' * 60}")
 
             mark_started(output_dir, "stage5_upload", metadata={"hf_repo": hf_repo})
             log("stage5_upload", "stage_started", hf_repo=hf_repo)
 
             try:
                 from huggingface_hub import HfApi, create_repo
+
                 token = os.environ.get("HF_TOKEN", "")
                 if not token:
                     print("  HF_TOKEN not set -- skipping upload")
-                    mark_finished(output_dir, "stage5_upload", ok=True,
-                                  errors=0, metadata={"skipped_reason": "no_hf_token"})
+                    mark_finished(
+                        output_dir,
+                        "stage5_upload",
+                        ok=True,
+                        errors=0,
+                        metadata={"skipped_reason": "no_hf_token"},
+                    )
                 else:
                     api = HfApi(token=token)
-                    create_repo(hf_repo, repo_type="dataset", private=False,
-                                exist_ok=True, token=token)
+                    create_repo(
+                        hf_repo, repo_type="dataset", private=False, exist_ok=True, token=token
+                    )
 
                     # Patterns we never want to ship.
                     #
@@ -722,15 +856,23 @@ def resume(
                     # We DO NOT add a generic "*.tar" exclusion -- the slice tar
                     # shards are exactly what we want to ship.
                     ignore = [
-                        "*.dcm", "*.dicom",
-                        "*.html", "*.htm",
-                        "*.tar.gz", "*.zip",
-                        ".*", ".*/**",
-                        "_internal/**", "**/_internal/**",
-                        ".hf_cache/**", "**/.hf_cache/**",
+                        "*.dcm",
+                        "*.dicom",
+                        "*.html",
+                        "*.htm",
+                        "*.tar.gz",
+                        "*.zip",
+                        ".*",
+                        ".*/**",
+                        "_internal/**",
+                        "**/_internal/**",
+                        ".hf_cache/**",
+                        "**/.hf_cache/**",
                         # Raw per-slice PNGs -- replaced by *.slices.tar shards
-                        "slices/**", "**/slices/**",
-                        "*_slices/**", "**/*_slices/**",
+                        "slices/**",
+                        "**/slices/**",
+                        "*_slices/**",
+                        "**/*_slices/**",
                     ]
 
                     t_u = time.time()
@@ -738,7 +880,7 @@ def resume(
                     print(f"  Source: {output_dir}")
                     print(f"  Top-level entries: {len(top_level)}")
                     print(f"  Ignore patterns: {len(ignore)}")
-                    print(f"  Starting upload_large_folder...", flush=True)
+                    print("  Starting upload_large_folder...", flush=True)
 
                     api.upload_large_folder(
                         folder_path=str(output_dir),
@@ -751,13 +893,23 @@ def resume(
                     elapsed_u = time.time() - t_u
                     print(f"  Upload finished in {elapsed_u / 60:.1f} min")
                     print(f"  -> {hf_url}")
-                    log("stage5_upload", "stage_complete",
-                        elapsed_s=elapsed_u, ok=1, skipped=0, failed=0)
+                    log(
+                        "stage5_upload",
+                        "stage_complete",
+                        elapsed_s=elapsed_u,
+                        ok=1,
+                        skipped=0,
+                        failed=0,
+                    )
 
-                    mark_finished(output_dir, "stage5_upload", ok=True,
-                                  errors=0,
-                                  inputs_processed=1,
-                                  metadata={"hf_url": hf_url})
+                    mark_finished(
+                        output_dir,
+                        "stage5_upload",
+                        ok=True,
+                        errors=0,
+                        inputs_processed=1,
+                        metadata={"hf_url": hf_url},
+                    )
                     volume.commit()
 
             except Exception as e:
@@ -767,13 +919,13 @@ def resume(
                 raise
 
     elapsed = time.time() - t0
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print(f"RESUME DONE in {elapsed / 60:.0f} min")
     print(f"  Montages found: {len(all_montages)}")
     print(f"  Annotated: {len(ann_results)} series")
     if hf_url:
         print(f"  HF: {hf_url}")
-    print(f"{'='*60}")
+    print(f"{'=' * 60}")
 
     print(json.dumps(summarize(output_dir), indent=2, default=str))
 
@@ -802,8 +954,8 @@ def main(
         skip_pack=skip_pack,
         force=force,
     )
-    print(f"Spawned -- runs on Modal even if you disconnect.")
-    print(f"Check: https://modal.com/apps/shubhxho/main")
+    print("Spawned -- runs on Modal even if you disconnect.")
+    print("Check: https://modal.com/apps/shubhxho/main")
     try:
         result = call.get(timeout=86400)
         print(json.dumps(result, indent=2))

@@ -18,11 +18,13 @@ from rich.console import Console
 from rich.panel import Panel
 from rich.progress import BarColumn, Progress, SpinnerColumn, TextColumn, TimeElapsedColumn
 
-from ..helpers import to_json
 from ..ai_analysis import (
-    analyze_and_chain, cross_series_comparison, synthesize_report,
     _is_derivative,
+    analyze_and_chain,
+    cross_series_comparison,
+    synthesize_report,
 )
+from ..helpers import to_json
 
 console = Console()
 
@@ -46,7 +48,9 @@ def run_ai_analysis(
     for r in series_results:
         if not r.montage_path:
             continue
-        label = f"Series {r.info.get('series_number','?')} — {r.info.get('series_description','')}"
+        label = (
+            f"Series {r.info.get('series_number', '?')} — {r.info.get('series_description', '')}"
+        )
         qa = r.info.get("quality_analysis")
         item = (r.montage_path, label, r.enhanced_path, qa)
 
@@ -71,9 +75,12 @@ def run_ai_analysis(
     if derivative_items:
         t_deriv = time.time()
         with Progress(
-            SpinnerColumn(), TextColumn("[cyan]{task.description}"),
-            BarColumn(), TextColumn("{task.completed}/{task.total}"),
-            TimeElapsedColumn(), console=console,
+            SpinnerColumn(),
+            TextColumn("[cyan]{task.description}"),
+            BarColumn(),
+            TextColumn("{task.completed}/{task.total}"),
+            TimeElapsedColumn(),
+            console=console,
         ) as progress:
             task = progress.add_task("Derivatives (lightweight)", total=len(derivative_items))
             for path, label, _, _ in derivative_items:
@@ -93,9 +100,12 @@ def run_ai_analysis(
     if primary_items:
         t_prim = time.time()
         with Progress(
-            SpinnerColumn(), TextColumn("[cyan]{task.description}"),
-            BarColumn(), TextColumn("{task.completed}/{task.total}"),
-            TimeElapsedColumn(), console=console,
+            SpinnerColumn(),
+            TextColumn("[cyan]{task.description}"),
+            BarColumn(),
+            TextColumn("{task.completed}/{task.total}"),
+            TimeElapsedColumn(),
+            console=console,
         ) as progress:
             task = progress.add_task("Primaries (full + chain)", total=len(primary_items))
             for path, label, enhanced, qa in primary_items:
@@ -120,13 +130,13 @@ def run_ai_analysis(
         )
 
     # ── Cross-series comparison ──────────────────────────────────────────
-    console.print(f"\n[cyan]Cross-series comparison...[/cyan]")
+    console.print("\n[cyan]Cross-series comparison...[/cyan]")
     t_cross = time.time()
     cross_series = cross_series_comparison(image_analyses, series_info)
     console.print(f"[green]✓[/green] Cross-series done in {time.time() - t_cross:.1f}s")
 
     # ── Write analyses, then synthesize (sequential — GPU bound) ──────────
-    console.print(f"\n[cyan]Synthesizing final report...[/cyan]")
+    console.print("\n[cyan]Synthesizing final report...[/cyan]")
     t_synth = time.time()
 
     # Write per-series analyses to disk
@@ -147,7 +157,8 @@ def run_ai_analysis(
     for r in all_records:
         if r.get("_has_pixel_data"):
             sample_tags = {
-                k: to_json(v) for k, v in r.items()
+                k: to_json(v)
+                for k, v in r.items()
                 if not k.startswith("histogram_") and not k.startswith("_")
             }
             break
@@ -161,13 +172,15 @@ def run_ai_analysis(
     try:
         report = synthesize_report(payload, image_analyses, cross_series)
         console.print(f"[green]✓[/green] Synthesis done in {time.time() - t_synth:.1f}s")
-        console.print(Panel(
-            report, title="[bold]AI Analysis Report[/bold]",
-            border_style="green", padding=(1, 2),
-        ))
-        (out_dir / "ai_analysis.md").write_text(
-            f"# DICOM Study Analysis\n\n{report}\n"
+        console.print(
+            Panel(
+                report,
+                title="[bold]AI Analysis Report[/bold]",
+                border_style="green",
+                padding=(1, 2),
+            )
         )
+        (out_dir / "ai_analysis.md").write_text(f"# DICOM Study Analysis\n\n{report}\n")
         console.print(f"[green]✓[/green] Full report → {out_dir / 'ai_analysis.md'}")
     except Exception as e:
         console.print(f"[red]Synthesis error:[/red] {e}")

@@ -19,7 +19,6 @@ At ~300KB per slice, 355K slices = ~100GB of imagery.
 
 from __future__ import annotations
 
-import threading
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 
