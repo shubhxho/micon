@@ -75,6 +75,24 @@
     "sc:email": "shubh@shubhxho.com"
   },
   "sc:citation": "@dataset{speall_mri_2026, title={Speall MRI Brain Dataset: 1,105 Multi-Vendor Clinical Brain MRI Studies}, author={Shubh}, year={2026}, publisher={Hugging Face}, url={https://huggingface.co/datasets/shubhxho/speall-mri}, note={Acquired Dec 2021 -- Oct 2024 across GE, Philips, Siemens, Toshiba scanners}}",
+  "dct:hasPart": [
+    {
+      "@type": "sc:DataDownload",
+      "@id": "checksums-json",
+      "sc:name": "checksums.json",
+      "sc:description": "SHA-256 file-integrity manifest covering every shipped file in the dataset. Buyers can verify data integrity before training.",
+      "sc:contentUrl": "https://huggingface.co/datasets/shubhxho/speall-mri/resolve/main/checksums.json",
+      "sc:encodingFormat": "application/json"
+    },
+    {
+      "@type": "sc:DataDownload",
+      "@id": "prov-json",
+      "sc:name": "prov.json",
+      "sc:description": "W3C PROV-JSON provenance graph tracing raw DICOM source files through the micom extraction pipeline to each derived artifact.",
+      "sc:contentUrl": "https://huggingface.co/datasets/shubhxho/speall-mri/resolve/main/prov.json",
+      "sc:encodingFormat": "application/json"
+    }
+  ],
   "distribution": [
     {
       "@type": "cr:FileObject",
