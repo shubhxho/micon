@@ -1,0 +1,22 @@
+{
+  "pythonVersion": "3.12",
+  "typeCheckingMode": "standard",
+  "reportMissingTypeStubs": false,
+  "exclude": [
+    ".venv",
+    ".claude",
+    "mcap-files",
+    "output",
+    "clean_output",
+    "node_modules"
+  ],
+  "include": [
+    "src",
+    "tests",
+    "dev_run.py",
+    "backfill_metadata.py",
+    "upload_to_hf.py",
+    "generate_pdf.py",
+    "resume_pipeline.py"
+  ]
+}
