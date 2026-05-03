@@ -66,4 +66,8 @@ dataset
 .claude-flow/data/
 .claude-flow/logs/
 .claude-flow/sessions/
+.claude-flow/metrics/
+.claude-flow/security/
 ruvector.db
+agentdb.rvf
+agentdb.rvf.lock
