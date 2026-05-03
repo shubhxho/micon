@@ -309,7 +309,7 @@ def annotate_one(montage_path: str, series_label: str, quality_ctx: str, ann_dir
     sys.path.insert(0, "/root")
     from concurrent.futures import ThreadPoolExecutor
 
-    from src.cloud_analysis import (
+    from src.annotation.cloud import (
         _client,
         _detect_provider,
         annotate_series_multi,
@@ -553,7 +553,7 @@ def resume(
 
             try:
                 if os.environ.get("OPENROUTER_API_KEY"):
-                    from src.ai_analysis import _build_quality_context, _is_derivative
+                    from src.annotation.local import _build_quality_context, _is_derivative
 
                     ann_dir = str(output_dir / "annotations")
                     Path(ann_dir).mkdir(parents=True, exist_ok=True)

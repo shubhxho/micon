@@ -18,7 +18,7 @@ from rich.console import Console
 from rich.panel import Panel
 from rich.progress import BarColumn, Progress, SpinnerColumn, TextColumn, TimeElapsedColumn
 
-from ..ai_analysis import (
+from ..annotation.local import (
     _is_derivative,
     analyze_and_chain,
     cross_series_comparison,

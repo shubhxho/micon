@@ -988,7 +988,7 @@ def run_extraction_pipeline(
         if os.environ.get("OPENROUTER_API_KEY"):
             _progress("annotate", "Multi-model OpenRouter annotation + Gemma 4 / Claude synthesis")
             try:
-                from src.cloud_analysis import annotate_study_multi
+                from src.annotation.cloud import annotate_study_multi
 
                 ann_report = annotate_study_multi(
                     gpu_results,

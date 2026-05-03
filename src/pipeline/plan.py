@@ -39,7 +39,7 @@ def _safe_name(label: str) -> str:
     return _SAFE_NAME_RE.sub("_", label)
 
 
-# ── Mirrors src.ai_analysis._DERIVATIVE_RE / _is_derivative ──────────────────
+# ── Mirrors src.annotation.local._DERIVATIVE_RE / _is_derivative ──────────────────
 # Source of truth: src/ai_analysis.py (inline copy to keep this module dep-free)
 _DERIVATIVE_RE = re.compile(
     r"\b(d{0,2}REG\b|d{0,2}ADC\w*|d?ISO\w*|ISOTROPIC|FILT_PHA|COL:|PJN:|MIP|MinIP"

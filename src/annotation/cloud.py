@@ -788,7 +788,7 @@ def annotate_study_multi(
         )
         return {"error": "No API key set"}
 
-    from .ai_analysis import _build_quality_context, _is_derivative
+    from .local import _build_quality_context, _is_derivative
 
     ann_dir = out_dir / "annotations"
     ann_dir.mkdir(parents=True, exist_ok=True)

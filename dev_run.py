@@ -58,8 +58,8 @@ def _check_annotate_imports() -> None:
         sys.exit(1)
 
     for src_mod, attr in [
-        ("src.cloud_analysis", "annotate_series_multi"),
-        ("src.cloud_analysis", "tissue_analysis_with_model"),
+        ("src.annotation.cloud", "annotate_series_multi"),
+        ("src.annotation.cloud", "tissue_analysis_with_model"),
     ]:
         try:
             mod = __import__(src_mod, fromlist=[attr])
@@ -308,7 +308,7 @@ def dev_annotate(montage_path: str, series_label: str) -> None:
     from rich.panel import Panel
     from rich.syntax import Syntax
 
-    from src.cloud_analysis import (
+    from src.annotation.cloud import (
         _client,
         _detect_provider,
         annotate_series_multi,

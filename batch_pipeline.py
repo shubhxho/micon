@@ -217,7 +217,7 @@ def annotate_series_worker(
     import re
 
     # No volume.reload() — v2 volumes auto-mount latest data
-    from src.cloud_analysis import (
+    from src.annotation.cloud import (
         _client,
         _detect_provider,
         annotate_series_multi,
@@ -361,7 +361,7 @@ def process_batch(
     ann_results = []
     try:
         if os.environ.get("OPENROUTER_API_KEY"):
-            from src.ai_analysis import _build_quality_context, _is_derivative
+            from src.annotation.local import _build_quality_context, _is_derivative
 
             ann_dir = str(output_dir / "annotations")
             Path(ann_dir).mkdir(parents=True, exist_ok=True)
