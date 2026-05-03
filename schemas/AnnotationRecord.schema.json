@@ -1,0 +1,145 @@
+{
+  "$defs": {
+    "AnnotationConsensus": {
+      "additionalProperties": true,
+      "properties": {
+        "anatomical_structures": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Anatomical Structures",
+          "type": "array"
+        },
+        "disagreements": {
+          "items": {
+            "additionalProperties": true,
+            "type": "object"
+          },
+          "title": "Disagreements",
+          "type": "array"
+        },
+        "notable": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Notable",
+          "type": "array"
+        },
+        "pathology": {
+          "additionalProperties": true,
+          "title": "Pathology",
+          "type": "object"
+        },
+        "quality_grade": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Quality Grade"
+        },
+        "sequence_agreement": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Sequence Agreement"
+        },
+        "sequence_type": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Sequence Type"
+        }
+      },
+      "title": "AnnotationConsensus",
+      "type": "object"
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": true,
+  "properties": {
+    "consensus": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/AnnotationConsensus"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "models_called": {
+      "anyOf": [
+        {
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Models Called"
+    },
+    "models_succeeded": {
+      "anyOf": [
+        {
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Models Succeeded"
+    },
+    "per_model": {
+      "additionalProperties": true,
+      "title": "Per Model",
+      "type": "object"
+    },
+    "series_label": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Series Label"
+    },
+    "tissue_analysis": {
+      "anyOf": [
+        {
+          "additionalProperties": true,
+          "type": "object"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Tissue Analysis"
+    }
+  },
+  "title": "AnnotationRecord",
+  "type": "object"
+}

@@ -1,0 +1,703 @@
+{
+  "$defs": {
+    "MLTrainingScore": {
+      "additionalProperties": true,
+      "properties": {
+        "commercial_tier": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Commercial Tier"
+        },
+        "grade": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Grade"
+        },
+        "score": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Score"
+        }
+      },
+      "title": "MLTrainingScore",
+      "type": "object"
+    },
+    "PipelineVersion": {
+      "additionalProperties": true,
+      "properties": {
+        "git_sha": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Git Sha"
+        },
+        "timestamp": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Timestamp"
+        }
+      },
+      "title": "PipelineVersion",
+      "type": "object"
+    },
+    "QualityAnalysis": {
+      "additionalProperties": true,
+      "properties": {
+        "anomaly_detection": {
+          "additionalProperties": true,
+          "title": "Anomaly Detection",
+          "type": "object"
+        },
+        "motion_analysis": {
+          "additionalProperties": true,
+          "title": "Motion Analysis",
+          "type": "object"
+        },
+        "quality_grade": {
+          "additionalProperties": true,
+          "title": "Quality Grade",
+          "type": "object"
+        },
+        "sharpness_analysis": {
+          "additionalProperties": true,
+          "title": "Sharpness Analysis",
+          "type": "object"
+        },
+        "symmetry_analysis": {
+          "additionalProperties": true,
+          "title": "Symmetry Analysis",
+          "type": "object"
+        }
+      },
+      "title": "QualityAnalysis",
+      "type": "object"
+    },
+    "SequenceClassification": {
+      "additionalProperties": true,
+      "properties": {
+        "confidence": {
+          "enum": [
+            "high",
+            "medium",
+            "low",
+            "unknown"
+          ],
+          "title": "Confidence",
+          "type": "string"
+        },
+        "parameters": {
+          "anyOf": [
+            {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Parameters"
+        },
+        "reasoning": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Reasoning",
+          "type": "array"
+        },
+        "sequence_type": {
+          "title": "Sequence Type",
+          "type": "string"
+        }
+      },
+      "required": [
+        "sequence_type",
+        "confidence"
+      ],
+      "title": "SequenceClassification",
+      "type": "object"
+    },
+    "SequenceParams": {
+      "additionalProperties": true,
+      "properties": {
+        "b_value": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "B Value"
+        },
+        "columns": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Columns"
+        },
+        "fa": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Fa"
+        },
+        "field_strength": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Field Strength"
+        },
+        "pixel_spacing": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "number"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Pixel Spacing"
+        },
+        "rows": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Rows"
+        },
+        "slice_thickness": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Slice Thickness"
+        },
+        "spacing_between_slices": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Spacing Between Slices"
+        },
+        "te": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Te"
+        },
+        "ti": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Ti"
+        },
+        "tr": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Tr"
+        }
+      },
+      "title": "SequenceParams",
+      "type": "object"
+    },
+    "SeriesIdentity": {
+      "additionalProperties": true,
+      "description": "Accepts both ``uid`` (detail.json) and ``series_uid`` (study stats) naming.",
+      "properties": {
+        "description": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Description"
+        },
+        "file_count": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "File Count"
+        },
+        "has_pixels": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Has Pixels"
+        },
+        "modality": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Modality"
+        },
+        "number": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Number"
+        },
+        "sop_class": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Sop Class"
+        },
+        "sop_class_uid": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Sop Class Uid"
+        },
+        "source_subdir": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Source Subdir"
+        },
+        "uid": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Uid"
+        }
+      },
+      "title": "SeriesIdentity",
+      "type": "object"
+    },
+    "VolumeStats": {
+      "additionalProperties": true,
+      "properties": {
+        "fov_mm": {
+          "items": {
+            "type": "number"
+          },
+          "title": "Fov Mm",
+          "type": "array"
+        },
+        "quality_grade": {
+          "anyOf": [
+            {
+              "enum": [
+                "A",
+                "B",
+                "C",
+                "D",
+                "F"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Quality Grade"
+        },
+        "quality_score": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Quality Score"
+        },
+        "spacing_mm": {
+          "items": {
+            "type": "number"
+          },
+          "title": "Spacing Mm",
+          "type": "array"
+        },
+        "volume_cnr": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Volume Cnr"
+        },
+        "volume_entropy": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Volume Entropy"
+        },
+        "volume_max": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Volume Max"
+        },
+        "volume_mean": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Volume Mean"
+        },
+        "volume_min": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Volume Min"
+        },
+        "volume_shape": {
+          "items": {
+            "type": "integer"
+          },
+          "title": "Volume Shape",
+          "type": "array"
+        },
+        "volume_snr_estimate": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Volume Snr Estimate"
+        },
+        "volume_std": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Volume Std"
+        }
+      },
+      "title": "VolumeStats",
+      "type": "object"
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": true,
+  "description": "Top-level container for a single series.\n\nValidates both:\n- ``*_detail.json`` files: nested ``series`` dict\n- ``study_full_series_stats.json`` entries: flat shape with ``series_uid`` etc.",
+  "properties": {
+    "advanced_quality": {
+      "anyOf": [
+        {
+          "additionalProperties": true,
+          "type": "object"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Advanced Quality"
+    },
+    "conformance_issues": {
+      "items": {
+        "additionalProperties": true,
+        "type": "object"
+      },
+      "title": "Conformance Issues",
+      "type": "array"
+    },
+    "conformance_summary": {
+      "anyOf": [
+        {
+          "additionalProperties": true,
+          "type": "object"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Conformance Summary"
+    },
+    "file_paths": {
+      "items": {
+        "type": "string"
+      },
+      "title": "File Paths",
+      "type": "array"
+    },
+    "files": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Files",
+      "type": "array"
+    },
+    "ml_training_score": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/MLTrainingScore"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "per_file_stats": {
+      "items": {
+        "additionalProperties": true,
+        "type": "object"
+      },
+      "title": "Per File Stats",
+      "type": "array"
+    },
+    "pipeline_version": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/PipelineVersion"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "quality_analysis": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/QualityAnalysis"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "sequence_classification": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/SequenceClassification"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "sequence_params": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/SequenceParams"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "series": {
+      "$ref": "#/$defs/SeriesIdentity"
+    },
+    "study_id": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Study Id"
+    },
+    "volume_stats": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/VolumeStats"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    }
+  },
+  "required": [
+    "series"
+  ],
+  "title": "SeriesDetail",
+  "type": "object"
+}

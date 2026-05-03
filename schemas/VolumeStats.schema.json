@@ -1,0 +1,144 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": true,
+  "properties": {
+    "fov_mm": {
+      "items": {
+        "type": "number"
+      },
+      "title": "Fov Mm",
+      "type": "array"
+    },
+    "quality_grade": {
+      "anyOf": [
+        {
+          "enum": [
+            "A",
+            "B",
+            "C",
+            "D",
+            "F"
+          ],
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Quality Grade"
+    },
+    "quality_score": {
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Quality Score"
+    },
+    "spacing_mm": {
+      "items": {
+        "type": "number"
+      },
+      "title": "Spacing Mm",
+      "type": "array"
+    },
+    "volume_cnr": {
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Volume Cnr"
+    },
+    "volume_entropy": {
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Volume Entropy"
+    },
+    "volume_max": {
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Volume Max"
+    },
+    "volume_mean": {
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Volume Mean"
+    },
+    "volume_min": {
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Volume Min"
+    },
+    "volume_shape": {
+      "items": {
+        "type": "integer"
+      },
+      "title": "Volume Shape",
+      "type": "array"
+    },
+    "volume_snr_estimate": {
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Volume Snr Estimate"
+    },
+    "volume_std": {
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Volume Std"
+    }
+  },
+  "title": "VolumeStats",
+  "type": "object"
+}

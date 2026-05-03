@@ -1,8 +1,8 @@
 """
-Pydantic v2 schemas for the Speall MRI pipeline.
+Pydantic v2 model definitions for the Speall MRI pipeline.
 
-Backwards-compatible: existing dict-based code continues to work unchanged.
-New code can opt in via e.g. ``SeriesDetail.from_json_file(path)``.
+This module contains all the concrete BaseModel classes.  Import from
+``src.schemas`` (the package __init__) rather than from here directly.
 
 Key design decisions
 --------------------

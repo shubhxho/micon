@@ -28,6 +28,12 @@ dependencies = [
     "cryptography>=47.0.0",
     "webdataset>=1.0.2",
     "scikit-learn>=1.5",
+    "pandera[polars]>=0.20",
+    "msgspec>=0.18",
+    "jsonschema>=4.23",
+    "zarr>=2.18",
+    "ome-zarr>=0.10",
+    "scikit-image>=0.24",
 ]
 
 [project.optional-dependencies]

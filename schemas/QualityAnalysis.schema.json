@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": true,
+  "properties": {
+    "anomaly_detection": {
+      "additionalProperties": true,
+      "title": "Anomaly Detection",
+      "type": "object"
+    },
+    "motion_analysis": {
+      "additionalProperties": true,
+      "title": "Motion Analysis",
+      "type": "object"
+    },
+    "quality_grade": {
+      "additionalProperties": true,
+      "title": "Quality Grade",
+      "type": "object"
+    },
+    "sharpness_analysis": {
+      "additionalProperties": true,
+      "title": "Sharpness Analysis",
+      "type": "object"
+    },
+    "symmetry_analysis": {
+      "additionalProperties": true,
+      "title": "Symmetry Analysis",
+      "type": "object"
+    }
+  },
+  "title": "QualityAnalysis",
+  "type": "object"
+}

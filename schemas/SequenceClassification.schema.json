@@ -1,0 +1,46 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": true,
+  "properties": {
+    "confidence": {
+      "enum": [
+        "high",
+        "medium",
+        "low",
+        "unknown"
+      ],
+      "title": "Confidence",
+      "type": "string"
+    },
+    "parameters": {
+      "anyOf": [
+        {
+          "additionalProperties": true,
+          "type": "object"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Parameters"
+    },
+    "reasoning": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Reasoning",
+      "type": "array"
+    },
+    "sequence_type": {
+      "title": "Sequence Type",
+      "type": "string"
+    }
+  },
+  "required": [
+    "sequence_type",
+    "confidence"
+  ],
+  "title": "SequenceClassification",
+  "type": "object"
+}

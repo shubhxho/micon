@@ -1,0 +1,71 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": true,
+  "properties": {
+    "anatomical_structures": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Anatomical Structures",
+      "type": "array"
+    },
+    "disagreements": {
+      "items": {
+        "additionalProperties": true,
+        "type": "object"
+      },
+      "title": "Disagreements",
+      "type": "array"
+    },
+    "notable": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Notable",
+      "type": "array"
+    },
+    "pathology": {
+      "additionalProperties": true,
+      "title": "Pathology",
+      "type": "object"
+    },
+    "quality_grade": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Quality Grade"
+    },
+    "sequence_agreement": {
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Sequence Agreement"
+    },
+    "sequence_type": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Sequence Type"
+    }
+  },
+  "title": "AnnotationConsensus",
+  "type": "object"
+}

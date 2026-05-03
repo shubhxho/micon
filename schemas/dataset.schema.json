@@ -1,0 +1,44 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "description": "Top-level schema that references all per-model JSON Schemas shipped with the Speall MRI dataset.",
+  "properties": {
+    "AnnotationConsensus": {
+      "$ref": "AnnotationConsensus.schema.json"
+    },
+    "AnnotationRecord": {
+      "$ref": "AnnotationRecord.schema.json"
+    },
+    "MLTrainingScore": {
+      "$ref": "MLTrainingScore.schema.json"
+    },
+    "ManifestRow": {
+      "$ref": "ManifestRow.schema.json"
+    },
+    "PipelineVersion": {
+      "$ref": "PipelineVersion.schema.json"
+    },
+    "QualityAnalysis": {
+      "$ref": "QualityAnalysis.schema.json"
+    },
+    "SequenceClassification": {
+      "$ref": "SequenceClassification.schema.json"
+    },
+    "SequenceParams": {
+      "$ref": "SequenceParams.schema.json"
+    },
+    "SeriesDetail": {
+      "$ref": "SeriesDetail.schema.json"
+    },
+    "SeriesIdentity": {
+      "$ref": "SeriesIdentity.schema.json"
+    },
+    "StudyManifestRow": {
+      "$ref": "StudyManifestRow.schema.json"
+    },
+    "VolumeStats": {
+      "$ref": "VolumeStats.schema.json"
+    }
+  },
+  "title": "Speall MRI Dataset",
+  "type": "object"
+}
