@@ -22,6 +22,7 @@ import json
 import os
 import re
 import time
+from datetime import datetime, timezone
 from pathlib import Path, PurePosixPath
 
 import modal
@@ -71,17 +72,20 @@ volume = modal.Volume.from_name(VOLUME_NAME, create_if_missing=True, version=2)
     retries=modal.Retries(max_retries=2, initial_delay=5.0, backoff_coefficient=2.0),
 )
 @modal.concurrent(max_inputs=2)
-def quality_one_series(detail_path_str: str) -> dict:
+def quality_one_series(detail_path_str: str, output_dir_str: str) -> dict:
     """Run advanced quality + slice export for a single series.
 
     Returns {ok, skipped, slices, bytes, path, error}. Skipped means the series
-    already had advanced_quality (idempotent re-runs are cheap).
+    already had advanced_quality (idempotent re-runs are cheap). `output_dir_str`
+    is the dataset root so we can compute a deterministic study_id and rewrite
+    file_paths to study-relative form (no /vol/... leaks in published JSON).
     """
     import sys; sys.path.insert(0, "/root")
     import numpy as np
     import SimpleITK as sitk
 
     detail_path = Path(detail_path_str)
+    output_dir = Path(output_dir_str)
     out = {"ok": False, "skipped": False, "slices": 0, "bytes": 0,
            "path": detail_path_str, "error": None}
 
@@ -118,6 +122,31 @@ def quality_one_series(detail_path_str: str) -> dict:
         aq = full_quality_assessment(vol, detail.get("series_description", ""))
         detail["advanced_quality"] = aq
         detail["ml_training_score"] = aq.get("ml_training_score", {})
+
+        # study_id: deterministic from path relative to output_dir
+        try:
+            study_id = detail_path.relative_to(output_dir).parts[0]
+        except (ValueError, IndexError):
+            study_id = detail_path.parent.parent.name
+        detail["study_id"] = study_id
+
+        # pipeline_version: timestamp + best-effort git sha from env
+        detail["pipeline_version"] = {
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "git_sha": os.environ.get("GIT_SHA", "unknown"),
+        }
+
+        # Rewrite file_paths to study-relative -- prevents /vol/... leaks
+        # when this JSON ships publicly.
+        study_root = output_dir / study_id
+        rel_paths: list[str] = []
+        for p in detail.get("file_paths", []):
+            try:
+                rel_paths.append(str(Path(p).relative_to(study_root)))
+            except ValueError:
+                rel_paths.append(p)  # already relative or unknown base
+        detail["file_paths"] = rel_paths
+
         detail_path.write_text(json.dumps(detail, indent=2, default=str))
 
         series_dir = detail_path.parent
@@ -316,6 +345,7 @@ def resume(
     skip_quality: bool = False,
     skip_annotation: bool = False,
     skip_pack: bool = False,
+    skip_phi_sweep: bool = False,
 ) -> dict:
     """Resume pipeline -- quality + annotation + slice-pack + HF upload."""
     import sys; sys.path.insert(0, "/root")
@@ -366,7 +396,19 @@ def resume(
 
         if pending:
             t_q = time.time()
-            results = list(quality_one_series.map(pending))
+            # starmap so each worker also receives output_dir; needed to
+            # compute study_id deterministically and rewrite file_paths
+            # to study-relative form.
+            args = [(p, str(output_dir)) for p in pending]
+            results = list(quality_one_series.starmap(args, return_exceptions=True))
+            # Coerce any worker exceptions into error dicts so the rest of
+            # the summary code (which calls .get() on each result) works.
+            results = [
+                r if not isinstance(r, BaseException)
+                else {"ok": False, "skipped": False, "error": f"{type(r).__name__}: {r}",
+                      "slices": 0, "bytes": 0, "path": "?"}
+                for r in results
+            ]
 
             ok = sum(1 for r in results if r.get("ok"))
             skipped = sum(1 for r in results if r.get("skipped"))
@@ -549,6 +591,32 @@ def resume(
             volume.reload()
 
     # ══════════════════════════════════════════════════════════════════════
+    # STAGE 4.5: PHI / path-leak sweep gate (pre-upload validation)
+    # ══════════════════════════════════════════════════════════════════════
+    # Walks every JSON under output_dir for absolute paths, MRN-shaped values,
+    # PHI key names, and DOB-shaped values. Aborts upload on any finding so
+    # we never re-publish the leaked /vol/... paths or any redaction misses.
+    if hf_repo and not skip_phi_sweep:
+        print(f"\n{'='*60}")
+        print(f"STAGE 4.5: PHI / path-leak sweep")
+        print(f"{'='*60}")
+        try:
+            from src.preflight_phi_sweep import sweep
+            findings = sweep(output_dir)
+            if findings:
+                print(f"  ABORTING UPLOAD: {len(findings)} PHI / path-leak findings:")
+                for f in findings[:30]:
+                    print(f"    [{f['kind']}] {f['path']}:{f['line_number']}")
+                    print(f"      {f['snippet']}")
+                if len(findings) > 30:
+                    print(f"    ... and {len(findings) - 30} more")
+                hf_repo = ""  # short-circuit Stage 5
+            else:
+                print(f"  Clean -- no PHI or path-leak findings")
+        except Exception as e:
+            print(f"  Sweep failed (continuing): {e}")
+
+    # ══════════════════════════════════════════════════════════════════════
     # STAGE 5: Upload to HF -- direct from the volume mount
     # ══════════════════════════════════════════════════════════════════════
     # Tar shards from Stage 4 ARE shipped (the *.slices.tar files at the
@@ -631,6 +699,7 @@ def main(
     skip_quality: bool = False,
     skip_annotation: bool = False,
     skip_pack: bool = False,
+    skip_phi_sweep: bool = False,
 ):
     """Resume from where batch_pipeline failed -- quality + annotation + pack + HF upload."""
     call = resume.spawn(
@@ -638,6 +707,7 @@ def main(
         skip_quality=skip_quality,
         skip_annotation=skip_annotation,
         skip_pack=skip_pack,
+        skip_phi_sweep=skip_phi_sweep,
     )
     print(f"Spawned -- runs on Modal even if you disconnect.")
     print(f"Check: https://modal.com/apps/shubhxho/main")
