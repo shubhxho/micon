@@ -317,10 +317,19 @@ def _parallel_download(
     image=cpu_image,
     volumes={str(MOUNT_POINT): volume},
     timeout=120, memory=512, cpu=0.5,
+    region="us-east",
+    scaledown_window=300,
 )
-@modal.concurrent(max_inputs=32)
+@modal.concurrent(max_inputs=64, target_inputs=48)
 def extract_file_cloud(fpath: str) -> dict:
-    """Extract metadata from a single DICOM file. Distributed via .map()."""
+    """Extract metadata from a single DICOM file. Distributed via .map().
+
+    region="us-east" colocates with the volume's home region to cut cross-region
+    egress on per-file reads. max_inputs=64 lets one container service a full
+    .map() chunk in flight (extraction is I/O-bound: pydicom read of metadata
+    only, skip_pixels=True). target_inputs=48 keeps headroom so the autoscaler
+    spins up a new container before any single one saturates.
+    """
     import sys; sys.path.insert(0, "/root")
     from src.extraction import extract_single_file
     try:
@@ -339,6 +348,8 @@ def extract_file_cloud(fpath: str) -> dict:
     image=cpu_image,
     volumes={str(MOUNT_POINT): volume},
     timeout=600, memory=8192, cpu=4.0,
+    region="us-east",
+    scaledown_window=300,
     retries=modal.Retries(
         max_retries=2,
         initial_delay=5.0,
@@ -865,8 +876,14 @@ def run_extraction_pipeline(
 
 # ── Redaction ────────────────────────────────────────────────────────────────
 
-@app.function(image=cpu_image, volumes={str(MOUNT_POINT): volume}, timeout=120, memory=512)
-@modal.concurrent(max_inputs=16)
+@app.function(
+    image=cpu_image,
+    volumes={str(MOUNT_POINT): volume},
+    timeout=120, memory=512,
+    region="us-east",
+    scaledown_window=300,
+)
+@modal.concurrent(max_inputs=32, target_inputs=24)
 def redact_single_file_cloud(fpath: str, out_dir: str, salt: str, date_shift_days: int) -> dict:
     """Redact PHI from a single DICOM file. 66 rules, single-pass verify."""
     import sys; sys.path.insert(0, "/root")
