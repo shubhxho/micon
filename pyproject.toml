@@ -27,3 +27,9 @@ dependencies = [
     "cryptography>=47.0.0",
     "webdataset>=1.0.2",
 ]
+
+[project.scripts]
+speall = "src.cli:app"
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
