@@ -832,50 +832,65 @@ def annotate_study_multi(
     progress_tbl.add_column("Time", justify="right", style="dim")
     progress_tbl.add_column("Flags")
 
+    # Each annotate_series_multi call fans out to N model APIs and waits on
+    # network. The outer loop is embarrassingly parallel across series, so
+    # run a thread pool over OpenRouter calls. Worker count is bounded by
+    # _ANN_PARALLEL (env-tunable) so we stay within OpenRouter's per-key
+    # concurrency budget.
+    annot_jobs: list[tuple[str, str, dict]] = []
     for r in series_results:
         montage_path = r.get("montage_path") if isinstance(r, dict) else getattr(r, "montage_path", None)
         if not montage_path:
             continue
-
         info = r.get("info", r) if isinstance(r, dict) else r.info
         label = f"Series {info.get('series_number','?')} — {info.get('series_description','')}"
-
         if _is_derivative(label):
             continue
-
         qa = info.get("quality_analysis")
-        quality_ctx = _build_quality_context(qa)
+        annot_jobs.append((montage_path, label, _build_quality_context(qa)))
 
+    def _annotate_one(job: tuple[str, str, dict]) -> tuple[str, dict]:
+        montage_path, label, quality_ctx = job
         t0 = time.time()
-        result = annotate_series_multi(montage_path, label, quality_ctx, model_keys)
+        try:
+            result = annotate_series_multi(montage_path, label, quality_ctx, model_keys)
+        except Exception as e:
+            result = {"error": str(e), "models_called": 0, "models_succeeded": 0, "consensus": {}}
         result["time_s"] = round(time.time() - t0, 1)
-        all_annotations[label] = result
+        return label, result
 
-        safe_name = re.sub(r'[^\w\-]', '_', label)
-        (ann_dir / f"{safe_name}.json").write_text(
-            json.dumps(result, indent=2, default=str)
-        )
+    parallel = max(1, int(os.environ.get("MICOM_ANNOTATION_PARALLELISM", "8")))
+    with ThreadPoolExecutor(max_workers=min(parallel, len(annot_jobs) or 1)) as pool:
+        futures = {pool.submit(_annotate_one, j): j[1] for j in annot_jobs}
+        for fut in as_completed(futures):
+            label, result = fut.result()
+            all_annotations[label] = result
 
-        consensus = result.get("consensus", {})
-        n_ok = result.get("models_succeeded", 0)
-        n_total = result.get("models_called", 0)
-        seq = consensus.get("sequence_type", "?")
-        grade = consensus.get("quality_grade", "?")
-        flags = []
-        if consensus.get("disagreements"):
-            flags.append(Text("disagreement", style="yellow"))
-        if consensus.get("pathology", {}).get("found"):
-            flags.append(Text("pathology", style="red"))
-        flag_text = Text(", ").join(flags) if flags else Text("—", style="dim")
+            safe_name = re.sub(r'[^\w\-]', '_', label)
+            (ann_dir / f"{safe_name}.json").write_text(
+                json.dumps(result, indent=2, default=str)
+            )
 
-        progress_tbl.add_row(
-            label,
-            seq,
-            Text(grade, style=_GRADE_STYLE.get(grade, "dim")),
-            f"{n_ok}/{n_total}",
-            f"{result.get('time_s', 0):.1f}s",
-            flag_text,
-        )
+            consensus = result.get("consensus", {})
+            n_ok = result.get("models_succeeded", 0)
+            n_total = result.get("models_called", 0)
+            seq = consensus.get("sequence_type", "?")
+            grade = consensus.get("quality_grade", "?")
+            flags = []
+            if consensus.get("disagreements"):
+                flags.append(Text("disagreement", style="yellow"))
+            if consensus.get("pathology", {}).get("found"):
+                flags.append(Text("pathology", style="red"))
+            flag_text = Text(", ").join(flags) if flags else Text("—", style="dim")
+
+            progress_tbl.add_row(
+                label,
+                seq,
+                Text(grade, style=_GRADE_STYLE.get(grade, "dim")),
+                f"{n_ok}/{n_total}",
+                f"{result.get('time_s', 0):.1f}s",
+                flag_text,
+            )
 
     console.print(progress_tbl)
 
@@ -890,20 +905,21 @@ def annotate_study_multi(
 
     if tissue_model:
         client = _client()
-        tissue_count = 0
-        for label, result in all_annotations.items():
-            montage_path = None
-            for r in series_results:
-                info = r.get("info", r) if isinstance(r, dict) else r.info
-                rl = f"Series {info.get('series_number','?')} — {info.get('series_description','')}"
-                if rl == label:
-                    montage_path = r.get("montage_path") if isinstance(r, dict) else getattr(r, "montage_path", None)
-                    break
 
-            if not montage_path:
-                continue
+        # Index series_results by label once instead of doing two O(N) scans
+        # per annotation.
+        by_label: dict[str, dict] = {}
+        for r in series_results:
+            info = r.get("info", r) if isinstance(r, dict) else r.info
+            rl = f"Series {info.get('series_number','?')} — {info.get('series_description','')}"
+            mp = r.get("montage_path") if isinstance(r, dict) else getattr(r, "montage_path", None)
+            by_label[rl] = {"montage_path": mp, "qa": info.get("quality_analysis")}
 
-            # Summarize prior annotation for context
+        def _tissue_one(item: tuple[str, dict]) -> tuple[str, dict | None]:
+            label, result = item
+            entry = by_label.get(label)
+            if not entry or not entry.get("montage_path"):
+                return label, None
             consensus = result.get("consensus", {})
             prior_summary = json.dumps({
                 "sequence": consensus.get("sequence_type", "?"),
@@ -911,30 +927,27 @@ def annotate_study_multi(
                 "findings": consensus.get("pathology", {}).get("findings", [])[:3],
                 "quality_grade": consensus.get("quality_grade", "?"),
             }, default=str)
+            quality_ctx = _build_quality_context(entry["qa"]) if entry["qa"] else ""
+            try:
+                return label, tissue_analysis_with_model(
+                    client, entry["montage_path"], label,
+                    prior_annotation=prior_summary,
+                    quality_ctx=quality_ctx,
+                    model_key=tissue_model, provider=provider,
+                )
+            except Exception as e:
+                return label, {"error": str(e)}
 
-            qa = None
-            for r in series_results:
-                info = r.get("info", r) if isinstance(r, dict) else r.info
-                rl = f"Series {info.get('series_number','?')} — {info.get('series_description','')}"
-                if rl == label:
-                    qa = info.get("quality_analysis")
-                    break
-            quality_ctx = _build_quality_context(qa) if qa else ""
-
-            tissue_result = tissue_analysis_with_model(
-                client, montage_path, label,
-                prior_annotation=prior_summary,
-                quality_ctx=quality_ctx,
-                model_key=tissue_model, provider=provider,
-            )
-
-            if tissue_result.get("tissue_analysis"):
-                result["tissue_analysis"] = tissue_result["tissue_analysis"]
+        tissue_count = 0
+        with ThreadPoolExecutor(max_workers=min(parallel, len(all_annotations) or 1)) as pool:
+            for label, tissue_result in pool.map(_tissue_one, list(all_annotations.items())):
+                if not tissue_result or not tissue_result.get("tissue_analysis"):
+                    continue
+                all_annotations[label]["tissue_analysis"] = tissue_result["tissue_analysis"]
                 tissue_count += 1
-                # Update the saved annotation file
                 safe_name = re.sub(r'[^\w\-]', '_', label)
                 (ann_dir / f"{safe_name}.json").write_text(
-                    json.dumps(result, indent=2, default=str)
+                    json.dumps(all_annotations[label], indent=2, default=str)
                 )
 
         console.print(f"  [green]✓[/green] Tissue analysis: {tissue_count}/{len(all_annotations)} series")
