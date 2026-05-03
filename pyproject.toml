@@ -34,6 +34,7 @@ dependencies = [
     "zarr>=2.18",
     "ome-zarr>=0.10",
     "scikit-image>=0.24",
+    "monai>=1.4",
 ]
 
 [project.optional-dependencies]
