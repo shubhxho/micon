@@ -7,9 +7,9 @@ CLI usage:
 
 from __future__ import annotations
 
-import json
-import sys
 from pathlib import Path
+
+from src.io.msgspec_io import dumps_bytes, loads
 
 _REPO_ROOT = Path(__file__).parent.parent.parent
 _DEFAULT_INFO = _REPO_ROOT / "Speall_MRI_Dataset_Info.json"
@@ -38,7 +38,7 @@ def build_datacite_metadata(
     registration.
     """
     info_path = Path(info_path)
-    info = json.loads(info_path.read_text(encoding="utf-8"))
+    info = loads(info_path.read_bytes())
     ds = info.get("dataset", {})
     totals = info.get("totals", {})
     acq = info.get("acquisition_period", {})
@@ -141,7 +141,7 @@ def write_datacite_metadata(
     metadata = build_datacite_metadata(info_path)
     out_path = Path(out_path)
     out_path.parent.mkdir(parents=True, exist_ok=True)
-    out_path.write_text(json.dumps(metadata, indent=2), encoding="utf-8")
+    out_path.write_bytes(dumps_bytes(metadata, indent=2))
 
 
 # ---------------------------------------------------------------------------
@@ -149,16 +149,22 @@ def write_datacite_metadata(
 # ---------------------------------------------------------------------------
 
 
+def _cli_generate(
+    out: Path,
+    info: Path = _DEFAULT_INFO,
+) -> None:  # pragma: no cover
+    """Generate DataCite metadata JSON for the corpus."""
+    write_datacite_metadata(out, info)
+    print(f"DataCite metadata written to {out}")
+
+
 def _main() -> None:  # pragma: no cover
-    import argparse
+    from cyclopts import App
 
-    parser = argparse.ArgumentParser(prog="python -m src.integrity.datacite")
-    parser.add_argument("--out", required=True, type=Path)
-    parser.add_argument("--info", type=Path, default=_DEFAULT_INFO)
-    args = parser.parse_args()
-    write_datacite_metadata(args.out, args.info)
-    print(f"DataCite metadata written to {args.out}")
+    cli = App(name="datacite", help="DataCite Schema 4.5 metadata for the corpus.")
+    cli.default(_cli_generate)
+    cli()
 
 
-if __name__ == "__main__":
+if __name__ == "__main__":  # pragma: no cover
     _main()

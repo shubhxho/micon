@@ -19,13 +19,12 @@ notebook from the streaming interface:
 # %% Setup
 # pip install pyarrow pandas matplotlib
 
-import json
 from pathlib import Path
 from typing import Any
 
 # %%
 # Adjust DATASET_ROOT to wherever you unpacked the dataset download.
-DATASET_ROOT = Path("/data/speall-mri")   # <-- change this
+DATASET_ROOT = Path("/data/speall-mri")  # <-- change this
 MANIFEST_PATH = DATASET_ROOT / "manifest.parquet"
 
 
@@ -34,6 +33,7 @@ def load_manifest(path: Path) -> list[dict[str, Any]]:
     """Load manifest.parquet into a list of dicts."""
     try:
         import pyarrow.parquet as pq
+
         table = pq.read_table(str(path))
         cols = table.to_pydict()
         n = len(table)
@@ -41,6 +41,7 @@ def load_manifest(path: Path) -> list[dict[str, Any]]:
     except Exception:
         pass
     import pandas as pd
+
     return pd.read_parquet(str(path)).to_dict(orient="records")
 
 
@@ -49,26 +50,30 @@ if not MANIFEST_PATH.exists():
     print(f"[DEMO] manifest not found at {MANIFEST_PATH}. Using synthetic data.")
     # Synthetic fallback for demo purposes
     import random
+
     random.seed(42)
     SEQ_TYPES = ["DWI", "FLAIR", "T1", "T2", "SWAN", "TOF"]
     GRADES = ["A", "B", "C", "D", "F"]
     rows = []
     for i in range(500):
-        rows.append({
-            "study_id": f"study_{i // 5:04d}",
-            "series_uid": f"uid_{i:06d}",
-            "sequence_type": random.choice(SEQ_TYPES),
-            "quality_grade": random.choice(GRADES),
-            "ml_score": random.uniform(20, 95),
-            "field_strength_T": random.choice([1.5, 3.0]),
-            "modality": "MR",
-            "b_value": 1000.0 if i % 5 == 0 else None,
-        })
+        rows.append(
+            {
+                "study_id": f"study_{i // 5:04d}",
+                "series_uid": f"uid_{i:06d}",
+                "sequence_type": random.choice(SEQ_TYPES),
+                "quality_grade": random.choice(GRADES),
+                "ml_score": random.uniform(20, 95),
+                "field_strength_T": random.choice([1.5, 3.0]),
+                "modality": "MR",
+                "b_value": 1000.0 if i % 5 == 0 else None,
+            }
+        )
     all_rows = rows
 else:
     all_rows = load_manifest(MANIFEST_PATH)
 
 print(f"Total series: {len(all_rows)}")
+
 
 # %% Filter by sequence type
 def filter_by_sequence(rows: list[dict], seq: str) -> list[dict]:
@@ -82,6 +87,7 @@ flair_rows = filter_by_sequence(all_rows, "FLAIR")
 t1_rows = filter_by_sequence(all_rows, "T1")
 print(f"DWI: {len(dwi_rows)}  FLAIR: {len(flair_rows)}  T1: {len(t1_rows)}")
 
+
 # %% Filter by quality grade
 def filter_by_grade(rows: list[dict], grades: list[str]) -> list[dict]:
     """Return rows where quality_grade is in the given list."""
@@ -94,11 +100,12 @@ print(f"Grade A/B (premium): {len(premium)} series")
 
 # %% Plot sequence type distribution
 try:
-    import matplotlib.pyplot as plt
     from collections import Counter
 
+    import matplotlib.pyplot as plt
+
     seq_counts = Counter((r.get("sequence_type") or "Unknown") for r in all_rows)
-    labels, values = zip(*sorted(seq_counts.items(), key=lambda x: -x[1]))
+    labels, values = zip(*sorted(seq_counts.items(), key=lambda x: -x[1]), strict=False)
 
     fig, axes = plt.subplots(1, 2, figsize=(14, 5))
 
@@ -127,6 +134,7 @@ try:
 except ImportError:
     print("matplotlib not installed; skipping plots.")
 
+
 # %% Filter example: DWI grade A/B for 3T scanners
 def filter_cohort(
     rows: list[dict],
@@ -145,13 +153,17 @@ def filter_cohort(
     return result
 
 
-training_cohort = filter_cohort(all_rows, sequence_type="DWI", grades=["A", "B"], field_strength=3.0)
+training_cohort = filter_cohort(
+    all_rows, sequence_type="DWI", grades=["A", "B"], field_strength=3.0
+)
 print(f"DWI 3T grade A/B cohort: {len(training_cohort)} series")
 
 # %% Summary statistics
 ml_scores = [r.get("ml_score") for r in training_cohort if r.get("ml_score") is not None]
 if ml_scores:
-    print(f"ML score -- mean: {sum(ml_scores)/len(ml_scores):.1f}, min: {min(ml_scores):.1f}, max: {max(ml_scores):.1f}")
+    print(
+        f"ML score -- mean: {sum(ml_scores) / len(ml_scores):.1f}, min: {min(ml_scores):.1f}, max: {max(ml_scores):.1f}"
+    )
 
 # %% Next steps
 # -----------------------------------------------------------------------------

@@ -19,14 +19,14 @@ Usage via CLI::
 from __future__ import annotations
 
 import json
-import logging
 import re
-import warnings
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 from typing import Any
 
-logger = logging.getLogger(__name__)
+from src._logging import get_logger
+
+logger = get_logger(__name__)
 
 # ---------------------------------------------------------------------------
 # Optional heavy imports
@@ -85,19 +85,13 @@ def _derivatives_dir(
     """Return the derivatives output directory for one subject/session."""
     sub = _sanitize(subject)
     ses = _sanitize(session)
-    return (
-        bids_root
-        / "derivatives"
-        / derivative_name
-        / f"sub-{sub}"
-        / f"ses-{ses}"
-        / "anat"
-    )
+    return bids_root / "derivatives" / derivative_name / f"sub-{sub}" / f"ses-{ses}" / "anat"
 
 
 # ---------------------------------------------------------------------------
 # Derivatives dataset_description.json
 # ---------------------------------------------------------------------------
+
 
 def _write_derivatives_description(deriv_root: Path, model_name: str) -> None:
     """Write dataset_description.json into a derivatives subfolder."""
@@ -121,6 +115,7 @@ def _write_derivatives_description(deriv_root: Path, model_name: str) -> None:
 # ---------------------------------------------------------------------------
 # Core segmentation helpers
 # ---------------------------------------------------------------------------
+
 
 def _load_nifti(nifti_path: Path) -> tuple[Any, Any]:
     """Load a NIfTI file; returns (data_array, affine) or raises."""
@@ -204,26 +199,26 @@ def segment_one_series(
     try:
         volume, affine = _load_nifti(nifti_path)
     except Exception as exc:
-        logger.warning("Could not load NIfTI %s: %s", nifti_path, exc)
+        logger.warning("Could not load NIfTI {}: {}", nifti_path, exc)
         return {"ok": False, "mask_path": None, "n_voxels": 0, "label_volumes": {}}
 
     try:
         mask = _run_model_inference(model_name, volume)
     except Exception as exc:
-        logger.warning("Model %r failed on %s: %s", model_name, nifti_path, exc)
+        logger.warning("Model {!r} failed on {}: {}", model_name, nifti_path, exc)
         return {"ok": False, "mask_path": None, "n_voxels": 0, "label_volumes": {}}
 
     try:
         _save_mask_nifti(mask, affine, mask_path)
     except Exception as exc:
-        logger.warning("Could not save mask to %s: %s", mask_path, exc)
+        logger.warning("Could not save mask to {}: {}", mask_path, exc)
         return {"ok": False, "mask_path": None, "n_voxels": 0, "label_volumes": {}}
 
     voxel_vol_mm3 = _voxel_volume_mm3(affine)
     n_voxels = int((mask > 0).sum()) if _NUMPY else 0
     label_volumes = _compute_label_volumes(mask, voxel_vol_mm3)
 
-    logger.info("Saved mask -> %s  (%d non-zero voxels)", mask_path, n_voxels)
+    logger.info("Saved mask -> {} ({} non-zero voxels)", mask_path, n_voxels)
     return {
         "ok": True,
         "mask_path": mask_path,
@@ -290,21 +285,25 @@ def segment_study(
         nifti_path = _pick_input_nifti(bids_root, subject, session, model_name)
         if nifti_path is None:
             logger.warning(
-                "No suitable input NIfTI for model %r (sub-%s ses-%s)",
+                "No suitable input NIfTI for model {!r} (sub-{} ses-{})",
                 model_name,
                 subject,
                 session,
             )
             results.append(
-                {"ok": False, "model": model_name, "subject": subject,
-                 "mask_path": None, "n_voxels": 0, "label_volumes": {}}
+                {
+                    "ok": False,
+                    "model": model_name,
+                    "subject": subject,
+                    "mask_path": None,
+                    "n_voxels": 0,
+                    "label_volumes": {},
+                }
             )
             continue
 
         meta = get_model_meta(model_name)
-        out_dir = _derivatives_dir(
-            bids_root, meta["derivative_name"], subject, session
-        )
+        out_dir = _derivatives_dir(bids_root, meta["derivative_name"], subject, session)
         _write_derivatives_description(
             bids_root / "derivatives" / meta["derivative_name"],
             model_name,
@@ -372,7 +371,7 @@ def segment_dataset(
                 try:
                     all_results.extend(future.result())
                 except Exception as exc:
-                    logger.error("segment_study(sub=%s, ses=%s) raised: %s", sub, ses, exc)
+                    logger.error("segment_study(sub={}, ses={}) raised: {}", sub, ses, exc)
 
     n_ok = sum(1 for r in all_results if r.get("ok"))
     return {
@@ -387,6 +386,7 @@ def segment_dataset(
 # CLI
 # ---------------------------------------------------------------------------
 
+
 def _build_cli() -> Any:
     """Build and return the Typer CLI app."""
     import typer
@@ -399,7 +399,7 @@ def _build_cli() -> Any:
 
     @app.command()
     def run(
-        bids_root: Path = typer.Option(..., "--bids-root", help="BIDS dataset root."),
+        bids_root: Path = typer.Option(..., "--bids-root", help="BIDS dataset root."),  # noqa: B008
         models_csv: str = typer.Option(
             "synthstrip,synthseg",
             "--models",
@@ -409,10 +409,9 @@ def _build_cli() -> Any:
         verbose: bool = typer.Option(False, "--verbose", "-v", help="Debug logging."),
     ) -> None:
         """Pre-compute segmentation masks for all subjects in a BIDS dataset."""
-        logging.basicConfig(
-            level=logging.DEBUG if verbose else logging.INFO,
-            format="%(levelname)s %(name)s: %(message)s",
-        )
+        from src._logging import configure as _configure_logging
+
+        _configure_logging(level="DEBUG" if verbose else "INFO", force=True)
         model_list = [m.strip() for m in models_csv.split(",") if m.strip()]
         typer.echo(f"Segmenting {bids_root} with models: {model_list}, workers={workers}")
         summary = segment_dataset(bids_root, model_list, n_workers=workers)

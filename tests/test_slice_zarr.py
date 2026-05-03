@@ -16,12 +16,12 @@ import pytest
 
 zarr = pytest.importorskip("zarr", reason="zarr not installed")
 
-from src.zarr_export.slice_store import slices_to_zarr, _normalize_slice
-
+from src.zarr_export.slice_store import _normalize_slice, slices_to_zarr
 
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _smooth_volume(shape: tuple[int, int, int] = (20, 64, 64)) -> np.ndarray:
     """Return a smooth float32 gradient volume that compresses well."""
@@ -34,10 +34,11 @@ def _smooth_volume(shape: tuple[int, int, int] = (20, 64, 64)) -> np.ndarray:
 # 1. SlicesToZarr -- round-trip
 # ---------------------------------------------------------------------------
 
+
 class TestSlicesToZarr:
     def test_output_shape_matches_volume(self, tmp_path: Path) -> None:
         vol = _smooth_volume((12, 64, 64))
-        result = slices_to_zarr(vol, tmp_path / "out.zarr", series_label="t1")
+        slices_to_zarr(vol, tmp_path / "out.zarr", series_label="t1")
         arr = zarr.open_array(str(tmp_path / "out.zarr"), mode="r")
         assert arr.shape == (12, 64, 64)
 
@@ -56,7 +57,8 @@ class TestSlicesToZarr:
         for i in range(vol.shape[0]):
             expected = _normalize_slice(vol[i])
             np.testing.assert_array_equal(
-                arr[i], expected,
+                arr[i],
+                expected,
                 err_msg=f"Windowing mismatch on slice {i}",
             )
 
@@ -89,6 +91,7 @@ class TestSlicesToZarr:
 # 2. CompressionRatio
 # ---------------------------------------------------------------------------
 
+
 class TestCompressionRatio:
     def test_compression_ratio_less_than_one(self, tmp_path: Path) -> None:
         """A smooth gradient volume should compress well below 1.0."""
@@ -112,6 +115,7 @@ class TestCompressionRatio:
 # ---------------------------------------------------------------------------
 # 3. BothBackend -- export_all_slices with backend="both"
 # ---------------------------------------------------------------------------
+
 
 class TestBothBackend:
     def test_both_png_and_zarr_exist(self, tmp_path: Path) -> None:
@@ -174,6 +178,7 @@ class TestBothBackend:
 # ---------------------------------------------------------------------------
 # 4. EmptyVolume
 # ---------------------------------------------------------------------------
+
 
 class TestEmptyVolume:
     def test_empty_volume_returns_zero_slices(self, tmp_path: Path) -> None:

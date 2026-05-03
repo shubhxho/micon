@@ -24,8 +24,8 @@ from pydantic import BaseModel
 from src.schemas.models import (
     AnnotationConsensus,
     AnnotationRecord,
-    MLTrainingScore,
     ManifestRow,
+    MLTrainingScore,
     PipelineVersion,
     QualityAnalysis,
     SequenceClassification,
@@ -102,8 +102,7 @@ def export_all(out_dir: Path) -> list[Path]:
         ),
         "type": "object",
         "properties": {
-            model.__name__: {"$ref": f"{model.__name__}.schema.json"}
-            for model in _MODELS
+            model.__name__: {"$ref": f"{model.__name__}.schema.json"} for model in _MODELS
         },
     }
     dataset_path = out_dir / "dataset.schema.json"

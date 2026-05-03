@@ -48,18 +48,19 @@ _BIDS_LABEL_RE = re.compile(r"^[A-Za-z0-9]+$")
 
 # Full BIDS filename regex (permissive -- at minimum sub + ses + suffix + ext)
 _BIDS_FILENAME_RE = re.compile(
-    r"^sub-[A-Za-z0-9]+"          # sub entity
-    r"_ses-[A-Za-z0-9]+"          # ses entity
-    r"(?:_acq-[A-Za-z0-9]+)?"     # optional acq
-    r"(?:_run-[A-Za-z0-9]+)?"     # optional run
-    r"_[A-Za-z0-9]+"              # suffix
-    r"\.[A-Za-z0-9.]+$"           # extension(s)
+    r"^sub-[A-Za-z0-9]+"  # sub entity
+    r"_ses-[A-Za-z0-9]+"  # ses entity
+    r"(?:_acq-[A-Za-z0-9]+)?"  # optional acq
+    r"(?:_run-[A-Za-z0-9]+)?"  # optional run
+    r"_[A-Za-z0-9]+"  # suffix
+    r"\.[A-Za-z0-9.]+$"  # extension(s)
 )
 
 
 # ---------------------------------------------------------------------------
 # 1. SEQUENCE_TO_BIDS coverage
 # ---------------------------------------------------------------------------
+
 
 class TestSequenceToBids:
     def test_all_sample_sequence_types_mapped(self) -> None:
@@ -111,6 +112,7 @@ class TestSequenceToBids:
 # 2. bids_filename
 # ---------------------------------------------------------------------------
 
+
 class TestBidsFilename:
     def test_basic_no_optional_entities(self) -> None:
         name = bids_filename("001", "01", "T1w")
@@ -158,19 +160,23 @@ class TestBidsFilename:
 # 3. infer_acquisition_label
 # ---------------------------------------------------------------------------
 
+
 class TestInferAcquisitionLabel:
-    @pytest.mark.parametrize("desc,expected", [
-        ("Ax DWI", "axial"),
-        ("Ax T2 FLAIR", "axial"),
-        ("AxT1 MEMP", "axial"),
-        ("3D Ax SWAN", "axial"),
-        ("COR DWI", "coronal"),
-        ("SAG T2", "sagittal"),
-        (" SAG T2", "sagittal"),
-        ("BRAIN ANGIO", None),
-        ("ADC (10^-6 mm²/s)", None),
-        ("Processed Images", None),
-    ])
+    @pytest.mark.parametrize(
+        "desc,expected",
+        [
+            ("Ax DWI", "axial"),
+            ("Ax T2 FLAIR", "axial"),
+            ("AxT1 MEMP", "axial"),
+            ("3D Ax SWAN", "axial"),
+            ("COR DWI", "coronal"),
+            ("SAG T2", "sagittal"),
+            (" SAG T2", "sagittal"),
+            ("BRAIN ANGIO", None),
+            ("ADC (10^-6 mm²/s)", None),
+            ("Processed Images", None),
+        ],
+    )
     def test_orientation_detection(self, desc: str, expected: str | None) -> None:
         assert infer_acquisition_label(desc) == expected
 
@@ -187,6 +193,7 @@ class TestInferAcquisitionLabel:
 # ---------------------------------------------------------------------------
 # 4. convert_study layout test
 # ---------------------------------------------------------------------------
+
 
 class TestConvertStudyLayout:
     """Test that convert_study produces the expected BIDS directory layout.
@@ -260,6 +267,7 @@ class TestConvertStudyLayout:
                 header_bytes = fh.read(4)
             # NIfTI-1: first 4 bytes should decode to 348 (sizeof_hdr)
             import struct
+
             sizeof_hdr = struct.unpack("<i", header_bytes)[0]
             assert sizeof_hdr == 348, f"{nifti_path}: invalid NIfTI-1 sizeof_hdr={sizeof_hdr}"
 
@@ -322,9 +330,7 @@ class TestConvertStudyLayout:
                 f"{nifti.name!r} does not match BIDS filename pattern"
             )
 
-    def test_subject_id_with_spaces_sanitized(
-        self, sample_study_dir: Path, bids_out: Path
-    ) -> None:
+    def test_subject_id_with_spaces_sanitized(self, sample_study_dir: Path, bids_out: Path) -> None:
         convert_study(sample_study_dir, bids_out, "MEMAR 2329", session="01")
         sub_dir = bids_out / "sub-MEMAR2329"
         assert sub_dir.exists(), "Subject directory with sanitized ID not found"

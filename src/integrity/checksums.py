@@ -9,11 +9,12 @@ from __future__ import annotations
 
 import fnmatch
 import hashlib
-import json
 import sys
-from datetime import datetime, timezone
+from collections.abc import Sequence
+from datetime import UTC, datetime
 from pathlib import Path
-from typing import Sequence
+
+from src.io.msgspec_io import dumps_bytes, loads
 
 _CHUNK = 1 << 20  # 1 MB
 
@@ -48,7 +49,7 @@ def build_checksum_manifest(
         files[rel] = _sha256(path)
     return {
         "version": 1,
-        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "generated_at": datetime.now(UTC).isoformat(),
         "algorithm": "sha256",
         "files": files,
     }
@@ -58,12 +59,10 @@ def write_checksum_manifest(root: Path, out_path: Path) -> None:
     """Build manifest for *root* and write JSON to *out_path*."""
     manifest = build_checksum_manifest(root)
     out_path.parent.mkdir(parents=True, exist_ok=True)
-    out_path.write_text(json.dumps(manifest, indent=2), encoding="utf-8")
+    out_path.write_bytes(dumps_bytes(manifest, indent=2))
 
 
-def verify_checksum_manifest(
-    manifest_path: Path, root: Path
-) -> tuple[int, int, list[str]]:
+def verify_checksum_manifest(manifest_path: Path, root: Path) -> tuple[int, int, list[str]]:
     """Verify files in *root* against a manifest.
 
     Returns:
@@ -71,7 +70,7 @@ def verify_checksum_manifest(
         Missing files are included in mismatched_paths with suffix " <missing>".
     """
     root = root.resolve()
-    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    manifest = loads(manifest_path.read_bytes())
     recorded: dict[str, str] = manifest["files"]
     n_ok = 0
     bad: list[str] = []
@@ -106,34 +105,38 @@ def _sha256(path: Path) -> str:
 # ---------------------------------------------------------------------------
 
 
-def _main() -> None:  # pragma: no cover
-    import argparse
+def _build_cmd(
+    root: Path,
+    manifest: Path,
+) -> None:  # pragma: no cover
+    """Build a manifest of SHA-256 hashes for every file under ROOT."""
+    write_checksum_manifest(root, manifest)
+    print(f"Manifest written to {manifest}")
 
-    parser = argparse.ArgumentParser(prog="python -m src.integrity.checksums")
-    sub = parser.add_subparsers(dest="cmd", required=True)
 
-    b = sub.add_parser("build")
-    b.add_argument("--root", required=True, type=Path)
-    b.add_argument("--manifest", required=True, type=Path)
-
-    v = sub.add_parser("verify")
-    v.add_argument("--root", required=True, type=Path)
-    v.add_argument("--manifest", required=True, type=Path)
-
-    args = parser.parse_args()
-    if args.cmd == "build":
-        write_checksum_manifest(args.root, args.manifest)
-        print(f"Manifest written to {args.manifest}")
+def _verify_cmd(
+    root: Path,
+    manifest: Path,
+) -> None:  # pragma: no cover
+    """Verify ROOT against an existing checksum manifest."""
+    n_ok, n_bad, bad = verify_checksum_manifest(manifest, root)
+    if bad:
+        for p in bad:
+            print(f"MISMATCH: {p}", file=sys.stderr)
+        print(f"{n_ok} OK, {n_bad} failed")
+        sys.exit(1)
     else:
-        n_ok, n_bad, bad = verify_checksum_manifest(args.manifest, args.root)
-        if bad:
-            for p in bad:
-                print(f"MISMATCH: {p}", file=sys.stderr)
-            print(f"{n_ok} OK, {n_bad} failed")
-            sys.exit(1)
-        else:
-            print(f"All {n_ok} files OK")
+        print(f"All {n_ok} files OK")
 
 
-if __name__ == "__main__":
+def _main() -> None:  # pragma: no cover
+    from cyclopts import App
+
+    cli = App(name="checksums", help="SHA-256 file-integrity manifests.")
+    cli.command(_build_cmd, name="build")
+    cli.command(_verify_cmd, name="verify")
+    cli()
+
+
+if __name__ == "__main__":  # pragma: no cover
     _main()

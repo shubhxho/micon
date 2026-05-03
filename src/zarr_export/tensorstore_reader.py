@@ -22,16 +22,17 @@ Usage::
 from __future__ import annotations
 
 import json
-import logging
 from pathlib import Path
 from typing import TYPE_CHECKING
 
 import numpy as np
 
+from src._logging import get_logger
+
 if TYPE_CHECKING:
     import tensorstore as ts  # type: ignore[import-untyped]
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 def _detect_zarr_version(zarr_path: Path) -> int:
@@ -73,7 +74,7 @@ def _resolve_level_path(zarr_path: Path, level: int) -> str:
     return f"s{level}"
 
 
-def open_zarr_with_tensorstore(zarr_path: Path, *, level: int = 0) -> "ts.TensorStore":
+def open_zarr_with_tensorstore(zarr_path: Path, *, level: int = 0) -> ts.TensorStore:
     """Open an OME-Zarr group with TensorStore. Returns the level-N array.
 
     Detects Zarr format version from the on-disk layout and picks the
@@ -113,7 +114,7 @@ def open_zarr_with_tensorstore(zarr_path: Path, *, level: int = 0) -> "ts.Tensor
     array_path = str(zarr_path / level_path)
 
     logger.debug(
-        "open_zarr_with_tensorstore: driver=%s  path=%s  level=%d → %s",
+        "open_zarr_with_tensorstore: driver={} path={} level={} -> {}",
         driver,
         zarr_path.name,
         level,

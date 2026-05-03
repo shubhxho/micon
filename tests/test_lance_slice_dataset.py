@@ -19,7 +19,6 @@ lance = pytest.importorskip("lance", reason="lance not installed")
 
 from src.lance_export.slice_dataset import slices_to_lance
 
-
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
@@ -46,7 +45,7 @@ class TestRoundTrip:
 
     def test_schema_columns_present(self, tmp_path: Path) -> None:
         vol = _smooth_volume((8, 64, 64))
-        result = slices_to_lance(vol, tmp_path / "out.lance", series_label="t1")
+        slices_to_lance(vol, tmp_path / "out.lance", series_label="t1")
         ds = lance.dataset(str(tmp_path / "out.lance"))
         col_names = set(ds.schema.names)
         assert {"slice_index", "image", "n_rows", "n_cols", "dtype", "series_label"}.issubset(
@@ -101,6 +100,7 @@ class TestRoundTrip:
     def test_windowing_byte_identical_to_normalize_slice(self, tmp_path: Path) -> None:
         """PNG bytes in Lance must decode to same pixels as _normalize_slice."""
         from PIL import Image
+
         from src.export.slice_export import _normalize_slice
 
         vol = _smooth_volume((4, 32, 32))

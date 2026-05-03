@@ -31,24 +31,33 @@ try:
     import torch
     import torch.nn as nn
     from torch.optim import Adam
+
     _TORCH = True
-    print(f"torch {torch.__version__} available -- device: {torch.device('mps' if torch.backends.mps.is_available() else 'cpu')}")
+    print(
+        f"torch {torch.__version__} available -- device: {torch.device('mps' if torch.backends.mps.is_available() else 'cpu')}"
+    )
 except ImportError:
     _TORCH = False
     print("torch not installed. Install with: pip install torch")
     print("Running in no-op demonstration mode.")
 
 # %% Import the Speall loader
-from src.loaders.pytorch import SpeallMRIDataset, make_dataloader  # noqa: E402
+from src.loaders.pytorch import SpeallMRIDataset, make_dataloader
 
 # %% Configuration
-DATASET_ROOT = Path("/data/speall-mri")       # <-- change this
+DATASET_ROOT = Path("/data/speall-mri")  # <-- change this
 MANIFEST_PATH = DATASET_ROOT / "manifest.parquet"
 BATCH_SIZE = 8
 LEARNING_RATE = 1e-3
 NUM_EPOCHS = 1
 
-DEVICE = "mps" if (_TORCH and torch.backends.mps.is_available()) else "cuda" if (_TORCH and torch.cuda.is_available()) else "cpu"
+DEVICE = (
+    "mps"
+    if (_TORCH and torch.backends.mps.is_available())
+    else "cuda"
+    if (_TORCH and torch.cuda.is_available())
+    else "cpu"
+)
 print(f"Using device: {DEVICE}")
 
 # %% Build a synthetic dataset when real data is absent (demo mode)
@@ -58,7 +67,7 @@ if _DEMO_MODE:
     print("[DEMO] manifest.parquet not found -- building in-memory synthetic dataset.")
     import random
     import tempfile
-    import json
+
     import pyarrow as pa
     import pyarrow.parquet as pq
 
@@ -67,7 +76,7 @@ if _DEMO_MODE:
     _GRADES = ["A", "B", "C", "D"]
     _tmp = Path(tempfile.mkdtemp())
     _rows = {
-        "study_id": [f"study_{i//4:04d}" for i in range(80)],
+        "study_id": [f"study_{i // 4:04d}" for i in range(80)],
         "series_uid": [f"uid_{i:06d}" for i in range(80)],
         "series_number": list(range(80)),
         "series_description": [_SEQ[i % 4] for i in range(80)],
@@ -97,37 +106,39 @@ if _DEMO_MODE:
         "montage_path": [None] * 80,
         "has_tar_shard": [False] * 80,
     }
-    schema = pa.schema([
-        ("study_id", pa.string()),
-        ("series_uid", pa.string()),
-        ("series_number", pa.int64()),
-        ("series_description", pa.string()),
-        ("sequence_type", pa.string()),
-        ("sequence_confidence", pa.string()),
-        ("modality", pa.string()),
-        ("file_count", pa.int64()),
-        ("tr_ms", pa.float64()),
-        ("te_ms", pa.float64()),
-        ("ti_ms", pa.float64()),
-        ("fa_deg", pa.float64()),
-        ("b_value", pa.float64()),
-        ("field_strength_T", pa.float64()),
-        ("plane", pa.string()),
-        ("volume_shape", pa.list_(pa.int64())),
-        ("spacing_mm", pa.list_(pa.float64())),
-        ("fov_mm", pa.list_(pa.float64())),
-        ("volume_snr", pa.float64()),
-        ("volume_cnr", pa.float64()),
-        ("volume_entropy", pa.float64()),
-        ("quality_grade", pa.string()),
-        ("quality_score", pa.float64()),
-        ("ml_score", pa.float64()),
-        ("ml_grade", pa.string()),
-        ("commercial_tier", pa.string()),
-        ("detail_path", pa.string()),
-        ("montage_path", pa.string()),
-        ("has_tar_shard", pa.bool_()),
-    ])
+    schema = pa.schema(
+        [
+            ("study_id", pa.string()),
+            ("series_uid", pa.string()),
+            ("series_number", pa.int64()),
+            ("series_description", pa.string()),
+            ("sequence_type", pa.string()),
+            ("sequence_confidence", pa.string()),
+            ("modality", pa.string()),
+            ("file_count", pa.int64()),
+            ("tr_ms", pa.float64()),
+            ("te_ms", pa.float64()),
+            ("ti_ms", pa.float64()),
+            ("fa_deg", pa.float64()),
+            ("b_value", pa.float64()),
+            ("field_strength_T", pa.float64()),
+            ("plane", pa.string()),
+            ("volume_shape", pa.list_(pa.int64())),
+            ("spacing_mm", pa.list_(pa.float64())),
+            ("fov_mm", pa.list_(pa.float64())),
+            ("volume_snr", pa.float64()),
+            ("volume_cnr", pa.float64()),
+            ("volume_entropy", pa.float64()),
+            ("quality_grade", pa.string()),
+            ("quality_score", pa.float64()),
+            ("ml_score", pa.float64()),
+            ("ml_grade", pa.string()),
+            ("commercial_tier", pa.string()),
+            ("detail_path", pa.string()),
+            ("montage_path", pa.string()),
+            ("has_tar_shard", pa.bool_()),
+        ]
+    )
     table = pa.table(_rows, schema=schema)
     MANIFEST_PATH = _tmp / "manifest.parquet"
     DATASET_ROOT = _tmp
@@ -146,12 +157,13 @@ print(f"Training series: {len(dataset)}")
 
 if _TORCH:
     from src.loaders.pytorch import make_dataloader
+
     loader = make_dataloader(
         manifest=MANIFEST_PATH,
         root=DATASET_ROOT,
         split="train",
         batch_size=BATCH_SIZE,
-        num_workers=0,        # set >0 for production
+        num_workers=0,  # set >0 for production
         sequence_type="DWI",
     )
     print(f"DataLoader batches: {len(loader)}")
@@ -161,6 +173,7 @@ if _TORCH:
 # Accepts (B, 1, D, H, W) volumes or (B, 1, H, W) 2D slices.
 
 if _TORCH:
+
     class SmallMRIClassifier(nn.Module):
         """Tiny 3D CNN: grades MRI volumes into A/B/C/D/F (5 classes)."""
 
@@ -182,7 +195,7 @@ if _TORCH:
                 nn.Linear(128, num_classes),
             )
 
-        def forward(self, x: torch.Tensor) -> torch.Tensor:  # noqa: D102
+        def forward(self, x: torch.Tensor) -> torch.Tensor:
             return self.head(self.encoder(x))
 
     model = SmallMRIClassifier(num_classes=5).to(DEVICE)

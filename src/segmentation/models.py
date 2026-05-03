@@ -10,19 +10,20 @@ repeated calls within the same process reuse the loaded object.
 
 from __future__ import annotations
 
-import logging
-import warnings
+from collections.abc import Callable
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any
 
-logger = logging.getLogger(__name__)
+from src._logging import get_logger
+
+logger = get_logger(__name__)
 
 # ---------------------------------------------------------------------------
 # Optional heavy-weight imports (mirroring converter.py pattern)
 # ---------------------------------------------------------------------------
 
 try:
-    import torch as _torch  # noqa: F401
+    import torch as _torch
 
     _TORCH = True
 except ImportError:
@@ -30,7 +31,7 @@ except ImportError:
     _TORCH = False
 
 try:
-    import monai as _monai  # noqa: F401
+    import monai as _monai
 
     _MONAI = True
 except ImportError:
@@ -38,7 +39,7 @@ except ImportError:
     _MONAI = False
 
 try:
-    import huggingface_hub as _hf_hub  # noqa: F401
+    import huggingface_hub as _hf_hub
 
     _HF_HUB = True
 except ImportError:
@@ -130,9 +131,7 @@ def get_model_meta(name: str) -> ModelMeta:
         KeyError: If ``name`` is not in the registry.
     """
     if name not in MODEL_REGISTRY:
-        raise KeyError(
-            f"Unknown model {name!r}. Available: {list(MODEL_REGISTRY)}"
-        )
+        raise KeyError(f"Unknown model {name!r}. Available: {list(MODEL_REGISTRY)}")
     return MODEL_REGISTRY[name]
 
 
@@ -160,7 +159,7 @@ def load_model(name: str) -> Callable[..., Any]:
     loader_type = meta["loader_type"]
     loader_id = meta["loader"]
 
-    logger.info("Loading model %r (loader=%s, id=%s)", name, loader_type, loader_id)
+    logger.info("Loading model {!r} (loader={}, id={})", name, loader_type, loader_id)
 
     if loader_type == "huggingface":
         model_fn = _load_huggingface_model(name, loader_id)
@@ -187,14 +186,10 @@ def _load_huggingface_model(name: str, repo_id: str) -> Callable[..., Any]:
     """Download + load a HuggingFace model as a callable."""
     if not _HF_HUB:
         raise RuntimeError(
-            f"Model {name!r} requires huggingface_hub. "
-            "Install it via: pip install huggingface_hub"
+            f"Model {name!r} requires huggingface_hub. Install it via: pip install huggingface_hub"
         )
     if not _TORCH:
-        raise RuntimeError(
-            f"Model {name!r} requires torch. "
-            'Install via: pip install -e ".[dl]"'
-        )
+        raise RuntimeError(f'Model {name!r} requires torch. Install via: pip install -e ".[dl]"')
 
     import huggingface_hub  # type: ignore[import-untyped]
 
@@ -207,9 +202,7 @@ def _load_huggingface_model(name: str, repo_id: str) -> Callable[..., Any]:
             cache_dir=str(cache_dir),
         )
     except Exception as exc:
-        raise RuntimeError(
-            f"Failed to download model {name!r} from {repo_id!r}: {exc}"
-        ) from exc
+        raise RuntimeError(f"Failed to download model {name!r} from {repo_id!r}: {exc}") from exc
 
     return _build_hf_inference_fn(name, local_dir)
 
@@ -221,17 +214,17 @@ def _build_hf_inference_fn(name: str, local_dir: str) -> Callable[..., Any]:
 
     meta = MODEL_REGISTRY[name]
 
-    def _infer(volume: "np.ndarray") -> "np.ndarray":  # noqa: F821
+    def _infer(volume: np.ndarray) -> np.ndarray:
         """Run inference; returns integer mask same spatial shape as volume."""
-        logger.debug("Running HF model %r on shape %s", name, volume.shape)
-        n_labels = meta.get("n_labels", 2)
+        logger.debug("Running HF model {!r} on shape {}", name, volume.shape)
+        meta.get("n_labels", 2)
         with torch.no_grad():
             t = torch.from_numpy(volume.astype("float32")).unsqueeze(0).unsqueeze(0)
             # Normalise to [0, 1]
             t = (t - t.min()) / (t.max() - t.min() + 1e-8)
             # Placeholder: threshold at 0.3 (real model would be loaded from local_dir)
             mask = (t > 0.3).squeeze().numpy().astype("uint8")
-        logger.debug("HF model %r produced mask with %d non-zero voxels", name, int(mask.sum()))
+        logger.debug("HF model {!r} produced mask with {} non-zero voxels", name, int(mask.sum()))
         return mask
 
     _infer.__doc__ = f"Inference callable for {name} (HF: {local_dir})"
@@ -241,26 +234,18 @@ def _build_hf_inference_fn(name: str, local_dir: str) -> Callable[..., Any]:
 def _load_monai_bundle_model(name: str, bundle_name: str) -> Callable[..., Any]:
     """Download + load a MONAI Bundle model as a callable."""
     if not _MONAI:
-        raise RuntimeError(
-            f"Model {name!r} requires monai. "
-            'Install via: pip install -e ".[dl]"'
-        )
+        raise RuntimeError(f'Model {name!r} requires monai. Install via: pip install -e ".[dl]"')
     if not _TORCH:
-        raise RuntimeError(
-            f"Model {name!r} requires torch. "
-            'Install via: pip install -e ".[dl]"'
-        )
+        raise RuntimeError(f'Model {name!r} requires torch. Install via: pip install -e ".[dl]"')
 
     from src.segmentation.bundle_loader import download_bundle, run_inference
 
     try:
         bundle_path = download_bundle(bundle_name)
     except Exception as exc:
-        raise RuntimeError(
-            f"Failed to download MONAI bundle {bundle_name!r}: {exc}"
-        ) from exc
+        raise RuntimeError(f"Failed to download MONAI bundle {bundle_name!r}: {exc}") from exc
 
-    def _infer(volume: "np.ndarray") -> "np.ndarray":  # type: ignore[name-defined]  # noqa: F821
+    def _infer(volume: np.ndarray) -> np.ndarray:  # type: ignore[name-defined]  # noqa: F821
         return run_inference(bundle_path, volume)
 
     _infer.__doc__ = f"Inference callable for {name} (MONAI bundle: {bundle_name})"

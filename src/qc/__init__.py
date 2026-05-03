@@ -12,7 +12,7 @@ from .dataset import build_dataset_qc_report
 from .per_study import build_study_qc_report
 
 __all__ = [
-    "build_quality_badge",
     "build_dataset_qc_report",
+    "build_quality_badge",
     "build_study_qc_report",
 ]

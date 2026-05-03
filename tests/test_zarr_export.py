@@ -30,13 +30,13 @@ zarr = pytest.importorskip("zarr", reason="zarr not installed")
 ome_zarr_pkg = pytest.importorskip("ome_zarr", reason="ome_zarr not installed")
 nib = pytest.importorskip("nibabel", reason="nibabel not installed")
 
-from src.zarr_export.multiscale import build_pyramid, coordinate_transformations
 from src.zarr_export.converter import nifti_to_omezarr, study_to_omezarr
-
+from src.zarr_export.multiscale import build_pyramid, coordinate_transformations
 
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------
+
 
 def _make_synthetic_nifti(path: Path, shape: tuple[int, int, int] = (32, 64, 64)) -> Path:
     """Write a minimal real NIfTI-1 file with random float32 data."""
@@ -68,6 +68,7 @@ def zarr_out(tmp_path: Path) -> Path:
 # ---------------------------------------------------------------------------
 # 1. MultiscalePyramid
 # ---------------------------------------------------------------------------
+
 
 class TestMultiscalePyramid:
     def test_single_level_returns_full_res(self) -> None:
@@ -120,6 +121,7 @@ class TestMultiscalePyramid:
 # 2. CoordinateTransformations
 # ---------------------------------------------------------------------------
 
+
 class TestCoordinateTransformations:
     def test_returns_correct_number_of_levels(self) -> None:
         ct = coordinate_transformations((2.0, 1.5, 1.5), n_levels=4)
@@ -136,9 +138,7 @@ class TestCoordinateTransformations:
             prev = ct[i - 1][0]["scale"]
             curr = ct[i][0]["scale"]
             expected = [v * 2 for v in prev]
-            assert curr == pytest.approx(expected), (
-                f"Level {i}: expected {expected}, got {curr}"
-            )
+            assert curr == pytest.approx(expected), f"Level {i}: expected {expected}, got {curr}"
 
     def test_each_entry_has_type_scale(self) -> None:
         ct = coordinate_transformations((1.0, 1.0, 1.0), n_levels=3)
@@ -149,6 +149,7 @@ class TestCoordinateTransformations:
 # ---------------------------------------------------------------------------
 # 3. NIfTIToOmeZarr -- round-trip
 # ---------------------------------------------------------------------------
+
 
 class TestNiftiToOmeZarr:
     def test_returns_ok_dict(self, nifti_file: Path, zarr_out: Path) -> None:
@@ -167,16 +168,14 @@ class TestNiftiToOmeZarr:
         """write_multiscale writes s0, s1, s2... arrays."""
         nifti_to_omezarr(nifti_file, zarr_out, scales=4)
         grp = zarr.open_group(str(zarr_out), mode="r")
-        array_keys = [k for k in grp.keys() if not k.startswith(".")]
+        array_keys = [k for k in grp if not k.startswith(".")]
         assert len(array_keys) == 4
 
     def test_missing_nifti_raises(self, tmp_path: Path) -> None:
         with pytest.raises(FileNotFoundError):
             nifti_to_omezarr(tmp_path / "nonexistent.nii.gz", tmp_path / "out.zarr")
 
-    def test_small_volume_chunk_clipping(
-        self, small_nifti_file: Path, tmp_path: Path
-    ) -> None:
+    def test_small_volume_chunk_clipping(self, small_nifti_file: Path, tmp_path: Path) -> None:
         """Chunk size should be clipped to array shape; no error on tiny volumes."""
         result = nifti_to_omezarr(
             small_nifti_file,
@@ -198,6 +197,7 @@ class TestNiftiToOmeZarr:
 # ---------------------------------------------------------------------------
 # 4. OmeZarrMetadata
 # ---------------------------------------------------------------------------
+
 
 class TestOmeZarrMetadata:
     @pytest.fixture(autouse=True)
@@ -256,8 +256,8 @@ class TestOmeZarrMetadata:
         level0_scale = datasets[0]["coordinateTransformations"][0]["scale"]
         level1_scale = datasets[1]["coordinateTransformations"][0]["scale"]
         # Each element of level1 should be 2x level0
-        for s0, s1 in zip(level0_scale, level1_scale):
-            assert abs(s1 - s0 * 2) < 1e-5, f"Expected s1={s0*2}, got {s1}"
+        for s0, s1 in zip(level0_scale, level1_scale, strict=False):
+            assert abs(s1 - s0 * 2) < 1e-5, f"Expected s1={s0 * 2}, got {s1}"
 
     def test_version_is_05(self) -> None:
         assert self._attrs["ome"]["version"] == "0.5"
@@ -266,6 +266,7 @@ class TestOmeZarrMetadata:
 # ---------------------------------------------------------------------------
 # 5. StudyToOmeZarr
 # ---------------------------------------------------------------------------
+
 
 class TestStudyToOmeZarr:
     @pytest.fixture()
@@ -309,6 +310,7 @@ class TestStudyToOmeZarr:
 # 6. CLI inspect
 # ---------------------------------------------------------------------------
 
+
 class TestCliInspect:
     def test_inspect_prints_metadata(
         self, nifti_file: Path, zarr_out: Path, capsys: pytest.CaptureFixture
@@ -316,6 +318,7 @@ class TestCliInspect:
         nifti_to_omezarr(nifti_file, zarr_out, scales=2)
 
         from typer.testing import CliRunner
+
         from src.zarr_export.cli import app
 
         runner = CliRunner()
@@ -326,6 +329,7 @@ class TestCliInspect:
 
     def test_inspect_invalid_path_exits_nonzero(self, tmp_path: Path) -> None:
         from typer.testing import CliRunner
+
         from src.zarr_export.cli import app
 
         runner = CliRunner()

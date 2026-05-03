@@ -26,10 +26,10 @@ Each example contains:
 
 from __future__ import annotations
 
-import json
-import os
+import contextlib
+from collections.abc import Generator
 from pathlib import Path
-from typing import Any, Generator, Iterator
+from typing import Any
 
 import datasets
 
@@ -214,7 +214,7 @@ class SpeallMRI(datasets.GeneratorBasedBuilder):
             split_col = splits_dict.get("split", [])
             uid_col = splits_dict.get("series_uid", [])
             split_series_uids = {
-                uid for uid, s in zip(uid_col, split_col) if s == split
+                uid for uid, s in zip(uid_col, split_col, strict=False) if s == split
             }
         else:
             # No splits file: assign deterministically by index
@@ -235,11 +235,11 @@ class SpeallMRI(datasets.GeneratorBasedBuilder):
             # Apply split filter when no splits.parquet
             if split_series_uids is None:
                 row_hash = abs(hash(series_uid)) % 10
-                if split == "train" and row_hash >= 2:
-                    pass  # keep
-                elif split == "test" and row_hash == 0:
-                    pass  # keep
-                elif split == "validation" and row_hash == 1:
+                if (
+                    (split == "train" and row_hash >= 2)
+                    or (split == "test" and row_hash == 0)
+                    or (split == "validation" and row_hash == 1)
+                ):
                     pass  # keep
                 else:
                     continue
@@ -258,9 +258,15 @@ class SpeallMRI(datasets.GeneratorBasedBuilder):
 
             # Resolve image paths
             detail_path_rel: str = row.get("detail_path") or ""
-            series_dir = root / study_id / Path(detail_path_rel).parent if detail_path_rel else root / study_id
+            series_dir = (
+                root / study_id / Path(detail_path_rel).parent
+                if detail_path_rel
+                else root / study_id
+            )
 
-            stem = Path(detail_path_rel).stem.replace("_detail", "") if detail_path_rel else series_uid
+            stem = (
+                Path(detail_path_rel).stem.replace("_detail", "") if detail_path_rel else series_uid
+            )
             multiplane = _find_image(series_dir, stem, ["_multiplane.png", "_montage.png"])
             histogram = _find_image(series_dir, stem, ["_histogram.png"])
             enhanced = _find_image(series_dir, stem, ["_enhanced.png"])
@@ -269,10 +275,8 @@ class SpeallMRI(datasets.GeneratorBasedBuilder):
             detail_json_str = "{}"
             detail_json_path = (root / study_id / detail_path_rel) if detail_path_rel else None
             if detail_json_path and detail_json_path.exists():
-                try:
+                with contextlib.suppress(OSError):
                     detail_json_str = detail_json_path.read_text(encoding="utf-8")
-                except OSError:
-                    pass
 
             example: dict[str, Any] = {
                 "study_id": study_id,

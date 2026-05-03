@@ -102,12 +102,14 @@ def export_all_slices(
 
     if backend in ("zarr", "both", "all"):
         from src.zarr_export.slice_store import slices_to_zarr
+
         zarr_path = base_dir / "slices" / f"{series_name}.slices.zarr"
         zarr_result = slices_to_zarr(vol, zarr_path, series_label=series_name)
         result["zarr"] = zarr_result
 
     if backend in ("lance", "all"):
         from src.lance_export.slice_dataset import slices_to_lance
+
         lance_path = base_dir / "slices" / f"{series_name}.slices.lance"
         lance_result = slices_to_lance(vol, lance_path, series_label=series_name)
         result["lance"] = lance_result

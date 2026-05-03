@@ -24,17 +24,18 @@ is called, matching the pattern used in ``converter.py``.
 
 from __future__ import annotations
 
-import logging
 from pathlib import Path
 from typing import Any
 
 import numpy as np
 
+from src._logging import get_logger
 from src.zarr_export.multiscale import build_pyramid, coordinate_transformations
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 _TARGET_CHUNK_BYTES: int = 1_048_576  # 1 MB
+_SHARD_CHUNKS_TARGET: int = 8
 
 
 def _compute_chunk_shape(
@@ -64,14 +65,14 @@ def _clip_chunk(
     shape: tuple[int, ...],
 ) -> tuple[int, int, int]:
     """Clip chunk so no dimension exceeds the corresponding array shape."""
-    return tuple(min(c, s) for c, s in zip(chunk, shape))  # type: ignore[return-value]
+    return tuple(min(c, s) for c, s in zip(chunk, shape, strict=False))  # type: ignore[return-value]
 
 
 def _collect_stats(grp: Any) -> tuple[int, int]:
     """Return (total_chunks, total_bytes) across all arrays in grp."""
     total_chunks = 0
     total_bytes = 0
-    for key in grp.keys():
+    for key in grp:
         try:
             arr = grp[key]
             if hasattr(arr, "nchunks"):
@@ -144,10 +145,19 @@ def series_volume_to_omezarr(
     ]
 
     base_chunk = _compute_chunk_shape(vol_f32.shape)
-    per_level_storage = [
-        {"chunks": _clip_chunk(base_chunk, arr.shape)}
-        for arr in pyramid
-    ]
+
+    def _shard_for(arr_shape: tuple[int, ...], chunk: tuple[int, int, int]) -> tuple[int, int, int]:
+        z = min(arr_shape[0], chunk[0] * _SHARD_CHUNKS_TARGET)
+        return (max(z, chunk[0]), chunk[1], chunk[2])
+
+    per_level_storage = []
+    for arr in pyramid:
+        chunk = _clip_chunk(base_chunk, arr.shape)
+        shard = _shard_for(arr.shape, chunk)
+        opts: dict[str, Any] = {"chunks": chunk}
+        if shard != chunk:
+            opts["shards"] = shard
+        per_level_storage.append(opts)
 
     zarr_path = Path(zarr_path)
     store = zarr.storage.LocalStore(str(zarr_path))
@@ -170,7 +180,7 @@ def series_volume_to_omezarr(
     _, total_bytes = _collect_stats(grp)
 
     logger.info(
-        "series_volume_to_omezarr: %s  shape=%s  levels=%d  bytes=%d  chunk=%s",
+        "series_volume_to_omezarr: {} shape={} levels={} bytes={} chunk={}",
         zarr_path.name,
         vol_f32.shape,
         n_levels,

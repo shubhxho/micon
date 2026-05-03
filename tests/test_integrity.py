@@ -52,7 +52,7 @@ class TestChecksums:
         # Corrupt the file
         target.write_bytes(b"tampered!!")
 
-        n_ok, n_bad, bad = verify_checksum_manifest(manifest_path, tmp_path)
+        _n_ok, n_bad, bad = verify_checksum_manifest(manifest_path, tmp_path)
         assert n_bad >= 1
         assert any("secret.txt" in p for p in bad)
 
@@ -107,20 +107,14 @@ class TestProvenance:
         """Each detail JSON becomes a derived entity."""
         graph = build_prov_graph(_SAMPLES)
         n_json = len(list(_SAMPLES.glob("*.json")))
-        n_detail = sum(
-            1 for eid in graph["entity"] if eid.startswith("micom:detail:")
-        )
+        n_detail = sum(1 for eid in graph["entity"] if eid.startswith("micom:detail:"))
         assert n_detail == n_json
 
     def test_was_generated_by_edges(self) -> None:
         """Every derived entity has at least one wasGeneratedBy edge."""
         graph = build_prov_graph(_SAMPLES)
-        generated = {
-            e["prov:entity"] for e in graph["wasGeneratedBy"].values()
-        }
-        derived = {
-            eid for eid in graph["entity"] if eid.startswith("micom:detail:")
-        }
+        generated = {e["prov:entity"] for e in graph["wasGeneratedBy"].values()}
+        derived = {eid for eid in graph["entity"] if eid.startswith("micom:detail:")}
         assert derived.issubset(generated)
 
     def test_prov_prefix_present(self) -> None:
@@ -153,9 +147,7 @@ class TestDatacite:
 
     def test_identifiers_doi_placeholder(self) -> None:
         metadata = build_datacite_metadata()
-        doi_entries = [
-            i for i in metadata["identifiers"] if i["identifierType"] == "DOI"
-        ]
+        doi_entries = [i for i in metadata["identifiers"] if i["identifierType"] == "DOI"]
         assert len(doi_entries) == 1
 
     def test_rights_list_mit(self) -> None:
@@ -218,6 +210,7 @@ class TestValidateCroissant:
             ],
         }
         from src.integrity.validate_croissant import validate_croissant
+
         errors = validate_croissant(doc)
         assert errors == []
 
@@ -240,6 +233,7 @@ class TestValidateCroissant:
             ],
         }
         from src.integrity.validate_croissant import validate_croissant
+
         errors = validate_croissant(doc)
         assert any("recordSet" in e for e in errors)
 
@@ -252,11 +246,14 @@ class TestValidateCroissant:
             "sc:description": "Y",
             "sc:url": "Z",
             "sc:license": "W",
-            "distribution": [{"@id": "d", "@type": "cr:FileObject",
-                              "sc:name": "f", "sc:contentUrl": "u"}],
-            "recordSet": [{"@id": "r", "@type": "cr:RecordSet",
-                           "sc:name": "r", "cr:field": [{"@id": "f"}]}],
+            "distribution": [
+                {"@id": "d", "@type": "cr:FileObject", "sc:name": "f", "sc:contentUrl": "u"}
+            ],
+            "recordSet": [
+                {"@id": "r", "@type": "cr:RecordSet", "sc:name": "r", "cr:field": [{"@id": "f"}]}
+            ],
         }
         from src.integrity.validate_croissant import validate_croissant
+
         errors = validate_croissant(doc)
         assert any("@type" in e for e in errors)

@@ -25,7 +25,7 @@ import subprocess
 from pathlib import Path
 from typing import Any
 
-from jinja2 import Environment, BaseLoader
+from jinja2 import BaseLoader, Environment
 
 # ---------------------------------------------------------------------------
 # Grade styling
@@ -277,12 +277,17 @@ _DEFAULT_TEMPLATE = """<!DOCTYPE html>
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _get_git_sha() -> str:
     try:
-        return subprocess.check_output(
-            ["git", "rev-parse", "--short", "HEAD"],
-            stderr=subprocess.DEVNULL,
-        ).decode().strip()
+        return (
+            subprocess.check_output(
+                ["git", "rev-parse", "--short", "HEAD"],
+                stderr=subprocess.DEVNULL,
+            )
+            .decode()
+            .strip()
+        )
     except Exception:
         return "unknown"
 
@@ -292,8 +297,10 @@ def _encode_png(path: Path, max_px: int = 800) -> str:
     if not path.exists():
         return ""
     try:
-        from PIL import Image
         import io
+
+        from PIL import Image
+
         with Image.open(path) as img:
             w, h = img.size
             if w > max_px:
@@ -409,6 +416,7 @@ def _find_multiplane_png(study_dir: Path, series_row: dict) -> Path | None:
 # Public API
 # ---------------------------------------------------------------------------
 
+
 def build_study_qc_report(
     study_dir: Path,
     out_path: Path,
@@ -477,7 +485,7 @@ def build_study_qc_report(
     # ------------------------------------------------------------------
     # Grade counts
     # ------------------------------------------------------------------
-    grade_counts: dict[str, int] = {g: 0 for g in "ABCDF"}
+    grade_counts: dict[str, int] = dict.fromkeys("ABCDF", 0)
     for row in series_rows:
         g = row.get("quality_grade") or ""
         if g in grade_counts:
@@ -501,10 +509,12 @@ def build_study_qc_report(
     for row in series_rows:
         flags = _flag_anomalies(row)
         if flags:
-            anomalies.append({
-                "series_description": row.get("series_description", "?"),
-                "reasons": flags,
-            })
+            anomalies.append(
+                {
+                    "series_description": row.get("series_description", "?"),
+                    "reasons": flags,
+                }
+            )
 
     # ------------------------------------------------------------------
     # Series cards (with embedded images)
@@ -572,19 +582,20 @@ def build_study_qc_report(
 # CLI
 # ---------------------------------------------------------------------------
 
+
 def _cli() -> None:
     parser = argparse.ArgumentParser(
         description="Generate a per-study QC HTML report.",
     )
-    parser.add_argument("--study", required=True, type=Path,
-                        help="Path to the study directory.")
-    parser.add_argument("--out", required=True, type=Path,
-                        help="Output HTML file path.")
+    parser.add_argument("--study", required=True, type=Path, help="Path to the study directory.")
+    parser.add_argument("--out", required=True, type=Path, help="Output HTML file path.")
     parser.add_argument("--pipeline-version", default="5.0.0")
     args = parser.parse_args()
 
     summary = build_study_qc_report(
-        args.study, args.out, pipeline_version=args.pipeline_version,
+        args.study,
+        args.out,
+        pipeline_version=args.pipeline_version,
     )
     size_kb = args.out.stat().st_size / 1024
     print(f"Written {args.out}  ({size_kb:.1f} KB)")

@@ -55,6 +55,7 @@ def _downsample_2x(arr: np.ndarray) -> np.ndarray:
     """
     try:
         from skimage.transform import downscale_local_mean  # lazy import
+
         return downscale_local_mean(arr, (2, 2, 2)).astype(np.float32)
     except ImportError:
         # Fallback: simple 2x sub-sampling (no anti-aliasing)
@@ -80,9 +81,13 @@ def coordinate_transformations(
     sz, sy, sx = zooms_zyx
     result: list[list[dict]] = []
     for level in range(n_levels):
-        factor = 2.0 ** level
-        result.append([{
-            "type": "scale",
-            "scale": [sz * factor, sy * factor, sx * factor],
-        }])
+        factor = 2.0**level
+        result.append(
+            [
+                {
+                    "type": "scale",
+                    "scale": [sz * factor, sy * factor, sx * factor],
+                }
+            ]
+        )
     return result

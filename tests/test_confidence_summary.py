@@ -18,7 +18,6 @@ if _REPO_ROOT not in sys.path:
 
 from src.manifest.confidence_summary import study_confidence_rollup
 
-
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
@@ -27,9 +26,7 @@ from src.manifest.confidence_summary import study_confidence_rollup
 def _write_annotation(directory: Path, stem: str, consensus: dict) -> None:
     """Write a minimal annotation JSON with a consensus block."""
     directory.mkdir(parents=True, exist_ok=True)
-    (directory / f"{stem}.json").write_text(
-        json.dumps({"consensus": consensus}), encoding="utf-8"
-    )
+    (directory / f"{stem}.json").write_text(json.dumps({"consensus": consensus}), encoding="utf-8")
 
 
 # ---------------------------------------------------------------------------
@@ -115,7 +112,11 @@ class TestTwoSeriesRollup:
     def test_threshold_excludes_exactly_06(self, tmp_path: Path) -> None:
         # Confidence == 0.6 must NOT be counted as low (strict < 0.6).
         d = tmp_path / "annotations"
-        _write_annotation(d, "edge", {"confidence": 0.6, "needs_escalation": False, "tiers_used": [], "premium_used": False})
+        _write_annotation(
+            d,
+            "edge",
+            {"confidence": 0.6, "needs_escalation": False, "tiers_used": [], "premium_used": False},
+        )
         result = study_confidence_rollup(d)
         assert result["pct_low_confidence"] == 0.0
 
@@ -154,7 +155,16 @@ class TestTwoSeriesRollup:
 class TestEdgeCases:
     def test_single_series_above_threshold(self, tmp_path: Path) -> None:
         d = tmp_path / "annotations"
-        _write_annotation(d, "s0001", {"confidence": 0.85, "needs_escalation": False, "tiers_used": ["cheap"], "premium_used": False})
+        _write_annotation(
+            d,
+            "s0001",
+            {
+                "confidence": 0.85,
+                "needs_escalation": False,
+                "tiers_used": ["cheap"],
+                "premium_used": False,
+            },
+        )
         result = study_confidence_rollup(d)
         assert result["n_series"] == 1
         assert result["pct_low_confidence"] == 0.0
@@ -163,7 +173,16 @@ class TestEdgeCases:
     def test_all_premium(self, tmp_path: Path) -> None:
         d = tmp_path / "annotations"
         for i in range(3):
-            _write_annotation(d, f"s{i:04d}", {"confidence": 0.7, "needs_escalation": False, "tiers_used": ["premium"], "premium_used": True})
+            _write_annotation(
+                d,
+                f"s{i:04d}",
+                {
+                    "confidence": 0.7,
+                    "needs_escalation": False,
+                    "tiers_used": ["premium"],
+                    "premium_used": True,
+                },
+            )
         result = study_confidence_rollup(d)
         assert result["pct_premium_used"] == 1.0
 
@@ -171,7 +190,11 @@ class TestEdgeCases:
         d = tmp_path / "annotations"
         d.mkdir()
         (d / "broken.json").write_text("{not valid json", encoding="utf-8")
-        _write_annotation(d, "good", {"confidence": 0.8, "needs_escalation": False, "tiers_used": [], "premium_used": False})
+        _write_annotation(
+            d,
+            "good",
+            {"confidence": 0.8, "needs_escalation": False, "tiers_used": [], "premium_used": False},
+        )
         result = study_confidence_rollup(d)
         assert result["n_series"] == 1
 

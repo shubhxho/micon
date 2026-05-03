@@ -16,7 +16,6 @@ import warnings
 import polars as pl
 import pytest
 
-from src.manifest.splits import assign_splits, summarize_splits
 from src.manifest.cohorts import (
     complete_protocol,
     dwi_only,
@@ -31,7 +30,7 @@ from src.manifest.cohorts import (
     tof_only,
     with_pathology,
 )
-
+from src.manifest.splits import assign_splits, summarize_splits
 
 # ---------------------------------------------------------------------------
 # Fixtures
@@ -130,13 +129,12 @@ class TestNoLeakage:
         study_df = _make_study_df(n=300)
         series_df = _make_series_df(study_df)
 
-        series_out, study_out = assign_splits(series_df, study_df)
+        _series_out, study_out = assign_splits(series_df, study_df)
 
         # Collect sets per split at study level
         splits = ["train", "val", "test"]
         split_sets = {
-            s: set(study_out.filter(pl.col("split") == s)["study_id"].to_list())
-            for s in splits
+            s: set(study_out.filter(pl.col("split") == s)["study_id"].to_list()) for s in splits
         }
 
         # No study appears in more than one split
@@ -166,7 +164,7 @@ class TestNoLeakage:
 
         # Build expected study->split map
         study_split_map = dict(
-            zip(study_out["study_id"].to_list(), study_out["split"].to_list())
+            zip(study_out["study_id"].to_list(), study_out["split"].to_list(), strict=False)
         )
 
         for row in series_out.to_dicts():
@@ -187,9 +185,7 @@ class TestRatios:
         study_df = _make_study_df(n=500)
         series_df = _make_series_df(study_df)
 
-        _, study_out = assign_splits(
-            series_df, study_df, ratios=(0.8, 0.1, 0.1), seed=42
-        )
+        _, study_out = assign_splits(series_df, study_df, ratios=(0.8, 0.1, 0.1), seed=42)
 
         n = len(study_out)
         for split, expected_frac in [("train", 0.8), ("val", 0.1), ("test", 0.1)]:
@@ -202,7 +198,7 @@ class TestRatios:
         study_df = _make_study_df(n=50)
         series_df = _make_series_df(study_df)
 
-        with pytest.raises(ValueError, match="sum to 1.0"):
+        with pytest.raises(ValueError, match="sum to 1.0"):  # noqa: RUF043
             assign_splits(series_df, study_df, ratios=(0.7, 0.1, 0.1))
 
 
@@ -262,7 +258,10 @@ class TestStratification:
 class TestEdgeCases:
     def test_empty_study_df_returns_empty_with_split_col(self) -> None:
         empty_study = pl.DataFrame(
-            {"study_id": pl.Series([], dtype=pl.Utf8), "dominant_grade": pl.Series([], dtype=pl.Utf8)}
+            {
+                "study_id": pl.Series([], dtype=pl.Utf8),
+                "dominant_grade": pl.Series([], dtype=pl.Utf8),
+            }
         )
         empty_series = pl.DataFrame(
             {"study_id": pl.Series([], dtype=pl.Utf8), "series_uid": pl.Series([], dtype=pl.Utf8)}
@@ -278,7 +277,7 @@ class TestEdgeCases:
         series_df = _make_series_df(_make_study_df(n=50))
 
         with pytest.warns(UserWarning, match="already present"):
-            s_out, st_out = assign_splits(series_df, study_df)
+            _s_out, st_out = assign_splits(series_df, study_df)
 
         # Should return originals unchanged
         assert "split" in st_out.columns
@@ -289,7 +288,7 @@ class TestEdgeCases:
         series_df = _make_series_df(study_df)
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            s_out, st_out = assign_splits(series_df, study_df, seed=42)
+            _s_out, st_out = assign_splits(series_df, study_df, seed=42)
         assert "split" in st_out.columns
         assert len(st_out) == 10
 
@@ -372,8 +371,16 @@ class TestSequenceFilters:
         return pl.DataFrame(
             {
                 "sequence_type": [
-                    "DWI", "DWI b1000", "FLAIR", "T1-weighted", "T2-weighted",
-                    "SWAN", "SWI", "TOF", "ADC", None,
+                    "DWI",
+                    "DWI b1000",
+                    "FLAIR",
+                    "T1-weighted",
+                    "T2-weighted",
+                    "SWAN",
+                    "SWI",
+                    "TOF",
+                    "ADC",
+                    None,
                 ],
                 "study_id": [f"s{i}" for i in range(10)],
             }

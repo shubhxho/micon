@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import json
 import sys
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timezone
 from pathlib import Path
 
 import numpy as np
@@ -20,7 +20,6 @@ if _REPO_ROOT not in sys.path:
     sys.path.insert(0, _REPO_ROOT)
 
 from src.io.msgspec_io import fast_dumps, fast_loads, read_json, write_json
-
 
 # ---------------------------------------------------------------------------
 # fast_dumps
@@ -48,7 +47,7 @@ class TestFastDumps:
         assert parsed["v"] == 7
 
     def test_datetime_serialised(self) -> None:
-        dt = datetime(2024, 1, 15, 12, 0, 0, tzinfo=timezone.utc)
+        dt = datetime(2024, 1, 15, 12, 0, 0, tzinfo=UTC)
         result = fast_dumps({"ts": dt})
         parsed = json.loads(result)
         assert "2024" in parsed["ts"]
@@ -114,7 +113,7 @@ class TestWriteReadJson:
         assert result["label"] == "T1"
 
     def test_round_trip_with_datetime(self, tmp_path: Path) -> None:
-        dt = datetime(2025, 3, 1, 10, 30, 0, tzinfo=timezone.utc)
+        dt = datetime(2025, 3, 1, 10, 30, 0, tzinfo=UTC)
         obj = {"timestamp": dt, "study_id": "study_001"}
         p = tmp_path / "dt.json"
         write_json(p, obj)

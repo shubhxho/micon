@@ -27,7 +27,7 @@ SEQUENCE_TO_BIDS: dict[str, tuple[str, str]] = {
     "SWI (SWAN)": ("swi", "swi"),
     "TOF MRA": ("anat", "angio"),
     "ADC Map": ("dwi", "ADC"),
-    "CUBE (3D FSE)": ("anat", "T2w"),     # 3D T2 isotropic
+    "CUBE (3D FSE)": ("anat", "T2w"),  # 3D T2 isotropic
     "Color MIP": ("derivatives", "colormip"),
     "Projection MIP": ("derivatives", "projmip"),
     "Processed/MIP": ("derivatives", "processed"),

@@ -13,11 +13,10 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-
-import openai
 from typing import Any
 from unittest.mock import MagicMock, patch
 
+import openai
 import pytest
 from src.annotation.cost_model import (
     POLICY_HIT_RATES,
@@ -322,9 +321,7 @@ class TestRouteAnnotation:
     def test_missing_montage_returns_error(self) -> None:
         """Missing montage file returns graceful error dict."""
         mock_client = MagicMock(spec=openai.OpenAI)
-        result = route_annotation(
-            "/nonexistent/montage.png", "Series 1", client=mock_client
-        )
+        result = route_annotation("/nonexistent/montage.png", "Series 1", client=mock_client)
         assert result["annotation"] is None
         assert "error" in result["routing"]
 
@@ -336,9 +333,7 @@ class TestRouteAnnotation:
         completion = _make_mock_completion(_GOOD_RESPONSE)
         mock_client = self._make_client_mock([completion])
 
-        route_annotation(
-            str(montage), "Series T1", policy="cheap_first", client=mock_client
-        )
+        route_annotation(str(montage), "Series T1", policy="cheap_first", client=mock_client)
 
         # Inspect the model kwarg of the first create() call
         first_call_kwargs = mock_client.chat.completions.create.call_args_list[0].kwargs

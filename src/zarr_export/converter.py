@@ -12,13 +12,13 @@ call time so this module loads without those libraries installed.
 
 from __future__ import annotations
 
-import logging
 from pathlib import Path
 from typing import Any
 
+from src._logging import get_logger
 from src.zarr_export.multiscale import build_pyramid, coordinate_transformations
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 # ---------------------------------------------------------------------------
 # Type alias
@@ -30,6 +30,7 @@ ZarrPath = Path | str  # local Path or fsspec URL
 # ---------------------------------------------------------------------------
 # Public API
 # ---------------------------------------------------------------------------
+
 
 def nifti_to_omezarr(
     nifti_path: Path,
@@ -80,8 +81,8 @@ def nifti_to_omezarr(
     # Load volume -- nibabel returns XYZ; we need ZYX for OME-Zarr
     # ------------------------------------------------------------------
     img = nib.load(str(nifti_path))
-    data_xyz = img.get_fdata(dtype="float32")           # (X, Y, Z)
-    data_zyx = data_xyz.transpose(2, 1, 0).copy()       # (Z, Y, X)
+    data_xyz = img.get_fdata(dtype="float32")  # (X, Y, Z)
+    data_zyx = data_xyz.transpose(2, 1, 0).copy()  # (Z, Y, X)
 
     # Voxel sizes: nibabel get_zooms() -> (sx, sy, sz) in mm
     zooms_xyz = img.header.get_zooms()[:3]
@@ -112,10 +113,7 @@ def nifti_to_omezarr(
     # Write pyramid -- pass per-level storage_options to clip chunk size
     # so chunks never exceed the array shape at any level.
     # ------------------------------------------------------------------
-    per_level_storage = [
-        {"chunks": _chunk_for_shape(chunk_size, arr.shape)}
-        for arr in pyramid
-    ]
+    per_level_storage = [{"chunks": _chunk_for_shape(chunk_size, arr.shape)} for arr in pyramid]
 
     write_multiscale(
         pyramid,
@@ -131,7 +129,7 @@ def nifti_to_omezarr(
     total_chunks, total_bytes = _compute_stats(grp)
 
     logger.info(
-        "nifti_to_omezarr: %s -> %s  levels=%d  chunks=%d  bytes=%d",
+        "nifti_to_omezarr: {} -> {} levels={} chunks={} bytes={}",
         nifti_path.name,
         zarr_path,
         scales,
@@ -173,12 +171,10 @@ def study_to_omezarr(
     study_name = _sanitize_name(study_dir.name)
     study_zarr = out_root / f"{study_name}.ome.zarr"
 
-    nifti_files = sorted(
-        list(study_dir.rglob("*.nii.gz")) + list(study_dir.rglob("*.nii"))
-    )
+    nifti_files = sorted(list(study_dir.rglob("*.nii.gz")) + list(study_dir.rglob("*.nii")))
 
     if not nifti_files:
-        logger.warning("No NIfTI files found under %s", study_dir)
+        logger.warning("No NIfTI files found under {}", study_dir)
 
     results: list[dict[str, Any]] = []
     failed = 0
@@ -193,9 +189,9 @@ def study_to_omezarr(
             stats = nifti_to_omezarr(nifti_path, series_zarr)
             stats["series"] = str(rel)
             results.append(stats)
-            logger.info("  converted: %s", rel)
+            logger.info("  converted: {}", rel)
         except Exception as exc:
-            logger.warning("  FAILED %s: %s", rel, exc)
+            logger.warning("  FAILED {}: {}", rel, exc)
             results.append({"ok": False, "series": str(rel), "error": str(exc)})
             failed += 1
 
@@ -212,6 +208,7 @@ def study_to_omezarr(
 # Internal helpers
 # ---------------------------------------------------------------------------
 
+
 def _open_store(zarr_path: ZarrPath) -> Any:
     """Return a zarr store for ``zarr_path`` (local or fsspec URL)."""
     import zarr  # already guarded by caller
@@ -220,6 +217,7 @@ def _open_store(zarr_path: ZarrPath) -> Any:
     # fsspec URLs (s3://, gcs://, etc.)
     if "://" in path_str:
         import fsspec  # lazy import -- optional
+
         mapper = fsspec.get_mapper(path_str)
         return zarr.storage.FsspecStore(mapper.fs, path=mapper.root)
 
@@ -232,16 +230,15 @@ def _chunk_for_shape(
     shape: tuple[int, ...],
 ) -> tuple[int, int, int]:
     """Clip chunk_size so it never exceeds the array shape on any axis."""
-    return tuple(min(c, s) for c, s in zip(chunk_size, shape))  # type: ignore[return-value]
+    return tuple(min(c, s) for c, s in zip(chunk_size, shape, strict=False))  # type: ignore[return-value]
 
 
 def _compute_stats(grp: Any) -> tuple[int, int]:
     """Return (total_chunks, total_bytes) across all arrays in the group."""
     try:
-        import zarr
         total_chunks = 0
         total_bytes = 0
-        for key in grp.keys():
+        for key in grp:
             try:
                 arr = grp[key]
                 if hasattr(arr, "nchunks"):
@@ -258,6 +255,7 @@ def _compute_stats(grp: Any) -> tuple[int, int]:
 def _sanitize_name(name: str) -> str:
     """Strip unsafe characters from a Zarr group name."""
     import re
+
     return re.sub(r"[^A-Za-z0-9._-]", "_", name)
 
 
@@ -270,5 +268,5 @@ def _rel_path_to_group_name(rel: Path) -> str:
             stem = stem[: -len(ext)]
             break
     # Re-join parent parts + stem
-    parts = list(rel.parent.parts) + [stem]
+    parts = [*list(rel.parent.parts), stem]
     return "/".join(_sanitize_name(p) for p in parts if p not in (".", ""))

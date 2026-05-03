@@ -22,10 +22,9 @@ from __future__ import annotations
 
 import argparse
 from pathlib import Path
-from typing import Literal
 
-import polars as pl
 import pandera.polars as pa
+import polars as pl
 from pandera.errors import SchemaErrors
 
 # ---------------------------------------------------------------------------
@@ -177,10 +176,7 @@ def validate_manifest(
     resolved = _SCHEMA_ALIASES.get(schema_name, schema_name)
     schema = _SCHEMAS.get(resolved)
     if schema is None:
-        raise ValueError(
-            f"Unknown schema '{schema_name}'. "
-            f"Choose from: {sorted(_SCHEMAS)}"
-        )
+        raise ValueError(f"Unknown schema '{schema_name}'. Choose from: {sorted(_SCHEMAS)}")
 
     try:
         schema.validate(df, lazy=True)

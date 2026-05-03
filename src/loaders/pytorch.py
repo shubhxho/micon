@@ -27,13 +27,15 @@ Usage
 from __future__ import annotations
 
 import json
+from collections.abc import Callable
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any
 
 # Lazy torch import so the module imports even when torch is not installed.
 try:
     from torch.utils.data import DataLoader
     from torch.utils.data import Dataset as _TorchBase
+
     _TORCH_AVAILABLE = True
 except ImportError:
     DataLoader = None  # type: ignore[assignment,misc]
@@ -53,6 +55,7 @@ def _read_parquet_rows(path: Path) -> list[dict[str, Any]]:
     """
     try:
         import pyarrow.parquet as pq
+
         table = pq.read_table(str(path))
         cols = table.to_pydict()
         n = len(table)
@@ -62,6 +65,7 @@ def _read_parquet_rows(path: Path) -> list[dict[str, Any]]:
 
     try:
         import pandas as pd
+
         df = pd.read_parquet(str(path))
         return df.to_dict(orient="records")
     except ImportError:
@@ -137,9 +141,7 @@ class SpeallMRIDataset(_TorchBase):  # type: ignore[misc]
         split_uids: set[str] | None = None
         if splits_path and Path(splits_path).exists():
             split_rows = _read_parquet_rows(Path(splits_path))
-            split_uids = {
-                r["series_uid"] for r in split_rows if r.get("split") == split
-            }
+            split_uids = {r["series_uid"] for r in split_rows if r.get("split") == split}
 
         self._rows: list[dict[str, Any]] = []
         for row in all_rows:
@@ -173,12 +175,10 @@ class SpeallMRIDataset(_TorchBase):  # type: ignore[misc]
         # Resolve paths
         series_dir = self.root / study_id
         if detail_path_rel:
-            series_dir = (self.root / study_id / Path(detail_path_rel).parent)
+            series_dir = self.root / study_id / Path(detail_path_rel).parent
 
         row["series_dir"] = str(series_dir)
-        row["detail_json"] = self._load_detail_json(
-            self.root, study_id, detail_path_rel
-        )
+        row["detail_json"] = self._load_detail_json(self.root, study_id, detail_path_rel)
 
         if self.load_volume:
             row["volume"] = self._load_volume(series_dir)
@@ -209,7 +209,6 @@ class SpeallMRIDataset(_TorchBase):  # type: ignore[misc]
         """Load DICOM volume via SimpleITK, returns float32 numpy array or None."""
         try:
             import SimpleITK as sitk
-            import numpy as np
         except ImportError:
             return None
 
@@ -249,7 +248,7 @@ def make_dataloader(
     transform: Callable[[dict[str, Any]], Any] | None = None,
     load_volume: bool = False,
     splits_path: Path | None = None,
-) -> "DataLoader":  # type: ignore[type-arg]
+) -> DataLoader:  # type: ignore[type-arg]
     """Create a DataLoader for the Speall MRI dataset.
 
     Parameters mirror ``SpeallMRIDataset.__init__`` with ``batch_size``
@@ -262,8 +261,7 @@ def make_dataloader(
     """
     if not _TORCH_AVAILABLE:
         raise ImportError(
-            "torch is required for make_dataloader. "
-            "Install with: pip install 'micom[torch]'"
+            "torch is required for make_dataloader. Install with: pip install 'micom[torch]'"
         )
     from torch.utils.data import DataLoader as _DL
 

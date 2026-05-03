@@ -27,7 +27,6 @@ Usage
 
 from __future__ import annotations
 
-import json
 from pathlib import Path
 from typing import Any
 
@@ -37,6 +36,7 @@ from typing import Any
 
 try:
     import monai  # noqa: F401
+
     _MONAI_AVAILABLE = True
 except ImportError:
     _MONAI_AVAILABLE = False
@@ -122,6 +122,7 @@ def _read_parquet_rows(path: Path) -> list[dict[str, Any]]:
     """Read parquet file into list of row dicts."""
     try:
         import pyarrow.parquet as pq
+
         table = pq.read_table(str(path))
         cols = table.to_pydict()
         n = len(table)
@@ -131,6 +132,7 @@ def _read_parquet_rows(path: Path) -> list[dict[str, Any]]:
 
     try:
         import pandas as pd
+
         df = pd.read_parquet(str(path))
         return df.to_dict(orient="records")
     except ImportError:
@@ -226,9 +228,7 @@ def to_monai_dict_dataset(
         # Resolve image path: prefer NIfTI, fall back to DICOM dir
         detail_path_rel = row.get("detail_path") or ""
         series_dir = (
-            root / study_id / Path(detail_path_rel).parent
-            if detail_path_rel
-            else root / study_id
+            root / study_id / Path(detail_path_rel).parent if detail_path_rel else root / study_id
         )
 
         image_path = _resolve_image_path(series_dir)

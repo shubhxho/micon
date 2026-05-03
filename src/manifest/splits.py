@@ -15,9 +15,8 @@ folded into a synthetic "__other__" stratum and split together with the rest.
 
 from __future__ import annotations
 
-import sys
 import warnings
-from typing import Sequence
+from collections.abc import Sequence
 
 import numpy as np
 import polars as pl
@@ -165,10 +164,7 @@ def summarize_splits(study_df: pl.DataFrame) -> dict:
 
     # Per-split totals
     result["totals"] = (
-        study_df.group_by("split")
-        .agg(pl.len().alias("count"))
-        .sort("split")
-        .to_dicts()
+        study_df.group_by("split").agg(pl.len().alias("count")).sort("split").to_dicts()
     )
 
     # Per-stratum breakdown
@@ -204,10 +200,8 @@ def _resolve_stratify_cols(df: pl.DataFrame, cols: list[str]) -> list[str]:
 
 def _build_strat_labels(df: pl.DataFrame, cols: list[str]) -> np.ndarray:
     """Build a 1-D array of combined string labels (e.g. 'GE|A')."""
-    parts = [
-        df[c].fill_null(_NULL_SENTINEL).cast(pl.Utf8).to_list() for c in cols
-    ]
-    return np.array(["|".join(vals) for vals in zip(*parts)])
+    parts = [df[c].fill_null(_NULL_SENTINEL).cast(pl.Utf8).to_list() for c in cols]
+    return np.array(["|".join(vals) for vals in zip(*parts, strict=False)])
 
 
 def _merge_tiny_strata(labels: np.ndarray, min_count: int = 2) -> np.ndarray:
@@ -243,7 +237,7 @@ def _do_split(
         return idx, np.array([], dtype=int)
 
     # Guard: test_size must yield at least 1 sample
-    n_test = max(1, int(round(len(idx) * test_size)))
+    n_test = max(1, round(len(idx) * test_size))
     if n_test >= len(idx):
         n_test = len(idx) - 1
 

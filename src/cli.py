@@ -48,8 +48,12 @@ def _run(cmd: list[str]) -> None:
 
 @app.command
 def dev(
-    study: Annotated[str, Parameter(name="--study", help="Path to a study directory.")] = "mcap-files/3D_Ax_SWAN/",
-    skip_quality: Annotated[bool, Parameter(name="--skip-quality", help="Skip quality + slice export.")] = False,
+    study: Annotated[
+        str, Parameter(name="--study", help="Path to a study directory.")
+    ] = "mcap-files/3D_Ax_SWAN/",
+    skip_quality: Annotated[
+        bool, Parameter(name="--skip-quality", help="Skip quality + slice export.")
+    ] = False,
     skip_pack: Annotated[bool, Parameter(name="--skip-pack", help="Skip tarball packing.")] = False,
 ) -> None:
     """Run quality + pack flow locally on a single study (mirrors dev_run.py)."""
@@ -63,8 +67,12 @@ def dev(
 
 @app.command
 def annotate(
-    montage: Annotated[str, Parameter(name="--montage", help="Path to a *_multiplane.png montage.")],
-    label: Annotated[str, Parameter(name="--label", help='Series label, e.g. "Series 5 -- Ax DWI".')],
+    montage: Annotated[
+        str, Parameter(name="--montage", help="Path to a *_multiplane.png montage.")
+    ],
+    label: Annotated[
+        str, Parameter(name="--label", help='Series label, e.g. "Series 5 -- Ax DWI".')
+    ],
 ) -> None:
     """Annotate a single series montage locally using the Gemma model (mirrors dev_run.py --annotate)."""
     _run([sys.executable, "dev_run.py", "--annotate", "--montage", montage, "--label", label])
@@ -99,7 +107,9 @@ def plan(
 
 @app.command
 def manifest(
-    root: Annotated[str, Parameter(name="--root", help="Root directory to crawl for detail.json files.")],
+    root: Annotated[
+        str, Parameter(name="--root", help="Root directory to crawl for detail.json files.")
+    ],
     out: Annotated[str, Parameter(name="--out", help="Output directory for parquet files.")],
 ) -> None:
     """Generate manifest.parquet and study_manifest.parquet from pipeline output."""
@@ -107,9 +117,7 @@ def manifest(
 
     counts = write_manifests(Path(root), Path(out))
     print(f"Wrote {counts['series_rows']} series rows -> {Path(out) / 'manifest.parquet'}")
-    print(
-        f"Wrote {counts['study_rows']} study rows  -> {Path(out) / 'study_manifest.parquet'}"
-    )
+    print(f"Wrote {counts['study_rows']} study rows  -> {Path(out) / 'study_manifest.parquet'}")
 
 
 @app.command
@@ -184,9 +192,15 @@ def _get_git_sha() -> str:
 
 @app.command
 def resume(
-    repo: Annotated[str, Parameter(name="--repo", help="HuggingFace repo ID.")] = "shubhxho/speall-mri",
-    skip_quality: Annotated[bool, Parameter(name="--skip-quality", help="Skip quality stage.")] = False,
-    skip_annotation: Annotated[bool, Parameter(name="--skip-annotation", help="Skip annotation stage.")] = False,
+    repo: Annotated[
+        str, Parameter(name="--repo", help="HuggingFace repo ID.")
+    ] = "shubhxho/speall-mri",
+    skip_quality: Annotated[
+        bool, Parameter(name="--skip-quality", help="Skip quality stage.")
+    ] = False,
+    skip_annotation: Annotated[
+        bool, Parameter(name="--skip-annotation", help="Skip annotation stage.")
+    ] = False,
     skip_pack: Annotated[bool, Parameter(name="--skip-pack", help="Skip pack stage.")] = False,
 ) -> None:
     """Spawn the full Modal resume pipeline (quality + annotation + pack + HF upload)."""
@@ -202,9 +216,15 @@ def resume(
 
 @app.command
 def upload(
-    repo: Annotated[str, Parameter(name="--repo", help="HuggingFace repo ID.")] = "shubhxho/speall-mri",
-    skip_manifest: Annotated[bool, Parameter(name="--skip-manifest", help="Skip manifest generation.")] = False,
-    squash: Annotated[bool, Parameter(name="--squash", help="Squash HF commit history before upload.")] = False,
+    repo: Annotated[
+        str, Parameter(name="--repo", help="HuggingFace repo ID.")
+    ] = "shubhxho/speall-mri",
+    skip_manifest: Annotated[
+        bool, Parameter(name="--skip-manifest", help="Skip manifest generation.")
+    ] = False,
+    squash: Annotated[
+        bool, Parameter(name="--squash", help="Squash HF commit history before upload.")
+    ] = False,
 ) -> None:
     """Spawn a focused HF upload via Modal (auto-generates manifest by default)."""
     cmd = ["modal", "run", "--detach", "upload_to_hf.py", "--repo", repo]
@@ -217,7 +237,9 @@ def upload(
 
 @app.command
 def backfill(
-    repo_dir: Annotated[str, Parameter(name="--repo-dir", help="Sub-directory under /vol/output/ to backfill.")] = "akai_mri",
+    repo_dir: Annotated[
+        str, Parameter(name="--repo-dir", help="Sub-directory under /vol/output/ to backfill.")
+    ] = "akai_mri",
 ) -> None:
     """Backfill study_id and pipeline_version into existing detail.json files via Modal."""
     _run(["modal", "run", "--detach", "backfill_metadata.py", "--repo-dir", repo_dir])

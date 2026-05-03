@@ -40,9 +40,7 @@ _GRADE_ORDER: list[str] = ["A", "B", "C", "D", "F"]
 def _grades_at_least(min_grade: str) -> list[str]:
     """Return all grades >= min_grade (i.e. at-least-as-good-as)."""
     if min_grade not in _GRADE_ORDER:
-        raise ValueError(
-            f"Unknown grade '{min_grade}'. Valid grades: {_GRADE_ORDER}"
-        )
+        raise ValueError(f"Unknown grade '{min_grade}'. Valid grades: {_GRADE_ORDER}")
     cutoff = _GRADE_ORDER.index(min_grade)
     return _GRADE_ORDER[: cutoff + 1]
 
@@ -165,9 +163,7 @@ def single_vendor(df: pl.DataFrame, vendor: str) -> pl.DataFrame:
         )
         return df
 
-    return df.filter(
-        pl.col(vendor_col).str.to_lowercase() == vendor.lower()
-    )
+    return df.filter(pl.col(vendor_col).str.to_lowercase() == vendor.lower())
 
 
 def single_field(df: pl.DataFrame, field_T: float) -> pl.DataFrame:
@@ -199,9 +195,7 @@ def with_pathology(df: pl.DataFrame) -> pl.DataFrame:
     report NLP or structured finding fields.  The column marks where
     pathology annotation will live once the pipeline produces it.
     """
-    return df.with_columns(
-        pl.lit("unknown").cast(pl.Utf8).alias("pathology_flag")
-    )
+    return df.with_columns(pl.lit("unknown").cast(pl.Utf8).alias("pathology_flag"))
 
 
 # ---------------------------------------------------------------------------
@@ -238,9 +232,7 @@ def complete_protocol(
     return df
 
 
-def _complete_protocol_study_level(
-    df: pl.DataFrame, required: tuple[str, ...]
-) -> pl.DataFrame:
+def _complete_protocol_study_level(df: pl.DataFrame, required: tuple[str, ...]) -> pl.DataFrame:
     """Study-level completeness via sequences_present List column."""
 
     def _has_all(seq_list: list[str] | None) -> bool:
@@ -253,14 +245,9 @@ def _complete_protocol_study_level(
     return df.filter(pl.Series(mask))
 
 
-def _complete_protocol_series_level(
-    df: pl.DataFrame, required: tuple[str, ...]
-) -> pl.DataFrame:
+def _complete_protocol_series_level(df: pl.DataFrame, required: tuple[str, ...]) -> pl.DataFrame:
     """Series-level: group by study_id, check coverage, return matching series."""
-    study_seq = (
-        df.group_by("study_id")
-        .agg(pl.col("sequence_type").drop_nulls().alias("seqs"))
-    )
+    study_seq = df.group_by("study_id").agg(pl.col("sequence_type").drop_nulls().alias("seqs"))
 
     def _has_all(seq_list: list[str] | None) -> bool:
         if not seq_list:

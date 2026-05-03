@@ -13,46 +13,47 @@ import tempfile
 from pathlib import Path
 from typing import Any
 
-import pytest
 import pyarrow as pa
 import pyarrow.parquet as pq
-
+import pytest
 
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------
 
-_SERIES_SCHEMA = pa.schema([
-    ("study_id", pa.string()),
-    ("series_uid", pa.string()),
-    ("series_number", pa.int64()),
-    ("series_description", pa.string()),
-    ("sequence_type", pa.string()),
-    ("sequence_confidence", pa.string()),
-    ("modality", pa.string()),
-    ("file_count", pa.int64()),
-    ("tr_ms", pa.float64()),
-    ("te_ms", pa.float64()),
-    ("ti_ms", pa.float64()),
-    ("fa_deg", pa.float64()),
-    ("b_value", pa.float64()),
-    ("field_strength_T", pa.float64()),
-    ("plane", pa.string()),
-    ("volume_shape", pa.list_(pa.int64())),
-    ("spacing_mm", pa.list_(pa.float64())),
-    ("fov_mm", pa.list_(pa.float64())),
-    ("volume_snr", pa.float64()),
-    ("volume_cnr", pa.float64()),
-    ("volume_entropy", pa.float64()),
-    ("quality_grade", pa.string()),
-    ("quality_score", pa.float64()),
-    ("ml_score", pa.float64()),
-    ("ml_grade", pa.string()),
-    ("commercial_tier", pa.string()),
-    ("detail_path", pa.string()),
-    ("montage_path", pa.string()),
-    ("has_tar_shard", pa.bool_()),
-])
+_SERIES_SCHEMA = pa.schema(
+    [
+        ("study_id", pa.string()),
+        ("series_uid", pa.string()),
+        ("series_number", pa.int64()),
+        ("series_description", pa.string()),
+        ("sequence_type", pa.string()),
+        ("sequence_confidence", pa.string()),
+        ("modality", pa.string()),
+        ("file_count", pa.int64()),
+        ("tr_ms", pa.float64()),
+        ("te_ms", pa.float64()),
+        ("ti_ms", pa.float64()),
+        ("fa_deg", pa.float64()),
+        ("b_value", pa.float64()),
+        ("field_strength_T", pa.float64()),
+        ("plane", pa.string()),
+        ("volume_shape", pa.list_(pa.int64())),
+        ("spacing_mm", pa.list_(pa.float64())),
+        ("fov_mm", pa.list_(pa.float64())),
+        ("volume_snr", pa.float64()),
+        ("volume_cnr", pa.float64()),
+        ("volume_entropy", pa.float64()),
+        ("quality_grade", pa.string()),
+        ("quality_score", pa.float64()),
+        ("ml_score", pa.float64()),
+        ("ml_grade", pa.string()),
+        ("commercial_tier", pa.string()),
+        ("detail_path", pa.string()),
+        ("montage_path", pa.string()),
+        ("has_tar_shard", pa.bool_()),
+    ]
+)
 
 _N = 20  # rows in synthetic manifest
 
@@ -159,7 +160,9 @@ def test_speall_dataset_sequence_filter(synthetic_manifest: Path, tmp_path: Path
     from src.loaders.pytorch import SpeallMRIDataset
 
     ds_all = SpeallMRIDataset(manifest_path=synthetic_manifest, root=tmp_path, split="all")
-    ds_dwi = SpeallMRIDataset(manifest_path=synthetic_manifest, root=tmp_path, split="all", sequence_type="DWI")
+    ds_dwi = SpeallMRIDataset(
+        manifest_path=synthetic_manifest, root=tmp_path, split="all", sequence_type="DWI"
+    )
     assert len(ds_dwi) < len(ds_all)
     assert len(ds_dwi) > 0
 
@@ -271,7 +274,9 @@ def test_to_monai_dict_dataset_sequence_filter(synthetic_manifest: Path, tmp_pat
     from src.loaders.monai import to_monai_dict_dataset
 
     all_items = to_monai_dict_dataset(manifest_path=synthetic_manifest, root=tmp_path, split="all")
-    dwi_items = to_monai_dict_dataset(manifest_path=synthetic_manifest, root=tmp_path, split="all", sequence_type="DWI")
+    dwi_items = to_monai_dict_dataset(
+        manifest_path=synthetic_manifest, root=tmp_path, split="all", sequence_type="DWI"
+    )
     assert len(dwi_items) < len(all_items)
     for item in dwi_items:
         assert item["metadata"]["sequence_type"] == "DWI"
@@ -317,6 +322,7 @@ def test_hf_loading_script_info() -> None:
 
     # Import the standalone loading script (not src/)
     import importlib.util
+
     script_path = Path(__file__).parent.parent / "speall_mri_loading_script.py"
     assert script_path.exists(), f"Loading script not found: {script_path}"
 
@@ -350,9 +356,10 @@ def test_hf_loading_script_info() -> None:
 
 def test_hf_builder_configs() -> None:
     """BUILDER_CONFIGS covers all required config names."""
-    datasets = pytest.importorskip("datasets")
+    pytest.importorskip("datasets")
 
     import importlib.util
+
     script_path = Path(__file__).parent.parent / "speall_mri_loading_script.py"
     spec = importlib.util.spec_from_file_location("speall_mri_loading_script", script_path)
     assert spec is not None and spec.loader is not None

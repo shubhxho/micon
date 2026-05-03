@@ -395,9 +395,7 @@ def _call_model(
         msg = resp.choices[0].message
         c = msg.content or ""
         if capture_reasoning:
-            reasoning = getattr(msg, "reasoning_content", None) or getattr(
-                msg, "reasoning", None
-            )
+            reasoning = getattr(msg, "reasoning_content", None) or getattr(msg, "reasoning", None)
             return c, reasoning
         return c
 

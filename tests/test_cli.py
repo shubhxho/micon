@@ -10,6 +10,7 @@ Cyclopts. Cyclopts raises SystemExit on --help (exit 0) and on errors.
 
 from __future__ import annotations
 
+import contextlib
 import io
 
 import pytest
@@ -79,10 +80,8 @@ def test_version_exits_zero(capsys):
 
 
 def test_version_output_contains_speall(capsys):
-    try:
+    with contextlib.suppress(SystemExit):
         app(["version"])
-    except SystemExit:
-        pass
     captured = capsys.readouterr()
     assert "speall" in captured.out
 

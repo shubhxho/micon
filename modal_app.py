@@ -1050,8 +1050,6 @@ def run_extraction_pipeline(
         _progress("hf_upload", "Uploading to Hugging Face")
         print("\n=== Uploading to Hugging Face (server-side) ===")
         try:
-            import os
-
             from src.hf_upload import upload_to_huggingface
 
             hipaa_dict = compliance_report_to_dict(hipaa_report)

@@ -22,7 +22,7 @@ from jsonschema import Draft202012Validator
 
 def test_backwards_compat_import_series_detail() -> None:
     """from src.schemas import SeriesDetail must keep working."""
-    from src.schemas import SeriesDetail  # noqa: PLC0415
+    from src.schemas import SeriesDetail
 
     assert SeriesDetail is not None
     detail = SeriesDetail.model_validate(
@@ -39,11 +39,11 @@ def test_backwards_compat_import_series_detail() -> None:
 
 def test_backwards_compat_import_all_models() -> None:
     """All 12 public models must be importable from src.schemas."""
-    from src.schemas import (  # noqa: PLC0415
+    from src.schemas import (
         AnnotationConsensus,
         AnnotationRecord,
-        MLTrainingScore,
         ManifestRow,
+        MLTrainingScore,
         PipelineVersion,
         QualityAnalysis,
         SequenceClassification,
@@ -95,7 +95,7 @@ _EXPECTED_MODEL_FILES = [
 
 def test_export_produces_file_per_model(tmp_path: Path) -> None:
     """export_all writes one .schema.json per model."""
-    from src.schemas.export_jsonschema import export_all  # noqa: PLC0415
+    from src.schemas.export_jsonschema import export_all
 
     written = export_all(tmp_path)
     filenames = {p.name for p in written}
@@ -106,7 +106,7 @@ def test_export_produces_file_per_model(tmp_path: Path) -> None:
 
 def test_export_produces_dataset_schema(tmp_path: Path) -> None:
     """export_all writes dataset.schema.json referencing all models."""
-    from src.schemas.export_jsonschema import export_all  # noqa: PLC0415
+    from src.schemas.export_jsonschema import export_all
 
     export_all(tmp_path)
     dataset_file = tmp_path / "dataset.schema.json"
@@ -122,14 +122,14 @@ def test_export_produces_dataset_schema(tmp_path: Path) -> None:
 
 def test_export_is_deterministic(tmp_path: Path) -> None:
     """Running export_all twice produces identical output."""
-    from src.schemas.export_jsonschema import export_all  # noqa: PLC0415
+    from src.schemas.export_jsonschema import export_all
 
     out1 = tmp_path / "run1"
     out2 = tmp_path / "run2"
     paths1 = export_all(out1)
     paths2 = export_all(out2)
 
-    for p1, p2 in zip(paths1, paths2):
+    for p1, p2 in zip(paths1, paths2, strict=False):
         assert p1.read_text() == p2.read_text(), f"Non-deterministic output: {p1.name}"
 
 
@@ -138,10 +138,10 @@ def test_export_is_deterministic(tmp_path: Path) -> None:
 # ---------------------------------------------------------------------------
 
 
-@pytest.mark.parametrize("filename", _EXPECTED_MODEL_FILES + ["dataset.schema.json"])
+@pytest.mark.parametrize("filename", [*_EXPECTED_MODEL_FILES, "dataset.schema.json"])
 def test_schema_is_valid_draft_2020_12(tmp_path: Path, filename: str) -> None:
     """Every generated schema must pass Draft202012Validator.check_schema."""
-    from src.schemas.export_jsonschema import export_all  # noqa: PLC0415
+    from src.schemas.export_jsonschema import export_all
 
     export_all(tmp_path)
     schema_path = tmp_path / filename

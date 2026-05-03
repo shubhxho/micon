@@ -16,18 +16,18 @@ from pathlib import Path
 import pytest
 
 from src.annotation.cloud import (
+    _SYNTHESIS_PROMPT_DYNAMIC,
     ANNOTATION_PROMPT_DYNAMIC,
     ANNOTATION_PROMPT_STATIC,
     CLOUD_SYNTHESIS_PROMPT_STATIC,
-    _SYNTHESIS_PROMPT_DYNAMIC,
     _build_cached_user_content,
     _cache_provider,
     annotate_with_model,
     synthesize_cloud_report,
 )
 
-
 # ── Unit tests for _cache_provider ──────────────────────────────────────────
+
 
 def test_cache_provider_anthropic():
     assert _cache_provider("anthropic/claude-sonnet-4") == "anthropic"
@@ -61,6 +61,7 @@ def test_cache_provider_other():
 
 # ── Unit tests for _build_cached_user_content ────────────────────────────────
 
+
 def test_anthropic_content_has_cache_control():
     """Anthropic model_id → static text block must have cache_control marker."""
     parts = _build_cached_user_content(
@@ -86,8 +87,7 @@ def test_anthropic_dynamic_part_no_cache_control():
         model_id="anthropic/claude-sonnet-4",
     )
     dynamic_parts = [
-        p for p in parts
-        if p.get("type") == "text" and "T2_FLAIR" in p.get("text", "")
+        p for p in parts if p.get("type") == "text" and "T2_FLAIR" in p.get("text", "")
     ]
     assert dynamic_parts, "No dynamic text part found"
     assert "cache_control" not in dynamic_parts[0], "Dynamic part must not have cache_control"
@@ -168,16 +168,14 @@ def test_dynamic_text_contains_series_label():
         image_b64=None,
         model_id="anthropic/claude-sonnet-4",
     )
-    dynamic_parts = [
-        p for p in parts
-        if p.get("type") == "text" and SERIES in p.get("text", "")
-    ]
+    dynamic_parts = [p for p in parts if p.get("type") == "text" and SERIES in p.get("text", "")]
     assert dynamic_parts, f"series_label '{SERIES}' not found in any dynamic text part"
     # Confirm the dynamic part is not marked cached
     assert "cache_control" not in dynamic_parts[0]
 
 
 # ── Integration: annotate_with_model wires cache correctly ──────────────────
+
 
 def _make_mock_response(text: str = "{}"):
     """Create a minimal mock response matching openai.ChatCompletion shape."""
@@ -210,7 +208,7 @@ def test_annotate_with_model_anthropic_sends_cache_control(tmp_path, mock_client
     fake_png.write_bytes(b"\x89PNG\r\n")
 
     with mock.patch("src.annotation.cloud._encode_image", return_value="fakebase64"):
-        result = annotate_with_model(
+        annotate_with_model(
             client=mock_client,
             model_key="claude",
             montage_path=str(fake_png),
@@ -225,10 +223,7 @@ def test_annotate_with_model_anthropic_sends_cache_control(tmp_path, mock_client
     user_msg = next(m for m in messages if m["role"] == "user")
     content_parts = user_msg["content"]
 
-    cached_parts = [
-        p for p in content_parts
-        if isinstance(p, dict) and "cache_control" in p
-    ]
+    cached_parts = [p for p in content_parts if isinstance(p, dict) and "cache_control" in p]
     assert cached_parts, "No cache_control parts found for Claude model"
     # Confirm static text is in cached part
     assert any("board-certified radiologist" in p.get("text", "") for p in cached_parts)
@@ -240,7 +235,7 @@ def test_annotate_with_model_kimi_no_cache_control(tmp_path, mock_client):
     fake_png.write_bytes(b"\x89PNG\r\n")
 
     with mock.patch("src.annotation.cloud._encode_image", return_value="fakebase64"):
-        result = annotate_with_model(
+        annotate_with_model(
             client=mock_client,
             model_key="kimi",
             montage_path=str(fake_png),
@@ -311,7 +306,8 @@ def test_dynamic_suffix_contains_series_label_in_annotate(tmp_path, mock_client)
 
     # Find any text part containing the series label
     dynamic_text_parts = [
-        p for p in content_parts
+        p
+        for p in content_parts
         if isinstance(p, dict) and p.get("type") == "text" and SERIES in p.get("text", "")
     ]
     assert dynamic_text_parts, f"series_label '{SERIES}' not found in text content parts"
@@ -322,6 +318,7 @@ def test_dynamic_suffix_contains_series_label_in_annotate(tmp_path, mock_client)
 
 
 # ── Prompt structure sanity checks ──────────────────────────────────────────
+
 
 def test_annotation_prompt_static_has_no_format_vars():
     """ANNOTATION_PROMPT_STATIC must not contain {series_label} or {quality_ctx}."""

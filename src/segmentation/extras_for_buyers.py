@@ -24,13 +24,14 @@ Usage::
 
 from __future__ import annotations
 
-import logging
 from pathlib import Path
 from typing import Any
 
 import polars as pl
 
-logger = logging.getLogger(__name__)
+from src._logging import get_logger
+
+logger = get_logger(__name__)
 
 # ---------------------------------------------------------------------------
 # Optional heavy imports
@@ -74,7 +75,6 @@ def _volume_cm3(mask: Any, voxel_vol_mm3: float, labels: frozenset[int] | None =
     """Sum voxels matching ``labels`` (or all non-zero), convert to cm^3."""
     if not _NUMPY:
         return 0.0
-    import numpy as _np
 
     if labels is None:
         count = int((mask > 0).sum())
@@ -92,7 +92,7 @@ def _read_nifti_mask(path: Path) -> tuple[Any, Any] | None:
         img = nib.load(str(path))
         return img.get_fdata().astype("uint8"), img.affine
     except Exception as exc:
-        logger.warning("Could not load mask %s: %s", path, exc)
+        logger.warning("Could not load mask {}: {}", path, exc)
         return None
 
 
@@ -104,7 +104,7 @@ def _find_derivative_mask(
     desc_label: str,
 ) -> Path | None:
     """Return the BIDS derivatives mask path if it exists."""
-    from src.segmentation.pipeline import _sanitize, _derivatives_filename
+    from src.segmentation.pipeline import _derivatives_filename, _sanitize
 
     out_dir = (
         bids_root
@@ -142,9 +142,7 @@ def _study_seg_stats(
             brain_volume = _volume_cm3(loaded[0], _voxel_volume_mm3(loaded[1]))
 
     # parcellation
-    parcel_path = _find_derivative_mask(
-        bids_root, "speall-synthseg", subject, session, "parcel"
-    )
+    parcel_path = _find_derivative_mask(bids_root, "speall-synthseg", subject, session, "parcel")
     has_parcellation = parcel_path is not None
     ventricle_volume = 0.0
     if has_parcellation:
@@ -155,9 +153,7 @@ def _study_seg_stats(
             )
 
     # lesion mask
-    lesion_path = _find_derivative_mask(
-        bids_root, "speall-lesion", subject, session, "lesion"
-    )
+    lesion_path = _find_derivative_mask(bids_root, "speall-lesion", subject, session, "lesion")
     has_lesion_mask = lesion_path is not None
     lesion_load = 0.0
     if has_lesion_mask:
@@ -235,7 +231,7 @@ def augment_manifest(
 
     result = df.join(seg_df, on="study_id", how="left")
     result.write_parquet(str(out_path))
-    logger.info("Wrote augmented manifest -> %s  (%d rows)", out_path, len(result))
+    logger.info("Wrote augmented manifest -> {} ({} rows)", out_path, len(result))
     return result
 
 
@@ -270,9 +266,19 @@ def compute_cohort_summary(augmented_df: pl.DataFrame) -> dict[str, Any]:
     n = len(augmented_df)
     return {
         "n_studies": n,
-        "n_with_brain_mask": int(augmented_df["has_brain_mask"].sum()) if "has_brain_mask" in augmented_df.columns else 0,
-        "n_with_parcellation": int(augmented_df["has_brain_parcellation"].sum()) if "has_brain_parcellation" in augmented_df.columns else 0,
-        "n_with_lesion_mask": int(augmented_df["has_lesion_mask"].sum()) if "has_lesion_mask" in augmented_df.columns else 0,
-        "mean_brain_volume_cm3": float(augmented_df["brain_volume_cm3"].mean() or 0.0) if "brain_volume_cm3" in augmented_df.columns else 0.0,
-        "mean_lesion_load_cm3": float(augmented_df["lesion_load_cm3"].mean() or 0.0) if "lesion_load_cm3" in augmented_df.columns else 0.0,
+        "n_with_brain_mask": int(augmented_df["has_brain_mask"].sum())
+        if "has_brain_mask" in augmented_df.columns
+        else 0,
+        "n_with_parcellation": int(augmented_df["has_brain_parcellation"].sum())
+        if "has_brain_parcellation" in augmented_df.columns
+        else 0,
+        "n_with_lesion_mask": int(augmented_df["has_lesion_mask"].sum())
+        if "has_lesion_mask" in augmented_df.columns
+        else 0,
+        "mean_brain_volume_cm3": float(augmented_df["brain_volume_cm3"].mean() or 0.0)
+        if "brain_volume_cm3" in augmented_df.columns
+        else 0.0,
+        "mean_lesion_load_cm3": float(augmented_df["lesion_load_cm3"].mean() or 0.0)
+        if "lesion_load_cm3" in augmented_df.columns
+        else 0.0,
     }

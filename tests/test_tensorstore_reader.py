@@ -25,10 +25,10 @@ pytest.importorskip("ome_zarr", reason="ome_zarr not installed")
 from src.zarr_export.series_writer import series_volume_to_omezarr
 from src.zarr_export.tensorstore_reader import open_zarr_with_tensorstore, read_volume
 
-
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------
+
 
 @pytest.fixture(scope="module")
 def synthetic_vol() -> np.ndarray:
@@ -55,10 +55,9 @@ def written_zarr(tmp_path_factory: pytest.TempPathFactory, synthetic_vol: np.nda
 # 1. TensorStoreOpen
 # ---------------------------------------------------------------------------
 
+
 class TestTensorStoreOpen:
-    def test_shape_matches_input(
-        self, written_zarr: Path, synthetic_vol: np.ndarray
-    ) -> None:
+    def test_shape_matches_input(self, written_zarr: Path, synthetic_vol: np.ndarray) -> None:
         """Level-0 TensorStore handle must report the same shape as input."""
         store = open_zarr_with_tensorstore(written_zarr, level=0)
         assert tuple(store.shape) == synthetic_vol.shape
@@ -69,6 +68,7 @@ class TestTensorStoreOpen:
 
     def test_returns_tensorstore_object(self, written_zarr: Path) -> None:
         import tensorstore as _ts
+
         store = open_zarr_with_tensorstore(written_zarr, level=0)
         assert hasattr(store, "read")  # TensorStore handle
 
@@ -77,10 +77,9 @@ class TestTensorStoreOpen:
 # 2. ReadVolumeRoundtrip
 # ---------------------------------------------------------------------------
 
+
 class TestReadVolumeRoundtrip:
-    def test_read_volume_matches_input(
-        self, written_zarr: Path, synthetic_vol: np.ndarray
-    ) -> None:
+    def test_read_volume_matches_input(self, written_zarr: Path, synthetic_vol: np.ndarray) -> None:
         """read_volume(level=0) must be numerically equal to original (lossless zstd)."""
         result = read_volume(written_zarr, level=0)
         np.testing.assert_array_equal(result, synthetic_vol)
@@ -89,9 +88,7 @@ class TestReadVolumeRoundtrip:
         result = read_volume(written_zarr, level=0)
         assert isinstance(result, np.ndarray)
 
-    def test_shape_matches(
-        self, written_zarr: Path, synthetic_vol: np.ndarray
-    ) -> None:
+    def test_shape_matches(self, written_zarr: Path, synthetic_vol: np.ndarray) -> None:
         result = read_volume(written_zarr, level=0)
         assert result.shape == synthetic_vol.shape
 
@@ -100,20 +97,17 @@ class TestReadVolumeRoundtrip:
 # 3. Level1Downsampled
 # ---------------------------------------------------------------------------
 
+
 class TestLevel1Downsampled:
-    def test_level1_smaller_shape(
-        self, written_zarr: Path, synthetic_vol: np.ndarray
-    ) -> None:
+    def test_level1_smaller_shape(self, written_zarr: Path, synthetic_vol: np.ndarray) -> None:
         """Level 1 must have at least one dimension strictly smaller than level 0."""
         arr1 = read_volume(written_zarr, level=1)
-        assert any(d1 < d0 for d1, d0 in zip(arr1.shape, synthetic_vol.shape))
+        assert any(d1 < d0 for d1, d0 in zip(arr1.shape, synthetic_vol.shape, strict=False))
 
-    def test_level1_all_dims_le_level0(
-        self, written_zarr: Path, synthetic_vol: np.ndarray
-    ) -> None:
+    def test_level1_all_dims_le_level0(self, written_zarr: Path, synthetic_vol: np.ndarray) -> None:
         """All level-1 dims must be <= level-0 dims (pyramids only shrink)."""
         arr1 = read_volume(written_zarr, level=1)
-        for d1, d0 in zip(arr1.shape, synthetic_vol.shape):
+        for d1, d0 in zip(arr1.shape, synthetic_vol.shape, strict=False):
             assert d1 <= d0
 
     def test_level1_dtype_float32(self, written_zarr: Path) -> None:
@@ -125,16 +119,19 @@ class TestLevel1Downsampled:
 # 4. LazyImportGuard
 # ---------------------------------------------------------------------------
 
+
 class TestLazyImportGuard:
     def test_module_importable(self) -> None:
         """The module must import without error."""
-        from src.zarr_export import tensorstore_reader  # noqa: F401
+        from src.zarr_export import tensorstore_reader
+
         assert tensorstore_reader is not None
 
 
 # ---------------------------------------------------------------------------
 # 5. FileNotFoundError
 # ---------------------------------------------------------------------------
+
 
 class TestFileNotFoundError:
     def test_missing_path_raises(self, tmp_path: Path) -> None:

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -24,7 +25,7 @@ from .exports import (
 )
 from .extraction import classify_sequence, shm_read, volume_stats
 from .helpers import safe_getfloat, safe_squeeze, to_json
-from .io.msgspec_io import dumps_bytes, write_detail
+from .io.msgspec_io import write_detail
 from .quality import analyze_volume_quality
 
 log = get_logger(__name__)
@@ -491,7 +492,7 @@ def _write_series_mcap(
 
         mcap_path = series_out / f"{safe_name}.mcap"
 
-        record_schema = dumps_bytes(
+        record_schema = json.dumps(
             {
                 "type": "object",
                 "properties": {
@@ -504,7 +505,7 @@ def _write_series_mcap(
                 },
             }
         )
-        summary_schema = dumps_bytes(
+        summary_schema = json.dumps(
             {
                 "type": "object",
                 "properties": {
@@ -528,12 +529,12 @@ def _write_series_mcap(
                 rec_schema_id = writer.register_schema(
                     name="dicom_record",
                     encoding="jsonschema",
-                    data=record_schema,
+                    data=record_schema.encode(),
                 )
                 sum_schema_id = writer.register_schema(
                     name="series_summary",
                     encoding="jsonschema",
-                    data=summary_schema,
+                    data=summary_schema.encode(),
                 )
 
                 snum = info.get("series_number", "?")
@@ -590,7 +591,7 @@ def _write_series_mcap(
                         channel_id=ch_id,
                         log_time=now,
                         publish_time=now,
-                        data=dumps_bytes(msg),
+                        data=json.dumps(msg, default=str).encode(),
                         sequence=seq,
                     )
 
@@ -600,15 +601,16 @@ def _write_series_mcap(
                     channel_id=sum_ch_id,
                     log_time=now,
                     publish_time=now,
-                    data=dumps_bytes(
+                    data=json.dumps(
                         {
                             "series_uid": uid,
                             "series_description": desc,
                             "file_count": len(file_records),
                             "volume_stats": info.get("volume_stats", {}),
                             "quality_analysis": info.get("quality_analysis", {}),
-                        }
-                    ),
+                        },
+                        default=str,
+                    ).encode(),
                     sequence=0,
                 )
 

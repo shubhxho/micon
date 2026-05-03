@@ -26,7 +26,7 @@ _SAMPLES_SERIES = _REPO / "Speall_MRI_Samples" / "series"
 
 def _build_sample_manifest() -> pl.DataFrame:
     """Build series manifest from sample series JSON files."""
-    from src.manifest.builder import build_series_manifest  # noqa: PLC0415
+    from src.manifest.builder import build_series_manifest
 
     return build_series_manifest(_SAMPLES_SERIES)
 
@@ -110,7 +110,7 @@ def test_real_manifest_passes_pandera() -> None:
     assert len(df) > 0, "Expected non-empty sample manifest"
 
     valid, errors = validate_manifest(df, "manifest")
-    assert valid, f"Pandera validation failed with errors:\n" + "\n".join(errors)
+    assert valid, "Pandera validation failed with errors:\n" + "\n".join(errors)
 
 
 def test_synthetic_manifest_passes_pandera() -> None:
@@ -119,7 +119,7 @@ def test_synthetic_manifest_passes_pandera() -> None:
     df = pl.DataFrame([row], schema=_MANIFEST_SCHEMA)
 
     valid, errors = validate_manifest(df, "manifest")
-    assert valid, f"Synthetic manifest failed:\n" + "\n".join(errors)
+    assert valid, "Synthetic manifest failed:\n" + "\n".join(errors)
 
 
 # ---------------------------------------------------------------------------
@@ -136,7 +136,7 @@ def test_missing_column_fails_validation() -> None:
     schema_without_key = {k: v for k, v in _MANIFEST_SCHEMA.items() if k != "study_id"}
     df = pl.DataFrame([row], schema=schema_without_key)
 
-    valid, errors = validate_manifest(df, "manifest")
+    _valid, _errors = validate_manifest(df, "manifest")
     # Pandera strict=False means missing columns are not errors by default;
     # but we can check that at least the column is simply absent.
     # The schema has strict=False to allow future evolution -- missing columns
@@ -163,7 +163,7 @@ def test_invalid_split_value_fails() -> None:
         {"study_id": ["study_001"], "split": ["holdout"]},
         schema={"study_id": pl.Utf8, "split": pl.Utf8},
     )
-    valid, errors = validate_manifest(df, "splits")
+    valid, _errors = validate_manifest(df, "splits")
     assert not valid, "Expected validation failure for invalid split value 'holdout'"
 
 
@@ -192,7 +192,7 @@ def test_out_of_range_quality_score_fails() -> None:
     row["quality_score"] = 150.0  # out of range
 
     df = pl.DataFrame([row], schema=_MANIFEST_SCHEMA)
-    valid, errors = validate_manifest(df, "manifest")
+    valid, _errors = validate_manifest(df, "manifest")
     assert not valid, "Expected validation failure for quality_score=150.0"
 
 
@@ -202,7 +202,7 @@ def test_invalid_confidence_value_fails() -> None:
     row["sequence_confidence"] = "very_high"  # invalid value
 
     df = pl.DataFrame([row], schema=_MANIFEST_SCHEMA)
-    valid, errors = validate_manifest(df, "manifest")
+    valid, _errors = validate_manifest(df, "manifest")
     assert not valid, "Expected validation failure for invalid sequence_confidence"
 
 

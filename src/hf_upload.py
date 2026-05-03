@@ -20,6 +20,8 @@ import os
 import time
 from pathlib import Path
 
+from src._resilience import retry
+
 
 def _build_dataset_card(
     study_name: str,
@@ -392,29 +394,20 @@ def upload_to_huggingface(
             shutil.copy2(local_path, dest)
             total_bytes += local_path.stat().st_size
 
-        # Retry with backoff — handles transient 429/5xx errors
-        last_error = None
-        for attempt in range(3):
-            try:
-                api.upload_folder(
-                    folder_path=str(staging_path),
-                    repo_id=repo_id,
-                    repo_type="dataset",
-                    token=token,
-                    commit_message=f"Upload {study_name} pipeline output",
-                )
-                break
-            except Exception as e:
-                last_error = e
-                if attempt < 2:
-                    wait = 10 * (attempt + 1)
-                    print(f"  Upload attempt {attempt + 1} failed: {e}")
-                    print(f"  Retrying in {wait}s...")
-                    time.sleep(wait)
-                else:
-                    raise RuntimeError(
-                        f"HF upload failed after 3 attempts: {last_error}"
-                    ) from last_error
+        @retry(on=Exception, attempts=3, wait_initial=10.0, wait_max=60.0)
+        def _do_upload() -> None:
+            api.upload_folder(
+                folder_path=str(staging_path),
+                repo_id=repo_id,
+                repo_type="dataset",
+                token=token,
+                commit_message=f"Upload {study_name} pipeline output",
+            )
+
+        try:
+            _do_upload()
+        except Exception as exc:
+            raise RuntimeError(f"HF upload failed: {exc}") from exc
 
     elapsed = time.time() - t0
     url = f"https://huggingface.co/datasets/{repo_id}"

@@ -17,11 +17,11 @@ CLI usage:
 
 from __future__ import annotations
 
-import json
 import sys
 from pathlib import Path
 from typing import Any
 
+from src.io.msgspec_io import loads
 
 _REPO_ROOT = Path(__file__).parent.parent.parent
 _DEFAULT_CROISSANT = _REPO_ROOT / "croissant.json"
@@ -59,9 +59,7 @@ def validate_croissant(data: dict) -> list[str]:
 
     typ = _get(data, "@type")
     if typ not in ("sc:Dataset", "https://schema.org/Dataset"):
-        errors.append(
-            f"@type must be 'sc:Dataset', got {typ!r}"
-        )
+        errors.append(f"@type must be 'sc:Dataset', got {typ!r}")
 
     for field, ns_field in [
         ("name", "sc:name"),
@@ -70,9 +68,7 @@ def validate_croissant(data: dict) -> list[str]:
         ("license", "sc:license"),
     ]:
         if not _has(data, field, ns_field):
-            errors.append(
-                f"Missing required field: '{field}' (or '{ns_field}')"
-            )
+            errors.append(f"Missing required field: '{field}' (or '{ns_field}')")
 
     # --- distribution ---
     distribution = _get(data, "distribution")
@@ -99,8 +95,7 @@ def validate_croissant(data: dict) -> list[str]:
             has_file_ref = _has(entry, "cr:source", "source")
             if not has_url and not has_file_ref:
                 errors.append(
-                    f"{prefix}: must have 'contentUrl'/'sc:contentUrl' "
-                    "or a file-object reference"
+                    f"{prefix}: must have 'contentUrl'/'sc:contentUrl' or a file-object reference"
                 )
 
     # --- recordSet ---
@@ -116,16 +111,12 @@ def validate_croissant(data: dict) -> list[str]:
                 errors.append(f"{prefix}: missing '@id'")
             typ_rs = _get(rs, "@type")
             if typ_rs != "cr:RecordSet":
-                errors.append(
-                    f"{prefix}: @type must be 'cr:RecordSet', got {typ_rs!r}"
-                )
+                errors.append(f"{prefix}: @type must be 'cr:RecordSet', got {typ_rs!r}")
             if not _has(rs, "name", "sc:name"):
                 errors.append(f"{prefix}: missing 'name' or 'sc:name'")
             fields = _get(rs, "field", "cr:field")
             if not isinstance(fields, list) or len(fields) == 0:
-                errors.append(
-                    f"{prefix}: 'field'/'cr:field' must be a non-empty array"
-                )
+                errors.append(f"{prefix}: 'field'/'cr:field' must be a non-empty array")
 
     return errors
 
@@ -134,7 +125,7 @@ def validate_croissant_file(path: Path) -> list[str]:
     """Load *path* and return validation errors."""
     path = Path(path)
     try:
-        data = json.loads(path.read_text(encoding="utf-8"))
+        data = loads(path.read_bytes())
     except Exception as exc:
         return [f"Failed to parse JSON: {exc}"]
     return validate_croissant(data)
@@ -145,29 +136,23 @@ def validate_croissant_file(path: Path) -> list[str]:
 # ---------------------------------------------------------------------------
 
 
-def _main() -> None:
-    import argparse
-
-    parser = argparse.ArgumentParser(
-        prog="python -m src.integrity.validate_croissant"
-    )
-    parser.add_argument(
-        "--path",
-        type=Path,
-        default=_DEFAULT_CROISSANT,
-        help="Path to croissant.json (default: repo root)",
-    )
-    args = parser.parse_args()
-
-    errors = validate_croissant_file(args.path)
+def _cli_validate(path: Path = _DEFAULT_CROISSANT) -> None:  # pragma: no cover
+    """Validate a Croissant 1.0 JSON-LD file (default: repo croissant.json)."""
+    errors = validate_croissant_file(path)
     if errors:
         for err in errors:
             print(f"ERROR: {err}", file=sys.stderr)
         sys.exit(1)
-    else:
-        print(f"OK: {args.path} is valid Croissant 1.0")
-        sys.exit(0)
+    print(f"OK: {path} is valid Croissant 1.0")
 
 
-if __name__ == "__main__":
+def _main() -> None:  # pragma: no cover
+    from cyclopts import App
+
+    cli = App(name="validate-croissant", help="Validate Croissant 1.0 JSON-LD.")
+    cli.default(_cli_validate)
+    cli()
+
+
+if __name__ == "__main__":  # pragma: no cover
     _main()

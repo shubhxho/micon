@@ -14,11 +14,10 @@ CLI usage:
 
 from __future__ import annotations
 
-import json
-import sys
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
+from src.io.msgspec_io import dumps_bytes, loads
 
 _PIPELINE_NS = "micom"
 _PIPELINE_VERSION = "5.0.0"
@@ -34,7 +33,8 @@ def build_prov_graph(corpus_root: Path) -> dict:
     """
     corpus_root = corpus_root.resolve()
     detail_files = sorted(
-        p for p in corpus_root.rglob("*.json")
+        p
+        for p in corpus_root.rglob("*.json")
         if not p.name.startswith("checksums") and not p.name.startswith("prov")
     )
 
@@ -49,7 +49,7 @@ def build_prov_graph(corpus_root: Path) -> dict:
     for detail_path in detail_files:
         mtime = detail_path.stat().st_mtime
         activity_id = f"{_PIPELINE_NS}:activity:{detail_path.stem}"
-        act_time = datetime.fromtimestamp(mtime, tz=timezone.utc).isoformat()
+        act_time = datetime.fromtimestamp(mtime, tz=UTC).isoformat()
 
         activities[activity_id] = {
             "prov:startTime": {"$": act_time, "type": _XSD_DT},
@@ -72,12 +72,14 @@ def build_prov_graph(corpus_root: Path) -> dict:
             f"{_PIPELINE_NS}:detail_path": str(detail_path.relative_to(corpus_root)),
         }
 
-        was_generated_by.append({
-            "prov:entity": derived_id,
-            "prov:activity": activity_id,
-            "prov:agent": agent_id,
-            "prov:time": {"$": act_time, "type": _XSD_DT},
-        })
+        was_generated_by.append(
+            {
+                "prov:entity": derived_id,
+                "prov:activity": activity_id,
+                "prov:agent": agent_id,
+                "prov:time": {"$": act_time, "type": _XSD_DT},
+            }
+        )
 
         # Source entities: DICOM files
         for dcm_path in data.get("file_paths", []):
@@ -89,11 +91,13 @@ def build_prov_graph(corpus_root: Path) -> dict:
                     f"{_PIPELINE_NS}:format": "application/dicom",
                 }
             used.append({"prov:activity": activity_id, "prov:entity": src_id})
-            was_derived_from.append({
-                "prov:generatedEntity": derived_id,
-                "prov:usedEntity": src_id,
-                "prov:activity": activity_id,
-            })
+            was_derived_from.append(
+                {
+                    "prov:generatedEntity": derived_id,
+                    "prov:usedEntity": src_id,
+                    "prov:activity": activity_id,
+                }
+            )
 
     agents = {
         agent_id: {
@@ -112,15 +116,9 @@ def build_prov_graph(corpus_root: Path) -> dict:
         "entity": entities,
         "activity": activities,
         "agent": agents,
-        "wasGeneratedBy": {
-            f"wgb_{i}": e for i, e in enumerate(was_generated_by)
-        },
-        "wasDerivedFrom": {
-            f"wdf_{i}": e for i, e in enumerate(was_derived_from)
-        },
-        "used": {
-            f"used_{i}": e for i, e in enumerate(used)
-        },
+        "wasGeneratedBy": {f"wgb_{i}": e for i, e in enumerate(was_generated_by)},
+        "wasDerivedFrom": {f"wdf_{i}": e for i, e in enumerate(was_derived_from)},
+        "used": {f"used_{i}": e for i, e in enumerate(used)},
     }
 
 
@@ -128,7 +126,7 @@ def write_prov_graph(corpus_root: Path, out_path: Path) -> None:
     """Build provenance graph for *corpus_root* and write to *out_path*."""
     graph = build_prov_graph(corpus_root)
     out_path.parent.mkdir(parents=True, exist_ok=True)
-    out_path.write_text(json.dumps(graph, indent=2), encoding="utf-8")
+    out_path.write_bytes(dumps_bytes(graph, indent=2))
 
 
 # ---------------------------------------------------------------------------
@@ -138,7 +136,7 @@ def write_prov_graph(corpus_root: Path, out_path: Path) -> None:
 
 def _load_json_safe(path: Path) -> dict:
     try:
-        return json.loads(path.read_text(encoding="utf-8"))
+        return loads(path.read_bytes())
     except Exception:
         return {}
 
@@ -158,16 +156,19 @@ def _safe_id(path: str) -> str:
 # ---------------------------------------------------------------------------
 
 
+def _cli_generate(root: Path, out: Path) -> None:  # pragma: no cover
+    """Build PROV-JSON for the corpus rooted at ROOT and write to OUT."""
+    write_prov_graph(root, out)
+    print(f"PROV-JSON written to {out}")
+
+
 def _main() -> None:  # pragma: no cover
-    import argparse
+    from cyclopts import App
 
-    parser = argparse.ArgumentParser(prog="python -m src.integrity.provenance")
-    parser.add_argument("--root", required=True, type=Path)
-    parser.add_argument("--out", required=True, type=Path)
-    args = parser.parse_args()
-    write_prov_graph(args.root, args.out)
-    print(f"PROV-JSON written to {args.out}")
+    cli = App(name="provenance", help="W3C PROV-JSON graph for the corpus.")
+    cli.default(_cli_generate)
+    cli()
 
 
-if __name__ == "__main__":
+if __name__ == "__main__":  # pragma: no cover
     _main()

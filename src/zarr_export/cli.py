@@ -11,12 +11,13 @@ Usage::
 
 from __future__ import annotations
 
-import json
-import logging
 from pathlib import Path
 from typing import Annotated
 
 import typer
+
+from src._logging import configure as _configure_logging
+from src.io.msgspec_io import dumps as _fast_json_dumps
 
 app = typer.Typer(
     name="zarr-export",
@@ -45,10 +46,7 @@ def cmd_convert(
     ] = False,
 ) -> None:
     """Convert every NIfTI in a BIDS tree to OME-Zarr multiscale format."""
-    logging.basicConfig(
-        level=logging.DEBUG if verbose else logging.INFO,
-        format="%(levelname)s %(name)s: %(message)s",
-    )
+    _configure_logging(level="DEBUG" if verbose else "INFO", force=True)
 
     from src.zarr_export.converter import study_to_omezarr  # lazy
 
@@ -59,7 +57,9 @@ def cmd_convert(
     out.mkdir(parents=True, exist_ok=True)
 
     # Walk subject directories (BIDS sub-* pattern)
-    subject_dirs = sorted(d for d in bids_root.iterdir() if d.is_dir() and d.name.startswith("sub-"))
+    subject_dirs = sorted(
+        d for d in bids_root.iterdir() if d.is_dir() and d.name.startswith("sub-")
+    )
     if not subject_dirs:
         # Fall back: treat entire bids_root as one study
         subject_dirs = [bids_root]
@@ -98,14 +98,14 @@ def cmd_inspect(
         import zarr  # lazy
     except ImportError:
         typer.echo("ERROR: zarr is not installed. Run: uv add zarr ome-zarr", err=True)
-        raise typer.Exit(code=1)
+        raise typer.Exit(code=1) from None
 
     try:
         store = _open_store_for_inspect(zarr_path)
         grp = zarr.open_group(store=store, mode="r")
     except Exception as exc:
         typer.echo(f"ERROR opening Zarr group: {exc}", err=True)
-        raise typer.Exit(code=1)
+        raise typer.Exit(code=1) from exc
 
     attrs = dict(grp.attrs)
     if not attrs:
@@ -113,7 +113,7 @@ def cmd_inspect(
         return
 
     indent = 2 if pretty else None
-    typer.echo(json.dumps(attrs, indent=indent))
+    typer.echo(_fast_json_dumps(attrs, indent=indent))
 
     # Print a brief summary of arrays in the group
     typer.echo("\nArrays:")
@@ -126,6 +126,7 @@ def _open_store_for_inspect(zarr_path: str) -> object:
 
     if "://" in zarr_path:
         import fsspec
+
         mapper = fsspec.get_mapper(zarr_path)
         return zarr.storage.FsspecStore(mapper.fs, path=mapper.root, read_only=True)
     return zarr.storage.LocalStore(zarr_path, read_only=True)

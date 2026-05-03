@@ -14,7 +14,6 @@ Uses ThreadPoolExecutor (not ProcessPool) because:
 from __future__ import annotations
 
 import hashlib
-import logging
 import os
 import threading
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -24,7 +23,9 @@ from pathlib import Path
 
 import pydicom
 
-log = logging.getLogger(__name__)
+from src._logging import get_logger
+
+log = get_logger(__name__)
 
 # ── PHI tag sets — frozen for O(1) membership test ───────────────────────────
 

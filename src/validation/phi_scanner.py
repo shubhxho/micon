@@ -230,7 +230,7 @@ def scan_files(
         done = 0
         for fut in as_completed(futures):
             result = fut.result()
-            done += 1
+            done += 1  # noqa: SIM113
 
             if result.error:
                 report.failed_files += 1

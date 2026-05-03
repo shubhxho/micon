@@ -31,7 +31,6 @@ from __future__ import annotations
 
 import hashlib
 import json
-import logging
 import re
 import threading
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -41,7 +40,9 @@ from pathlib import Path
 
 import pydicom
 
-log = logging.getLogger(__name__)
+from src._logging import get_logger
+
+log = get_logger(__name__)
 
 # ── Private tag groups to strip (vendor-specific, may leak PHI) ─────────────
 # All odd-numbered groups are private by DICOM standard.

@@ -15,10 +15,10 @@ import stamina
 
 from src.annotation.cloud import _call_model
 
-
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _make_response(content: str, reasoning: str | None = None) -> MagicMock:
     """Build a minimal mock openai ChatCompletion response."""
@@ -35,12 +35,16 @@ def _make_response(content: str, reasoning: str | None = None) -> MagicMock:
 
 def _rate_limit_exc() -> openai.RateLimitError:
     req = httpx.Request("POST", "https://openrouter.ai/api/v1/chat/completions")
-    return openai.RateLimitError("rate limited", response=httpx.Response(429, request=req), body=None)
+    return openai.RateLimitError(
+        "rate limited", response=httpx.Response(429, request=req), body=None
+    )
 
 
 def _bad_request_exc() -> openai.BadRequestError:
     req = httpx.Request("POST", "https://openrouter.ai/api/v1/chat/completions")
-    return openai.BadRequestError("unsupported param", response=httpx.Response(400, request=req), body=None)
+    return openai.BadRequestError(
+        "unsupported param", response=httpx.Response(400, request=req), body=None
+    )
 
 
 def _make_client(side_effect) -> MagicMock:
@@ -61,6 +65,7 @@ def _make_client(side_effect) -> MagicMock:
 # Fixtures
 # ---------------------------------------------------------------------------
 
+
 @pytest.fixture(autouse=True)
 def stamina_testing():
     """Zero out stamina backoffs for the test module so retries are instant.
@@ -77,13 +82,12 @@ def stamina_testing():
 # Tests
 # ---------------------------------------------------------------------------
 
+
 class TestRateLimitRetry:
     def test_succeeds_after_two_rate_limit_failures(self):
         """RateLimitError ×2 then success → returns content string."""
         ok = _make_response("diagnosis: normal")
-        client, create_mock = _make_client(
-            [_rate_limit_exc(), _rate_limit_exc(), ok]
-        )
+        client, create_mock = _make_client([_rate_limit_exc(), _rate_limit_exc(), ok])
 
         result = _call_model(client, "test/model", [{"role": "user", "content": "hi"}])
 
@@ -108,9 +112,7 @@ class TestRateLimitRetry:
 
     def test_error_string_respects_retries_parameter(self):
         """Error message reflects the custom retries= value."""
-        client, create_mock = _make_client(
-            [_rate_limit_exc(), _rate_limit_exc()]
-        )
+        client, _create_mock = _make_client([_rate_limit_exc(), _rate_limit_exc()])
 
         result = _call_model(
             client,
@@ -160,13 +162,13 @@ class TestBadRequestStrip:
 
     def test_bad_request_with_no_extra_body_returns_error(self):
         """BadRequestError when extra_body is empty → error string immediately."""
-        client, create_mock = _make_client([_bad_request_exc()])
+        _client, _create_mock = _make_client([_bad_request_exc()])
 
         # No fallbacks → extra_body will be effectively empty/no-op keys
         # _openrouter_extras(fallbacks=None, json_schema=None) → {"provider": {"sort": "price"}}
         # This is truthy, so strip path fires; second call also fails
-        ok2 = _bad_request_exc()
-        client2, create_mock2 = _make_client([_bad_request_exc(), _bad_request_exc()])
+        _bad_request_exc()
+        client2, _create_mock2 = _make_client([_bad_request_exc(), _bad_request_exc()])
 
         result = _call_model(
             client2,

@@ -9,14 +9,15 @@ Cache location: ``~/.cache/speall/segmentation/bundles/``
 
 from __future__ import annotations
 
-import logging
 from pathlib import Path
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     import numpy as np
 
-logger = logging.getLogger(__name__)
+from src._logging import get_logger
+
+logger = get_logger(__name__)
 
 BUNDLE_CACHE_DIR: Path = Path.home() / ".cache" / "speall" / "segmentation" / "bundles"
 
@@ -25,7 +26,7 @@ BUNDLE_CACHE_DIR: Path = Path.home() / ".cache" / "speall" / "segmentation" / "b
 # ---------------------------------------------------------------------------
 
 try:
-    import monai as _monai  # noqa: F401
+    import monai as _monai
 
     _MONAI = True
 except ImportError:
@@ -33,7 +34,7 @@ except ImportError:
     _MONAI = False
 
 try:
-    import torch as _torch  # noqa: F401
+    import torch as _torch
 
     _TORCH = True
 except ImportError:
@@ -61,31 +62,28 @@ def download_bundle(bundle_name: str) -> Path:
     """
     if not _MONAI:
         raise RuntimeError(
-            "MONAI is required to download bundles. "
-            'Install via: pip install -e ".[dl]"'
+            'MONAI is required to download bundles. Install via: pip install -e ".[dl]"'
         )
 
     bundle_dir = BUNDLE_CACHE_DIR / bundle_name
     if bundle_dir.exists():
-        logger.info("Bundle %r already cached at %s", bundle_name, bundle_dir)
+        logger.info("Bundle {!r} already cached at {}", bundle_name, bundle_dir)
         return bundle_dir
 
     bundle_dir.mkdir(parents=True, exist_ok=True)
-    logger.info("Downloading MONAI bundle %r -> %s", bundle_name, bundle_dir)
+    logger.info("Downloading MONAI bundle {!r} -> {}", bundle_name, bundle_dir)
 
     try:
         from monai.bundle import download  # type: ignore[import-untyped]
 
         download(name=bundle_name, bundle_dir=str(BUNDLE_CACHE_DIR))
     except Exception as exc:
-        raise RuntimeError(
-            f"Failed to download MONAI bundle {bundle_name!r}: {exc}"
-        ) from exc
+        raise RuntimeError(f"Failed to download MONAI bundle {bundle_name!r}: {exc}") from exc
 
     return bundle_dir
 
 
-def run_inference(bundle_path: Path, input_volume: "np.ndarray") -> "np.ndarray":
+def run_inference(bundle_path: Path, input_volume: np.ndarray) -> np.ndarray:
     """Run inference on a volume using a MONAI Bundle.
 
     Loads the bundle's inference config and runs the model on
@@ -104,19 +102,17 @@ def run_inference(bundle_path: Path, input_volume: "np.ndarray") -> "np.ndarray"
     """
     if not _MONAI:
         raise RuntimeError(
-            "MONAI is required for bundle inference. "
-            'Install via: pip install -e ".[dl]"'
+            'MONAI is required for bundle inference. Install via: pip install -e ".[dl]"'
         )
     if not _TORCH:
         raise RuntimeError(
-            "PyTorch is required for bundle inference. "
-            'Install via: pip install -e ".[dl]"'
+            'PyTorch is required for bundle inference. Install via: pip install -e ".[dl]"'
         )
 
     import numpy as np
     import torch
 
-    logger.info("Running MONAI bundle inference from %s", bundle_path)
+    logger.info("Running MONAI bundle inference from {}", bundle_path)
 
     try:
         from monai.bundle import ConfigParser  # type: ignore[import-untyped]
@@ -136,9 +132,7 @@ def run_inference(bundle_path: Path, input_volume: "np.ndarray") -> "np.ndarray"
             out = model(t)
             mask = out.squeeze().argmax(dim=0).numpy().astype("uint8")
     except Exception as exc:
-        logger.warning(
-            "MONAI bundle inference failed (%s); returning zero mask", exc
-        )
+        logger.warning("MONAI bundle inference failed ({}); returning zero mask", exc)
         mask = np.zeros(input_volume.shape, dtype="uint8")
 
     return mask

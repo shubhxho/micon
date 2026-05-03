@@ -20,28 +20,28 @@ import numpy as np
 import polars as pl
 import pytest
 
+from src.segmentation.extras_for_buyers import (
+    _parse_study_id,
+    augment_manifest,
+    compute_cohort_summary,
+)
 from src.segmentation.models import (
     MODEL_REGISTRY,
+    clear_cache,
     get_model_meta,
     list_models,
-    clear_cache,
 )
 from src.segmentation.pipeline import (
-    _derivatives_filename,
     _derivatives_dir,
+    _derivatives_filename,
     segment_one_series,
     segment_study,
 )
-from src.segmentation.extras_for_buyers import (
-    augment_manifest,
-    _parse_study_id,
-    compute_cohort_summary,
-)
-
 
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------
+
 
 def _write_placeholder_nifti(dest: Path) -> None:
     """Write a minimal valid gzip-compressed NIfTI-1 placeholder."""
@@ -88,6 +88,7 @@ def clear_model_cache() -> None:  # type: ignore[return]
 # 1. Model registry
 # ---------------------------------------------------------------------------
 
+
 class TestModelRegistry:
     def test_has_three_required_entries(self) -> None:
         for name in ("synthstrip", "synthseg", "monai_brain_lesion"):
@@ -117,8 +118,12 @@ class TestModelRegistry:
 
     def test_all_entries_have_required_keys(self) -> None:
         required_keys = {
-            "task", "input_modalities", "loader", "loader_type",
-            "desc_label", "derivative_name",
+            "task",
+            "input_modalities",
+            "loader",
+            "loader_type",
+            "desc_label",
+            "derivative_name",
         }
         for name, meta in MODEL_REGISTRY.items():
             missing = required_keys - meta.keys()
@@ -139,10 +144,9 @@ class TestModelRegistry:
 # 2. segment_one_series -- mocked model
 # ---------------------------------------------------------------------------
 
+
 class TestSegmentOneSeries:
-    def test_output_path_in_bids_derivatives(
-        self, tmp_path: Path, bids_root: Path
-    ) -> None:
+    def test_output_path_in_bids_derivatives(self, tmp_path: Path, bids_root: Path) -> None:
         """Mocked inference should produce a path in derivatives layout."""
         anat_dir = bids_root / "sub-001" / "ses-01" / "anat"
         nifti_path = anat_dir / "sub-001_ses-01_T1w.nii.gz"
@@ -165,9 +169,7 @@ class TestSegmentOneSeries:
         assert parts[3] == "ses-01"
         assert parts[4] == "anat"
 
-    def test_output_filename_bids_pattern(
-        self, bids_root: Path
-    ) -> None:
+    def test_output_filename_bids_pattern(self, bids_root: Path) -> None:
         """Output filename must follow the BIDS derivatives naming convention."""
         anat_dir = bids_root / "sub-001" / "ses-01" / "anat"
         nifti_path = anat_dir / "sub-001_ses-01_T1w.nii.gz"
@@ -230,6 +232,7 @@ class TestSegmentOneSeries:
 # 3. Manifest augmentation
 # ---------------------------------------------------------------------------
 
+
 class TestManifestAugmentation:
     def _make_manifest(self, tmp_path: Path, study_ids: list[str]) -> Path:
         df = pl.DataFrame(
@@ -269,17 +272,14 @@ class TestManifestAugmentation:
         assert row["has_brain_parcellation"] is False
         assert row["has_lesion_mask"] is False
 
-    def test_augment_true_when_mask_present(
-        self, tmp_path: Path, bids_root: Path
-    ) -> None:
+    def test_augment_true_when_mask_present(self, tmp_path: Path, bids_root: Path) -> None:
         """Place a synthstrip mask in the right BIDS path; expect has_brain_mask=True."""
-        mask_dir = (
-            bids_root / "derivatives" / "speall-synthstrip" / "sub-001" / "ses-01" / "anat"
-        )
+        mask_dir = bids_root / "derivatives" / "speall-synthstrip" / "sub-001" / "ses-01" / "anat"
         mask_dir.mkdir(parents=True)
         fake_mask = np.ones((4, 4, 4), dtype="uint8")
         import nibabel as _nib
         import numpy as _np
+
         affine = _np.eye(4)
         img = _nib.Nifti1Image(fake_mask, affine)
         mask_fname = "sub-001_ses-01_space-orig_desc-brainmask_dseg.nii.gz"
@@ -314,16 +314,18 @@ class TestManifestAugmentation:
 # 4. Helper utilities
 # ---------------------------------------------------------------------------
 
+
 class TestParseStudyId:
-    @pytest.mark.parametrize("study_id,expected_sub,expected_ses", [
-        ("sub-001_ses-01", "001", "01"),
-        ("sub-MEMAR01_ses-02", "MEMAR01", "02"),
-        ("001", "001", "01"),
-        ("sub-999", "999", "01"),
-    ])
-    def test_various_formats(
-        self, study_id: str, expected_sub: str, expected_ses: str
-    ) -> None:
+    @pytest.mark.parametrize(
+        "study_id,expected_sub,expected_ses",
+        [
+            ("sub-001_ses-01", "001", "01"),
+            ("sub-MEMAR01_ses-02", "MEMAR01", "02"),
+            ("001", "001", "01"),
+            ("sub-999", "999", "01"),
+        ],
+    )
+    def test_various_formats(self, study_id: str, expected_sub: str, expected_ses: str) -> None:
         sub, ses = _parse_study_id(study_id)
         assert sub == expected_sub
         assert ses == expected_ses

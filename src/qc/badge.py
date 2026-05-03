@@ -34,7 +34,7 @@ def build_quality_badge(grade: str) -> str:
         SVG markup as a string (valid XML, no external deps).
     """
     grade = grade.upper().strip()
-    dark, light = _GRADE_COLORS.get(grade, ("#4a5568", "#a0aec0"))
+    dark, _light = _GRADE_COLORS.get(grade, ("#4a5568", "#a0aec0"))
     total_w = _LABEL_WIDTH + _VALUE_WIDTH
 
     return f"""<svg xmlns="http://www.w3.org/2000/svg" width="{total_w}" height="20" role="img" aria-label="{_LABEL}: {grade}">
@@ -62,8 +62,12 @@ def build_quality_badge(grade: str) -> str:
 
 def _cli() -> None:
     parser = argparse.ArgumentParser(description="Generate an SVG quality badge.")
-    parser.add_argument("--grade", required=True, choices=list(_GRADE_COLORS) + [g.lower() for g in _GRADE_COLORS],
-                        help="Quality grade: A B C D F")
+    parser.add_argument(
+        "--grade",
+        required=True,
+        choices=list(_GRADE_COLORS) + [g.lower() for g in _GRADE_COLORS],
+        help="Quality grade: A B C D F",
+    )
     args = parser.parse_args()
     print(build_quality_badge(args.grade))
 

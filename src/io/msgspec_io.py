@@ -61,9 +61,7 @@ except ImportError:
 _ORJSON_OPTS = 0
 if _orjson is not None:
     _ORJSON_OPTS = (
-        _orjson.OPT_SERIALIZE_NUMPY
-        | _orjson.OPT_NON_STR_KEYS
-        | _orjson.OPT_SERIALIZE_DATACLASS
+        _orjson.OPT_SERIALIZE_NUMPY | _orjson.OPT_NON_STR_KEYS | _orjson.OPT_SERIALIZE_DATACLASS
     )
 
 # Options for the fast_dumps canonical hot-path (includes OPT_INDENT_2)

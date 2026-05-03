@@ -29,10 +29,10 @@ from pathlib import Path
 from typing import Any
 
 import matplotlib
+
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
-
 
 # ---------------------------------------------------------------------------
 # Inline CSS (no external deps)
@@ -153,10 +153,10 @@ _HTML_TEMPLATE = """<!DOCTYPE html>
 # Chart builders
 # ---------------------------------------------------------------------------
 
+
 def _fig_to_b64(fig: plt.Figure) -> str:
     buf = io.BytesIO()
-    fig.savefig(buf, format="png", dpi=110, bbox_inches="tight",
-                facecolor=fig.get_facecolor())
+    fig.savefig(buf, format="png", dpi=110, bbox_inches="tight", facecolor=fig.get_facecolor())
     plt.close(fig)
     return base64.b64encode(buf.getvalue()).decode()
 
@@ -167,7 +167,7 @@ def _vendor_bar_chart(vendor_agg: dict[str, Any]) -> str:
     colors = ["#4299e1", "#48bb78", "#ed8936", "#9f7aea", "#fc8181"]
 
     fig, ax = plt.subplots(figsize=(6, 3.5), facecolor="#fff")
-    bars = ax.barh(labels, values, color=colors[:len(labels)], edgecolor="white")
+    bars = ax.barh(labels, values, color=colors[: len(labels)], edgecolor="white")
     ax.set_xlabel("DICOM Files", fontsize=10)
     ax.set_title("Vendor Mix (by file count)", fontsize=12, fontweight="bold")
     ax.bar_label(bars, fmt="{:,.0f}", padding=4, fontsize=9)
@@ -183,7 +183,7 @@ def _field_strength_chart(field_agg: dict[str, Any]) -> str:
     colors = ["#4299e1", "#48bb78", "#a0aec0"]
 
     fig, ax = plt.subplots(figsize=(5, 3.2), facecolor="#fff")
-    bars = ax.bar(labels, values, color=colors[:len(labels)], edgecolor="white", width=0.5)
+    bars = ax.bar(labels, values, color=colors[: len(labels)], edgecolor="white", width=0.5)
     ax.set_ylabel("DICOM Files", fontsize=10)
     ax.set_title("Field Strength Mix", fontsize=12, fontweight="bold")
     ax.bar_label(bars, fmt="{:,.0f}", padding=3, fontsize=9)
@@ -228,9 +228,12 @@ def _sex_pie_chart(sex_dist: dict[str, int]) -> str:
     colors = ["#4299e1", "#fc8181", "#a0aec0", "#e2e8f0"]
 
     fig, ax = plt.subplots(figsize=(4.5, 4), facecolor="#fff")
-    wedges, _, autotexts = ax.pie(
-        values, labels=labels, autopct="%1.1f%%",
-        colors=colors[:len(labels)], startangle=90,
+    _wedges, _, autotexts = ax.pie(
+        values,
+        labels=labels,
+        autopct="%1.1f%%",
+        colors=colors[: len(labels)],
+        startangle=90,
         wedgeprops={"edgecolor": "white", "linewidth": 1.5},
     )
     for at in autotexts:
@@ -269,9 +272,16 @@ def _sequence_coverage_heatmap(
     per-series cross-tab is unavailable.
     """
     _SEQ_KEYWORDS: list[tuple[str, str]] = [
-        ("DWI", "DWI"), ("FLAIR", "FLAIR"), ("SWAN", "SWI"), ("T1", "T1w"),
-        ("T2", "T2w"), ("TOF", "TOF"), ("ADC", "ADC"), ("ANGIO", "MRA"),
-        ("CUBE", "CUBE"), ("DTI", "DTI"),
+        ("DWI", "DWI"),
+        ("FLAIR", "FLAIR"),
+        ("SWAN", "SWI"),
+        ("T1", "T1w"),
+        ("T2", "T2w"),
+        ("TOF", "TOF"),
+        ("ADC", "ADC"),
+        ("ANGIO", "MRA"),
+        ("CUBE", "CUBE"),
+        ("DTI", "DTI"),
     ]
 
     vendors = list(vendor_agg.keys())
@@ -292,8 +302,7 @@ def _sequence_coverage_heatmap(
     seq_labels = sorted(seq_counts.keys())
     if not vendors or not seq_labels:
         fig, ax = plt.subplots(figsize=(6, 3), facecolor="#fff")
-        ax.text(0.5, 0.5, "Insufficient data for coverage matrix",
-                ha="center", va="center")
+        ax.text(0.5, 0.5, "Insufficient data for coverage matrix", ha="center", va="center")
         return _fig_to_b64(fig)
 
     # Build matrix: vendor × seq_type using vendor share × total seq count
@@ -313,14 +322,23 @@ def _sequence_coverage_heatmap(
     ax.set_xticklabels(seq_labels, rotation=40, ha="right", fontsize=9)
     ax.set_yticks(range(len(vendors)))
     ax.set_yticklabels(vendors, fontsize=9)
-    ax.set_title("Sequence Coverage Matrix (vendor × sequence type)", fontsize=11, fontweight="bold")
+    ax.set_title(
+        "Sequence Coverage Matrix (vendor × sequence type)", fontsize=11, fontweight="bold"
+    )
     plt.colorbar(im, ax=ax, label="Est. series count")
     for vi in range(len(vendors)):
         for si in range(len(seq_labels)):
             val = int(matrix[vi, si])
             if val > 0:
-                ax.text(si, vi, str(val), ha="center", va="center",
-                        fontsize=8, color="white" if val > matrix.max() * 0.5 else "black")
+                ax.text(
+                    si,
+                    vi,
+                    str(val),
+                    ha="center",
+                    va="center",
+                    fontsize=8,
+                    color="white" if val > matrix.max() * 0.5 else "black",
+                )
     fig.tight_layout()
     return _fig_to_b64(fig)
 
@@ -352,7 +370,11 @@ def _grade_distribution_chart(series_descs: list[dict]) -> str:
         edgecolor="white",
     )
     ax.set_ylabel("Fraction of Series", fontsize=10)
-    ax.set_title("Quality Grade Distribution\n(illustrative — aggregate from full corpus)", fontsize=10, fontweight="bold")
+    ax.set_title(
+        "Quality Grade Distribution\n(illustrative — aggregate from full corpus)",
+        fontsize=10,
+        fontweight="bold",
+    )
     ax.set_ylim(0, max(example_pcts) * 1.2)
     ax.bar_label(bars, fmt="{:.0%}", padding=3, fontsize=9)
     ax.spines[["top", "right"]].set_visible(False)
@@ -368,8 +390,8 @@ def _conformance_vendor_html(scanner_mix: list[dict]) -> str:
     This section summarises the coverage from the scanner mix.
     """
     rows = "".join(
-        f"<tr><td>{s.get('vendor','')}</td><td>{s.get('model','')}</td>"
-        f"<td>{s.get('files',0):,}</td>"
+        f"<tr><td>{s.get('vendor', '')}</td><td>{s.get('model', '')}</td>"
+        f"<td>{s.get('files', 0):,}</td>"
         f"<td style='color:#718096;font-style:italic;'>Requires per-series detail JSONs</td></tr>"
         for s in scanner_mix
     )
@@ -388,10 +410,10 @@ def _conformance_vendor_html(scanner_mix: list[dict]) -> str:
 
 def _vendor_table_html(scanner_mix: list[dict]) -> str:
     rows = "".join(
-        f"<tr><td>{s.get('vendor','')}</td><td>{s.get('model','')}</td>"
-        f"<td>{s.get('field_T','')}T</td>"
-        f"<td>{s.get('files',0):,}</td>"
-        f"<td>{s.get('share',0)*100:.1f}%</td></tr>"
+        f"<tr><td>{s.get('vendor', '')}</td><td>{s.get('model', '')}</td>"
+        f"<td>{s.get('field_T', '')}T</td>"
+        f"<td>{s.get('files', 0):,}</td>"
+        f"<td>{s.get('share', 0) * 100:.1f}%</td></tr>"
         for s in scanner_mix
     )
     return (
@@ -403,7 +425,7 @@ def _vendor_table_html(scanner_mix: list[dict]) -> str:
 
 def _series_desc_table_html(series_descs: list[dict]) -> str:
     rows = "".join(
-        f"<tr><td>{s.get('description','')}</td><td>{s.get('series',0):,}</td></tr>"
+        f"<tr><td>{s.get('description', '')}</td><td>{s.get('series', 0):,}</td></tr>"
         for s in series_descs[:30]
     )
     return (
@@ -415,6 +437,7 @@ def _series_desc_table_html(series_descs: list[dict]) -> str:
 # ---------------------------------------------------------------------------
 # Public API
 # ---------------------------------------------------------------------------
+
 
 def build_dataset_qc_report(
     corpus_root: Path,
@@ -502,22 +525,24 @@ def build_dataset_qc_report(
 # CLI
 # ---------------------------------------------------------------------------
 
+
 def _cli() -> None:
     parser = argparse.ArgumentParser(
         description="Generate a dataset-wide QC HTML report.",
     )
-    parser.add_argument("--root", required=True, type=Path,
-                        help="Corpus root directory.")
-    parser.add_argument("--info", required=True, type=Path,
-                        help="Path to dataset info JSON.")
-    parser.add_argument("--manifest", default=None, type=Path,
-                        help="Optional path to manifest JSON.")
-    parser.add_argument("--out", required=True, type=Path,
-                        help="Output HTML file path.")
+    parser.add_argument("--root", required=True, type=Path, help="Corpus root directory.")
+    parser.add_argument("--info", required=True, type=Path, help="Path to dataset info JSON.")
+    parser.add_argument(
+        "--manifest", default=None, type=Path, help="Optional path to manifest JSON."
+    )
+    parser.add_argument("--out", required=True, type=Path, help="Output HTML file path.")
     args = parser.parse_args()
 
     summary = build_dataset_qc_report(
-        args.root, args.info, args.manifest, args.out,
+        args.root,
+        args.info,
+        args.manifest,
+        args.out,
     )
     size_kb = args.out.stat().st_size / 1024
     print(f"Written {args.out}  ({size_kb:.1f} KB)")

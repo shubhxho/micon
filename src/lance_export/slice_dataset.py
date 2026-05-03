@@ -18,7 +18,6 @@ from PIL import Image
 # Import canonical windowing so Lance and PNG paths stay byte-identical.
 from src.export.slice_export import _normalize_slice
 
-
 _SCHEMA = pa.schema(
     [
         pa.field("slice_index", pa.int32()),

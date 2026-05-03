@@ -26,10 +26,10 @@ from src.zarr_export.series_writer import (
     series_volume_to_omezarr,
 )
 
-
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------
+
 
 @pytest.fixture()
 def brain_vol() -> np.ndarray:
@@ -56,6 +56,7 @@ def zarr_result(brain_vol: np.ndarray, tmp_path: Path) -> tuple[dict, Path]:
 # 1. SeriesVolumeWriter -- round-trip
 # ---------------------------------------------------------------------------
 
+
 class TestSeriesVolumeWriter:
     def test_zarr_group_exists(self, zarr_result: tuple[dict, Path]) -> None:
         _, zp = zarr_result
@@ -73,7 +74,7 @@ class TestSeriesVolumeWriter:
     def test_four_pyramid_levels_written(self, zarr_result: tuple[dict, Path]) -> None:
         _, zp = zarr_result
         grp = zarr.open_group(str(zp), mode="r")
-        arr_keys = [k for k in grp.keys() if not k.startswith(".")]
+        arr_keys = [k for k in grp if not k.startswith(".")]
         assert len(arr_keys) == 4
 
     def test_pyramid_shapes_decrease(self, zarr_result: tuple[dict, Path]) -> None:
@@ -92,6 +93,7 @@ class TestSeriesVolumeWriter:
 # ---------------------------------------------------------------------------
 # 2. OmeNgffMetadata
 # ---------------------------------------------------------------------------
+
 
 class TestOmeNgffMetadata:
     @pytest.fixture(autouse=True)
@@ -155,13 +157,14 @@ class TestOmeNgffMetadata:
         datasets = self._attrs["ome"]["multiscales"][0]["datasets"]
         s0_scale = datasets[0]["coordinateTransformations"][0]["scale"]
         s1_scale = datasets[1]["coordinateTransformations"][0]["scale"]
-        for s0, s1 in zip(s0_scale, s1_scale):
+        for s0, s1 in zip(s0_scale, s1_scale, strict=False):
             assert s1 == pytest.approx(s0 * 2)
 
 
 # ---------------------------------------------------------------------------
 # 3. ChunkShapePolicy
 # ---------------------------------------------------------------------------
+
 
 class TestChunkShapePolicy:
     def test_chunk_bytes_under_2mb(self, brain_vol: np.ndarray, tmp_path: Path) -> None:
@@ -216,6 +219,7 @@ class TestChunkShapePolicy:
 # 4. SpacingEncoding
 # ---------------------------------------------------------------------------
 
+
 class TestSpacingEncoding:
     def test_custom_spacing_reflected_in_transforms(self, tmp_path: Path) -> None:
         vol = np.zeros((16, 32, 32), dtype=np.float32)
@@ -230,13 +234,16 @@ class TestSpacingEncoding:
         )
         grp = zarr.open_group(str(zp), mode="r")
         attrs = dict(grp.attrs)
-        scale0 = attrs["ome"]["multiscales"][0]["datasets"][0]["coordinateTransformations"][0]["scale"]
+        scale0 = attrs["ome"]["multiscales"][0]["datasets"][0]["coordinateTransformations"][0][
+            "scale"
+        ]
         assert scale0 == pytest.approx([3.0, 0.5, 0.5])
 
 
 # ---------------------------------------------------------------------------
 # 5. ReturnDict
 # ---------------------------------------------------------------------------
+
 
 class TestReturnDict:
     def test_return_keys(self, zarr_result: tuple[dict, Path]) -> None:
@@ -263,6 +270,7 @@ class TestReturnDict:
 # ---------------------------------------------------------------------------
 # 6. ErrorHandling
 # ---------------------------------------------------------------------------
+
 
 class TestErrorHandling:
     def test_non_3d_raises_value_error(self, tmp_path: Path) -> None:

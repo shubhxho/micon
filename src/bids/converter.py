@@ -23,19 +23,19 @@ from __future__ import annotations
 import argparse
 import gzip
 import json
-import logging
 import re
 import struct
 from pathlib import Path
 from typing import Any
 
+from src._logging import get_logger
 from src.bids.mappings import (
     SEQUENCE_TO_BIDS,
     bids_filename,
     infer_acquisition_label,
 )
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 # ---------------------------------------------------------------------------
 # Optional heavy imports -- graceful degradation
@@ -43,6 +43,7 @@ logger = logging.getLogger(__name__)
 
 try:
     import dicom2nifti.convert_dicom  # type: ignore[import-untyped]  # noqa: F401
+
     _DICOM2NIFTI = True
 except ImportError:
     _DICOM2NIFTI = False
@@ -56,7 +57,7 @@ except ImportError:
     _NIBABEL = False
 
 try:
-    import SimpleITK as sitk  # type: ignore[import-untyped]  # noqa: N813
+    import SimpleITK as sitk  # type: ignore[import-untyped]
 
     _SITK = True
 except ImportError:
@@ -131,7 +132,7 @@ def _convert_dicom_to_nifti(dicom_dir: Path, dest: Path) -> bool:
             _d2n.dicom_series_to_nifti(str(dicom_dir), str(dest), reorient_nifti=True)
             return dest.exists()
         except Exception as exc:
-            logger.warning("dicom2nifti failed (%s); trying SimpleITK fallback", exc)
+            logger.warning("dicom2nifti failed ({}); trying SimpleITK fallback", exc)
 
     if _SITK and _NIBABEL and sitk is not None and nib is not None:
         try:
@@ -147,7 +148,7 @@ def _convert_dicom_to_nifti(dicom_dir: Path, dest: Path) -> bool:
             nib.save(nii, str(dest))
             return dest.exists()
         except Exception as exc:
-            logger.warning("SimpleITK/nibabel fallback failed (%s)", exc)
+            logger.warning("SimpleITK/nibabel fallback failed ({})", exc)
 
     return False
 
@@ -168,6 +169,7 @@ def _sitk_affine(img: Any) -> Any:
 # ---------------------------------------------------------------------------
 # Sidecar JSON builder
 # ---------------------------------------------------------------------------
+
 
 def _build_sidecar(
     series_entry: dict[str, Any],
@@ -248,6 +250,7 @@ def _coerce_float(val: Any) -> float | None:
 # DWI ancillary files
 # ---------------------------------------------------------------------------
 
+
 def _write_bval_bvec(dest_stem: Path, b_value: float | None) -> None:
     """Write .bval and .bvec files for a DWI series."""
     bval = b_value if b_value is not None else 1000.0
@@ -261,6 +264,7 @@ def _write_bval_bvec(dest_stem: Path, b_value: float | None) -> None:
 # Dataset-level files
 # ---------------------------------------------------------------------------
 
+
 def _write_dataset_description(bids_root: Path) -> None:
     desc = {
         "Name": "Speall MRI Dataset",
@@ -269,12 +273,10 @@ def _write_dataset_description(bids_root: Path) -> None:
         "License": "CC-BY-4.0",
         "Authors": ["Speall AI"],
         "Acknowledgements": (
-            "Data processed by the Speall MRI pipeline. "
-            "BIDS conversion via src.bids.converter."
+            "Data processed by the Speall MRI pipeline. BIDS conversion via src.bids.converter."
         ),
         "HowToAcknowledge": (
-            "Please cite the Speall MRI Dataset and acknowledge "
-            "the Speall BIDS converter."
+            "Please cite the Speall MRI Dataset and acknowledge the Speall BIDS converter."
         ),
         "Funding": [],
         "ReferencesAndLinks": [
@@ -293,9 +295,7 @@ def _write_participants(bids_root: Path, rows: list[dict[str, Any]]) -> None:
     headers = ["participant_id", "age_bracket", "sex", "site"]
     tsv_lines = ["\t".join(headers)]
     for row in rows:
-        tsv_lines.append(
-            "\t".join(str(row.get(h, "n/a")) for h in headers)
-        )
+        tsv_lines.append("\t".join(str(row.get(h, "n/a")) for h in headers))
     (bids_root / "participants.tsv").write_text("\n".join(tsv_lines) + "\n")
 
     sidecar = {
@@ -341,14 +341,13 @@ def _write_derivatives_description(derivatives_root: Path) -> None:
         "DatasetType": "derivative",
         "GeneratedBy": [{"Name": "Speall MRI pipeline"}],
     }
-    (derivatives_root / "dataset_description.json").write_text(
-        json.dumps(desc, indent=2)
-    )
+    (derivatives_root / "dataset_description.json").write_text(json.dumps(desc, indent=2))
 
 
 # ---------------------------------------------------------------------------
 # Series-level conversion
 # ---------------------------------------------------------------------------
+
 
 def _convert_series(
     series_entry: dict[str, Any],
@@ -365,7 +364,7 @@ def _convert_series(
     seq_type = sc.get("sequence_type", "")
 
     if seq_type not in SEQUENCE_TO_BIDS:
-        logger.warning("Unknown sequence_type %r — skipping series", seq_type)
+        logger.warning("Unknown sequence_type {!r} — skipping series", seq_type)
         return None
 
     modality_dir, suffix = SEQUENCE_TO_BIDS[seq_type]
@@ -401,7 +400,7 @@ def _convert_series(
     if dicom_dir is not None:
         converted = _convert_dicom_to_nifti(dicom_dir, nifti_path)
     if not converted:
-        logger.debug("DICOMs not found for %r — writing placeholder NIfTI", series_desc)
+        logger.debug("DICOMs not found for {!r} — writing placeholder NIfTI", series_desc)
         _write_placeholder_nifti(nifti_path)
 
     # JSON sidecar
@@ -425,6 +424,7 @@ def _convert_series(
 # ---------------------------------------------------------------------------
 # Public API
 # ---------------------------------------------------------------------------
+
 
 def convert_study(
     study_dir: Path,
@@ -476,7 +476,7 @@ def convert_study(
                 flat = _flatten_series_json(entry)
                 series_list.append(flat)
             except Exception as exc:
-                logger.warning("Could not parse %s: %s", json_file, exc)
+                logger.warning("Could not parse {}: {}", json_file, exc)
 
     # Participants row
     sex = patient.get("patient_sex", "n/a") or "n/a"
@@ -495,7 +495,13 @@ def convert_study(
 
     for entry in series_list:
         result = _convert_series(
-            entry, study_dir, sub_dir, subject_id, session, run_counter, bids_root,
+            entry,
+            study_dir,
+            sub_dir,
+            subject_id,
+            session,
+            run_counter,
+            bids_root,
             patient=patient,
         )
         if result:
@@ -564,13 +570,14 @@ def convert_dataset(corpus_root: Path, bids_root: Path) -> dict[str, Any]:
     subject_counter = 1
 
     study_dirs = sorted(
-        d for d in corpus_root.iterdir()
+        d
+        for d in corpus_root.iterdir()
         if d.is_dir() and (d / "study_full_series_stats.json").exists()
     )
 
     if not study_dirs:
         logger.warning(
-            "No study directories with study_full_series_stats.json found in %s",
+            "No study directories with study_full_series_stats.json found in {}",
             corpus_root,
         )
 
@@ -593,6 +600,7 @@ def convert_dataset(corpus_root: Path, bids_root: Path) -> dict[str, Any]:
 # ---------------------------------------------------------------------------
 # CLI
 # ---------------------------------------------------------------------------
+
 
 def _build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(
@@ -659,8 +667,7 @@ def _export_zarr_alongside(bids_root: Path) -> None:
     print(f"\nExporting OME-Zarr alongside BIDS -> {zarr_root}")
 
     subject_dirs = sorted(
-        d for d in bids_root.iterdir()
-        if d.is_dir() and d.name.startswith("sub-")
+        d for d in bids_root.iterdir() if d.is_dir() and d.name.startswith("sub-")
     )
     for sub_dir in subject_dirs:
         print(f"  zarr: {sub_dir.name} ...")
@@ -672,12 +679,11 @@ def _export_zarr_alongside(bids_root: Path) -> None:
 
 
 def main() -> None:
+    from src._logging import configure as _configure_logging
+
     parser = _build_parser()
     args = parser.parse_args()
-    logging.basicConfig(
-        level=logging.DEBUG if args.verbose else logging.INFO,
-        format="%(levelname)s %(name)s: %(message)s",
-    )
+    _configure_logging(level="DEBUG" if args.verbose else "INFO", force=True)
 
     if args.subject is not None:
         print(f"Converting single study: {args.root} -> {args.bids_out}")

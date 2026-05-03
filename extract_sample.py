@@ -166,7 +166,7 @@ def extract_study(study_dir: Path, study_idx: int) -> dict:
     try:
         from src.extraction import classify_sequence
 
-        for uid, meta in series_meta.items():
+        for _uid, meta in series_meta.items():
             tr = None
             te = None
             ti = None

@@ -39,7 +39,6 @@ from src.manifest.cohorts import (  # noqa: E402
     single_vendor,
 )
 
-
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
@@ -93,10 +92,10 @@ def example_1_train_grade_a_dwi_ge_3t(series_df: pl.DataFrame) -> None:
     if "split" in df.columns:
         df = df.filter(pl.col("split") == "train")
 
-    df = grade_at_least(df, "A")   # quality_grade == A
-    df = dwi_only(df)              # sequence_type contains 'dwi'
-    df = single_vendor(df, "GE")   # vendor == GE
-    df = single_field(df, 3.0)     # field_strength_T ~ 3.0 T
+    df = grade_at_least(df, "A")  # quality_grade == A
+    df = dwi_only(df)  # sequence_type contains 'dwi'
+    df = single_vendor(df, "GE")  # vendor == GE
+    df = single_field(df, 3.0)  # field_strength_T ~ 3.0 T
 
     _show("Training-set Grade-A DWI series from GE 3T", df)
 
@@ -162,16 +161,10 @@ def example_4_adc_and_dwi_across_vendors(series_df: pl.DataFrame) -> None:
     low = pl.col("sequence_type").str.to_lowercase()
 
     # Studies with at least one DWI series
-    dwi_studies = (
-        series_df.filter(low.str.contains("dwi"))
-        ["study_id"].unique()
-    )
+    dwi_studies = series_df.filter(low.str.contains("dwi"))["study_id"].unique()
 
     # Studies with at least one ADC series
-    adc_studies = (
-        series_df.filter(low.str.contains("adc"))
-        ["study_id"].unique()
-    )
+    adc_studies = series_df.filter(low.str.contains("adc"))["study_id"].unique()
 
     both_studies = dwi_studies.filter(dwi_studies.is_in(adc_studies))
     df = series_df.filter(pl.col("study_id").is_in(both_studies))
@@ -188,7 +181,7 @@ def example_5_post_2024_grade_b_plus(study_df: pl.DataFrame, series_df: pl.DataF
     is added.  If the column is absent, it proceeds with only the grade filter.
     """
     df = study_df
-    df = grade_at_least(df, "B")   # dominant_grade in {A, B}
+    df = grade_at_least(df, "B")  # dominant_grade in {A, B}
 
     if "acquisition_date" in df.columns:
         df = df.filter(pl.col("acquisition_date") >= pl.lit("2024-01-01"))

@@ -13,8 +13,8 @@ from __future__ import annotations
 from src.schemas.models import (
     AnnotationConsensus,
     AnnotationRecord,
-    MLTrainingScore,
     ManifestRow,
+    MLTrainingScore,
     PipelineVersion,
     QualityAnalysis,
     SequenceClassification,
