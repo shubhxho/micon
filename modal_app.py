@@ -404,7 +404,46 @@ def process_one_series_gpu(
 @app.function(
     image=cpu_image,
     volumes={str(MOUNT_POINT): volume},
+    timeout=1800, memory=4096, cpu=2.0,
+    region="us-east",
+    scaledown_window=300,
+)
+def extract_tar_cloud(tar_path: str, extract_dir: str) -> dict:
+    """Extract one tar archive into the volume. Distributed via .starmap().
+
+    Each tar is ~3-4 GB and contains up to 20k DICOMs. Running one tar per
+    container in parallel scales linearly with tar count; the orchestrator
+    used to loop sequentially, which dominated startup for studies with
+    18+ tars. The volume's background commit picks up the writes; the
+    orchestrator calls volume.reload() before listing files.
+    """
+    import tarfile as _tf
+    from pathlib import Path as _P
+
+    tar_p = _P(tar_path)
+    out = _P(extract_dir)
+    out.mkdir(parents=True, exist_ok=True)
+
+    t0 = time.time()
+    n_files = 0
+    with _tf.open(str(tar_p), "r") as tf:
+        for member in tf:
+            tf.extract(member, path=str(out), filter="data")
+            if member.isfile():
+                n_files += 1
+
+    return {
+        "tar": tar_p.name,
+        "files": n_files,
+        "elapsed_s": round(time.time() - t0, 2),
+    }
+
+
+@app.function(
+    image=cpu_image,
+    volumes={str(MOUNT_POINT): volume},
     timeout=86400, memory=16384, cpu=8.0,
+    region="us-east",
     secrets=[modal.Secret.from_dict({"HF_TOKEN": os.environ.get("HF_TOKEN", "") or _get_hf_token()})],
 )
 def run_extraction_pipeline(
@@ -444,24 +483,30 @@ def run_extraction_pipeline(
 
     out_dir.mkdir(parents=True, exist_ok=True)
 
-    # ── Extract tar archives if present ─────────────────────────────────
-    # Extract to volume (not /tmp) so distributed .map() can see the files.
-    import tarfile as _tarfile
+    # ── Extract tar archives if present (parallel via .starmap) ─────────
+    # One container per tar, all running concurrently. Replaces the
+    # serial-on-orchestrator extract loop that used to dominate startup
+    # for studies with 18+ tars.
     tar_files = sorted(study_dir.glob("*.tar"))
     if tar_files:
         extract_dir = Path(str(STUDIES_DIR)) / f"{study_name}_extracted"
-        # Check if already extracted
         if extract_dir.exists() and any(extract_dir.rglob("*.dcm")):
             print(f"Using previously extracted files in {extract_dir}", flush=True)
         else:
             extract_dir.mkdir(parents=True, exist_ok=True)
-            print(f"Extracting {len(tar_files)} tar archives → {extract_dir}...", flush=True)
+            print(f"Extracting {len(tar_files)} tar archives in parallel → {extract_dir}...", flush=True)
             t_untar = time.time()
-            for tf_path in tar_files:
-                with _tarfile.open(str(tf_path), "r") as tf:
-                    tf.extractall(path=str(extract_dir), filter="data")
-            volume.commit()
-            print(f"  Extracted in {time.time() - t_untar:.1f}s", flush=True)
+            tar_args = [(str(tf), str(extract_dir)) for tf in tar_files]
+            results = list(extract_tar_cloud.starmap(tar_args))
+            n_extracted = sum(r.get("files", 0) for r in results)
+            volume.reload()
+            longest = max((r.get("elapsed_s", 0) for r in results), default=0)
+            print(
+                f"  Extracted {n_extracted} files from {len(tar_files)} tars "
+                f"in {time.time() - t_untar:.1f}s "
+                f"(parallel; longest single-tar {longest:.1f}s)",
+                flush=True,
+            )
         study_dir = extract_dir  # switch to extracted files
 
     dcm_files = sorted(study_dir.rglob("*.dcm"))
