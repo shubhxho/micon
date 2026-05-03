@@ -271,8 +271,24 @@ def build_study_manifest(series_df: pl.DataFrame, root: Path) -> pl.DataFrame:
     return pl.DataFrame(study_rows, schema=_STUDY_SCHEMA)
 
 
-def write_manifests(root: Path, out_dir: Path) -> dict[str, int]:
-    """Build both manifests and write parquet files to out_dir."""
+def write_manifests(
+    root: Path,
+    out_dir: Path,
+    with_splits: bool = False,
+) -> dict[str, int]:
+    """Build both manifests and write parquet files to out_dir.
+
+    Parameters
+    ----------
+    root:
+        Root directory to crawl for detail JSON files.
+    out_dir:
+        Output directory for parquet files.
+    with_splits:
+        When True, calls :func:`src.manifest.splits.assign_splits` after
+        building the manifests and writes ``splits.parquet`` (one row per
+        study: study_id, split) alongside the other outputs.
+    """
     root = Path(root)
     out_dir = Path(out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -283,7 +299,20 @@ def write_manifests(root: Path, out_dir: Path) -> dict[str, int]:
     series_df.write_parquet(out_dir / "manifest.parquet")
     study_df.write_parquet(out_dir / "study_manifest.parquet")
 
-    return {"series_rows": len(series_df), "study_rows": len(study_df)}
+    counts: dict[str, int] = {
+        "series_rows": len(series_df),
+        "study_rows": len(study_df),
+    }
+
+    if with_splits:
+        from src.manifest.splits import assign_splits  # lazy import
+
+        _, study_df_split = assign_splits(series_df, study_df)
+        splits_df = study_df_split.select(["study_id", "split"])
+        splits_df.write_parquet(out_dir / "splits.parquet")
+        counts["splits_rows"] = len(splits_df)
+
+    return counts
 
 
 # ---------------------------------------------------------------------------
@@ -299,11 +328,22 @@ def main() -> None:
     parser.add_argument(
         "--out", required=True, type=Path, help="Output directory for parquet files"
     )
+    parser.add_argument(
+        "--with-splits",
+        action="store_true",
+        default=False,
+        help=(
+            "Assign patient-level train/val/test splits after building manifests "
+            "and write splits.parquet (study_id, split) to --out."
+        ),
+    )
     args = parser.parse_args()
 
-    counts = write_manifests(args.root, args.out)
+    counts = write_manifests(args.root, args.out, with_splits=args.with_splits)
     print(f"Wrote {counts['series_rows']} series rows -> {args.out / 'manifest.parquet'}")
     print(f"Wrote {counts['study_rows']} study rows  -> {args.out / 'study_manifest.parquet'}")
+    if args.with_splits:
+        print(f"Wrote {counts['splits_rows']} split rows  -> {args.out / 'splits.parquet'}")
 
 
 if __name__ == "__main__":

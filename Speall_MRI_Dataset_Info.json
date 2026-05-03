@@ -214,5 +214,25 @@
       { "grade": "D", "min": 35, "tier": "limited" },
       { "grade": "F", "min": 0,  "tier": "exclude" }
     ]
+  },
+  "splits": {
+    "methodology": "Patient-level (study-level) stratified random split. No series from the same study appears in more than one split, preventing the most common medical-imaging ML data-leakage bug.",
+    "unit": "study",
+    "ratios": {
+      "train": 0.80,
+      "val":   0.10,
+      "test":  0.10
+    },
+    "stratification_keys": ["vendor", "dominant_grade"],
+    "stratification_note": "Cartesian product of vendor x dominant_grade is used as the stratum label. Tiny strata (< 2 members) are merged into a synthetic '__other__' bucket before splitting. Missing columns degrade gracefully with a warning.",
+    "random_seed": 42,
+    "algorithm": "sklearn.model_selection.StratifiedShuffleSplit (two-pass: first hold out test, then hold out val from the remainder)",
+    "output_file": "splits.parquet",
+    "output_schema": {
+      "study_id": "string -- unique study identifier, matches study_manifest.parquet",
+      "split":    "string -- one of: train | val | test"
+    },
+    "reproducibility": "Re-running `python -m src.manifest.builder --root <root> --out <out> --with-splits` with the same data produces byte-identical splits.parquet.",
+    "added_in_version": "2026.04"
   }
 }
