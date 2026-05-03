@@ -57,3 +57,6 @@ dicom_metadata.csv
 # Project-local data
 micom
 dataset
+
+# Claude Code runtime
+.claude/
