@@ -1,0 +1,1109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>QC Report — BRAIN + ANGIO CISS</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+       background: #f0f4f8; color: #1a202c; font-size: 14px; }
+.container { max-width: 1200px; margin: 0 auto; padding: 24px 16px; }
+h1 { font-size: 24px; font-weight: 700; margin-bottom: 4px; }
+h2 { font-size: 18px; font-weight: 600; margin: 24px 0 12px; }
+h3 { font-size: 15px; font-weight: 600; margin-bottom: 8px; }
+.header-bar { background: #1a365d; color: #fff; padding: 20px 24px; }
+.header-bar p { font-size: 13px; opacity: .8; margin-top: 4px; }
+.meta-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+             gap: 12px; margin: 16px 0; }
+.meta-card { background: #fff; border-radius: 8px; padding: 12px 16px;
+             box-shadow: 0 1px 3px rgba(0,0,0,.1); }
+.meta-label { font-size: 11px; text-transform: uppercase; letter-spacing: .05em;
+              color: #718096; margin-bottom: 4px; }
+.meta-value { font-size: 16px; font-weight: 700; color: #2d3748; }
+.section { background: #fff; border-radius: 10px; padding: 20px 24px;
+           box-shadow: 0 1px 3px rgba(0,0,0,.1); margin-bottom: 20px; }
+table { width: 100%; border-collapse: collapse; }
+th { background: #2d3748; color: #fff; padding: 8px 12px; text-align: left;
+     font-size: 12px; font-weight: 600; }
+td { padding: 8px 12px; border-bottom: 1px solid #e2e8f0; vertical-align: middle; }
+tr:hover td { background: #f7fafc; }
+.grade-pill { display: inline-block; border-radius: 999px; padding: 2px 10px;
+              font-weight: 700; font-size: 13px; }
+.grade-a { background: #c6f6d5; color: #276749; }
+.grade-b { background: #bee3f8; color: #2b6cb0; }
+.grade-c { background: #fefcbf; color: #975a16; }
+.grade-d { background: #feebc8; color: #c05621; }
+.grade-f { background: #fed7d7; color: #9b2c2c; }
+.series-card { border: 1px solid #e2e8f0; border-radius: 8px; margin-bottom: 16px;
+               overflow: hidden; }
+.card-header { background: #2d3748; color: #fff; padding: 10px 16px;
+               display: flex; align-items: center; gap: 12px; }
+.card-body { padding: 16px; display: grid; grid-template-columns: auto 1fr; gap: 16px; }
+.card-image img { max-width: 320px; max-height: 200px; border-radius: 6px;
+                  display: block; object-fit: contain; }
+.no-image { width: 320px; height: 140px; background: #e2e8f0; border-radius: 6px;
+            display: flex; align-items: center; justify-content: center;
+            color: #a0aec0; font-size: 13px; }
+dl { display: grid; grid-template-columns: max-content 1fr; gap: 4px 16px; }
+dt { font-weight: 600; color: #718096; font-size: 12px; }
+dd { font-size: 13px; color: #2d3748; }
+.flag { display: inline-block; background: #fed7d7; color: #9b2c2c; border-radius: 4px;
+        padding: 2px 8px; font-size: 12px; margin: 2px; }
+.conformance-file { background: #fffbeb; border-left: 3px solid #f6ad55;
+                    padding: 6px 10px; margin-bottom: 6px; border-radius: 0 4px 4px 0; }
+.conformance-tags { font-size: 11px; color: #718096; }
+.anomaly-row { background: #fff5f5; border-left: 3px solid #fc8181;
+               padding: 8px 12px; margin-bottom: 6px; border-radius: 0 4px 4px 0; }
+footer { text-align: center; padding: 20px; color: #a0aec0; font-size: 12px; }
+.kpi-row { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 16px; }
+.kpi { flex: 1; min-width: 100px; background: #ebf8ff; border-radius: 8px;
+       padding: 10px 16px; text-align: center; }
+.kpi-val { font-size: 22px; font-weight: 800; color: #2b6cb0; }
+.kpi-lbl { font-size: 11px; color: #718096; }
+@media (max-width: 700px) {
+  .card-body { grid-template-columns: 1fr; }
+  .card-image img, .no-image { max-width: 100%; width: 100%; }
+}
+</style>
+</head>
+<body>
+
+<div class="header-bar">
+  <div class="container">
+    <h1>QC Report &mdash; BRAIN + ANGIO CISS</h1>
+    <p>GE MEDICAL SYSTEMS SIGNA Pioneer &bull;
+       3T &bull;
+       Study date: 20260323</p>
+  </div>
+</div>
+
+<div class="container">
+
+  
+  <div class="meta-grid">
+    <div class="meta-card"><div class="meta-label">Manufacturer</div><div class="meta-value">GE MEDICAL SYSTEMS</div></div>
+    <div class="meta-card"><div class="meta-label">Model</div><div class="meta-value">SIGNA Pioneer</div></div>
+    <div class="meta-card"><div class="meta-label">Field Strength</div><div class="meta-value">3 T</div></div>
+    <div class="meta-card"><div class="meta-label">Software</div><div class="meta-value" style="font-size:12px;">['27', 'LX', 'MR Software...</div></div>
+    <div class="meta-card"><div class="meta-label">Station</div><div class="meta-value">GEHC</div></div>
+    <div class="meta-card"><div class="meta-label">Series Count</div><div class="meta-value">19</div></div>
+    <div class="meta-card"><div class="meta-label">DICOM Files</div><div class="meta-value">997</div></div>
+    <div class="meta-card"><div class="meta-label">Study Date</div><div class="meta-value">20260323</div></div>
+  </div>
+
+  
+  <div class="kpi-row">
+    
+    <div class="kpi">
+      <div class="kpi-val">7</div>
+      <div class="kpi-lbl">Grade A</div>
+    </div>
+    
+    <div class="kpi">
+      <div class="kpi-val">4</div>
+      <div class="kpi-lbl">Grade B</div>
+    </div>
+    
+    <div class="kpi">
+      <div class="kpi-val">4</div>
+      <div class="kpi-lbl">Grade C</div>
+    </div>
+    
+    <div class="kpi">
+      <div class="kpi-val">3</div>
+      <div class="kpi-lbl">Grade D</div>
+    </div>
+    
+    <div class="kpi">
+      <div class="kpi-val">1</div>
+      <div class="kpi-lbl">Grade F</div>
+    </div>
+    
+  </div>
+
+  
+  <div class="section">
+    <h2>Series Summary</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>#</th><th>Description</th><th>Sequence Type</th>
+          <th>Files</th><th>TR / TE (ms)</th><th>Grade</th><th>ML Score</th>
+        </tr>
+      </thead>
+      <tbody>
+        
+        <tr>
+          <td>5</td>
+          <td>Ax DWI</td>
+          <td>DWI</td>
+          <td>50</td>
+          <td>6034 / 74.5</td>
+          <td><span class="grade-pill grade-d">D</span></td>
+          <td>44.5</td>
+        </tr>
+        
+        <tr>
+          <td>7</td>
+          <td>Ax T2 FLAIR</td>
+          <td>FLAIR</td>
+          <td>25</td>
+          <td>9000 / 119.5</td>
+          <td><span class="grade-pill grade-a">A</span></td>
+          <td>84.3</td>
+        </tr>
+        
+        <tr>
+          <td>9</td>
+          <td>3D Ax SWAN</td>
+          <td>SWI (SWAN)</td>
+          <td>116</td>
+          <td>40 / 24.2</td>
+          <td><span class="grade-pill grade-b">B</span></td>
+          <td>65.5</td>
+        </tr>
+        
+        <tr>
+          <td>10</td>
+          <td>Ax T2 PROPELLER</td>
+          <td>T2-weighted</td>
+          <td>25</td>
+          <td>6500 / 112.6</td>
+          <td><span class="grade-pill grade-c">C</span></td>
+          <td>64.2</td>
+        </tr>
+        
+        <tr>
+          <td>11</td>
+          <td>AxT1 MEMP</td>
+          <td>T1-weighted</td>
+          <td>25</td>
+          <td>460 / 10.0</td>
+          <td><span class="grade-pill grade-a">A</span></td>
+          <td>86.6</td>
+        </tr>
+        
+        <tr>
+          <td>12</td>
+          <td> SAG T2</td>
+          <td>T2-weighted</td>
+          <td>30</td>
+          <td>7296 / 117.9</td>
+          <td><span class="grade-pill grade-a">A</span></td>
+          <td>85.3</td>
+        </tr>
+        
+        <tr>
+          <td>13</td>
+          <td>BRAIN ANGIO</td>
+          <td>T1-weighted</td>
+          <td>128</td>
+          <td>24 / 3.4</td>
+          <td><span class="grade-pill grade-b">B</span></td>
+          <td>70.8</td>
+        </tr>
+        
+        <tr>
+          <td>15</td>
+          <td>COR DWI</td>
+          <td>DWI</td>
+          <td>74</td>
+          <td>9840 / 78.0</td>
+          <td><span class="grade-pill grade-d">D</span></td>
+          <td>49.0</td>
+        </tr>
+        
+        <tr>
+          <td>17</td>
+          <td>3D Ax TOF NECK</td>
+          <td>TOF MRA</td>
+          <td>200</td>
+          <td>23 / 3.4</td>
+          <td><span class="grade-pill grade-a">A</span></td>
+          <td>83.8</td>
+        </tr>
+        
+        <tr>
+          <td>18</td>
+          <td>3D Ax T2 Cube HyperCube.</td>
+          <td>CUBE (3D FSE)</td>
+          <td>104</td>
+          <td>2002 / 160.3</td>
+          <td><span class="grade-pill grade-a">A</span></td>
+          <td>83.2</td>
+        </tr>
+        
+        <tr>
+          <td>550</td>
+          <td>ADC (10^-6 mm²/s):Mar 23 2026 15-52-42 IST</td>
+          <td>ADC Map</td>
+          <td>25</td>
+          <td>6034 / 74.5</td>
+          <td><span class="grade-pill grade-c">C</span></td>
+          <td>57.3</td>
+        </tr>
+        
+        <tr>
+          <td>900</td>
+          <td>FILT_PHA: 3D Ax SWAN</td>
+          <td>SWI (SWAN)</td>
+          <td>116</td>
+          <td>40 / 24.2</td>
+          <td><span class="grade-pill grade-f">F</span></td>
+          <td>32.0</td>
+        </tr>
+        
+        <tr>
+          <td>1300</td>
+          <td>COL:BRAIN ANGIO</td>
+          <td>Color MIP</td>
+          <td>1</td>
+          <td>24 / 3.4</td>
+          <td><span class="grade-pill grade-b">B</span></td>
+          <td>77.2</td>
+        </tr>
+        
+        <tr>
+          <td>1301</td>
+          <td>PJN:BRAIN ANGIO</td>
+          <td>Projection MIP</td>
+          <td>19</td>
+          <td>24 / 3.4</td>
+          <td><span class="grade-pill grade-a">A</span></td>
+          <td>90.1</td>
+        </tr>
+        
+        <tr>
+          <td>1350</td>
+          <td>Processed Images</td>
+          <td>Processed/MIP</td>
+          <td>13</td>
+          <td>24 / 3.4</td>
+          <td><span class="grade-pill grade-c">C</span></td>
+          <td>50.2</td>
+        </tr>
+        
+        <tr>
+          <td>1351</td>
+          <td>Processed Images</td>
+          <td>Processed/MIP</td>
+          <td>13</td>
+          <td>24 / 3.4</td>
+          <td><span class="grade-pill grade-d">D</span></td>
+          <td>49.7</td>
+        </tr>
+        
+        <tr>
+          <td>1700</td>
+          <td>COL:3D Ax TOF NECK</td>
+          <td>Color MIP</td>
+          <td>1</td>
+          <td>23 / 3.4</td>
+          <td><span class="grade-pill grade-a">A</span></td>
+          <td>100.0</td>
+        </tr>
+        
+        <tr>
+          <td>1701</td>
+          <td>PJN:3D Ax TOF NECK</td>
+          <td>Projection MIP</td>
+          <td>19</td>
+          <td>23 / 3.4</td>
+          <td><span class="grade-pill grade-b">B</span></td>
+          <td>74.0</td>
+        </tr>
+        
+        <tr>
+          <td>1750</td>
+          <td>Processed Images</td>
+          <td>Processed/MIP</td>
+          <td>13</td>
+          <td>23 / 3.4</td>
+          <td><span class="grade-pill grade-c">C</span></td>
+          <td>51.9</td>
+        </tr>
+        
+      </tbody>
+    </table>
+  </div>
+
+  
+  <h2>Series Detail</h2>
+  
+  <div class="series-card">
+    <div class="card-header">
+      <span style="font-weight:700; font-size:15px;">5: Ax DWI</span>
+      <span class="grade-pill grade-d">D</span>
+      <span style="font-size:12px; opacity:.7;">DWI</span>
+    </div>
+    <div class="card-body">
+      <div class="card-image">
+        
+        <div class="no-image">No montage available</div>
+        
+      </div>
+      <div>
+        <dl>
+          <dt>TR / TE</dt><dd>6034 / 74.5 ms</dd>
+          <dt>Files</dt><dd>50</dd>
+          <dt>Volume Shape</dt><dd>50 × 256 × 256</dd>
+          <dt>SNR</dt><dd>1.90</dd>
+          <dt>CNR</dt><dd>1769.0</dd>
+          <dt>Quality Score</dt><dd>44.5</dd>
+          <dt>b-value</dt><dd>1000.0</dd>
+          <dt>Motion Severity</dt><dd>35.4</dd>
+          <dt>Symmetry Index</dt><dd>0.712</dd>
+          <dt>Anomalous Slices</dt><dd>0</dd>
+        </dl>
+        
+        <div style="margin-top:10px;">
+          
+          <span class="flag">Symmetry index 0.712 < 0.85</span>
+          
+        </div>
+        
+      </div>
+    </div>
+  </div>
+  
+  <div class="series-card">
+    <div class="card-header">
+      <span style="font-weight:700; font-size:15px;">7: Ax T2 FLAIR</span>
+      <span class="grade-pill grade-a">A</span>
+      <span style="font-size:12px; opacity:.7;">FLAIR</span>
+    </div>
+    <div class="card-body">
+      <div class="card-image">
+        
+        <div class="no-image">No montage available</div>
+        
+      </div>
+      <div>
+        <dl>
+          <dt>TR / TE</dt><dd>9000 / 119.5 ms</dd>
+          <dt>Files</dt><dd>25</dd>
+          <dt>Volume Shape</dt><dd>25 × 512 × 512</dd>
+          <dt>SNR</dt><dd>37.00</dd>
+          <dt>CNR</dt><dd>30.6</dd>
+          <dt>Quality Score</dt><dd>84.3</dd>
+          
+          <dt>Motion Severity</dt><dd>18.8</dd>
+          <dt>Symmetry Index</dt><dd>0.821</dd>
+          <dt>Anomalous Slices</dt><dd>0</dd>
+        </dl>
+        
+        <div style="margin-top:10px;">
+          
+          <span class="flag">Symmetry index 0.821 < 0.85</span>
+          
+        </div>
+        
+      </div>
+    </div>
+  </div>
+  
+  <div class="series-card">
+    <div class="card-header">
+      <span style="font-weight:700; font-size:15px;">9: 3D Ax SWAN</span>
+      <span class="grade-pill grade-b">B</span>
+      <span style="font-size:12px; opacity:.7;">SWI (SWAN)</span>
+    </div>
+    <div class="card-body">
+      <div class="card-image">
+        
+        <div class="no-image">No montage available</div>
+        
+      </div>
+      <div>
+        <dl>
+          <dt>TR / TE</dt><dd>40 / 24.2 ms</dd>
+          <dt>Files</dt><dd>116</dd>
+          <dt>Volume Shape</dt><dd>116 × 512 × 512</dd>
+          <dt>SNR</dt><dd>4.61</dd>
+          <dt>CNR</dt><dd>2453.3</dd>
+          <dt>Quality Score</dt><dd>65.5</dd>
+          
+          <dt>Motion Severity</dt><dd>1.3</dd>
+          <dt>Symmetry Index</dt><dd>0.813</dd>
+          <dt>Anomalous Slices</dt><dd>0</dd>
+        </dl>
+        
+        <div style="margin-top:10px;">
+          
+          <span class="flag">Symmetry index 0.813 < 0.85</span>
+          
+        </div>
+        
+      </div>
+    </div>
+  </div>
+  
+  <div class="series-card">
+    <div class="card-header">
+      <span style="font-weight:700; font-size:15px;">10: Ax T2 PROPELLER</span>
+      <span class="grade-pill grade-c">C</span>
+      <span style="font-size:12px; opacity:.7;">T2-weighted</span>
+    </div>
+    <div class="card-body">
+      <div class="card-image">
+        
+        <div class="no-image">No montage available</div>
+        
+      </div>
+      <div>
+        <dl>
+          <dt>TR / TE</dt><dd>6500 / 112.6 ms</dd>
+          <dt>Files</dt><dd>25</dd>
+          <dt>Volume Shape</dt><dd>25 × 512 × 512</dd>
+          <dt>SNR</dt><dd>2.37</dd>
+          <dt>CNR</dt><dd>6505.2</dd>
+          <dt>Quality Score</dt><dd>64.2</dd>
+          
+          <dt>Motion Severity</dt><dd>29.4</dd>
+          <dt>Symmetry Index</dt><dd>0.779</dd>
+          <dt>Anomalous Slices</dt><dd>1</dd>
+        </dl>
+        
+        <div style="margin-top:10px;">
+          
+          <span class="flag">Symmetry index 0.779 < 0.85</span>
+          
+          <span class="flag">1 anomalous slice(s)</span>
+          
+        </div>
+        
+      </div>
+    </div>
+  </div>
+  
+  <div class="series-card">
+    <div class="card-header">
+      <span style="font-weight:700; font-size:15px;">11: AxT1 MEMP</span>
+      <span class="grade-pill grade-a">A</span>
+      <span style="font-size:12px; opacity:.7;">T1-weighted</span>
+    </div>
+    <div class="card-body">
+      <div class="card-image">
+        
+        <div class="no-image">No montage available</div>
+        
+      </div>
+      <div>
+        <dl>
+          <dt>TR / TE</dt><dd>460 / 10.0 ms</dd>
+          <dt>Files</dt><dd>25</dd>
+          <dt>Volume Shape</dt><dd>25 × 512 × 512</dd>
+          <dt>SNR</dt><dd>59.27</dd>
+          <dt>CNR</dt><dd>53.1</dd>
+          <dt>Quality Score</dt><dd>86.6</dd>
+          
+          <dt>Motion Severity</dt><dd>17.1</dd>
+          <dt>Symmetry Index</dt><dd>0.710</dd>
+          <dt>Anomalous Slices</dt><dd>0</dd>
+        </dl>
+        
+        <div style="margin-top:10px;">
+          
+          <span class="flag">Symmetry index 0.710 < 0.85</span>
+          
+        </div>
+        
+      </div>
+    </div>
+  </div>
+  
+  <div class="series-card">
+    <div class="card-header">
+      <span style="font-weight:700; font-size:15px;">12:  SAG T2</span>
+      <span class="grade-pill grade-a">A</span>
+      <span style="font-size:12px; opacity:.7;">T2-weighted</span>
+    </div>
+    <div class="card-body">
+      <div class="card-image">
+        
+        <div class="no-image">No montage available</div>
+        
+      </div>
+      <div>
+        <dl>
+          <dt>TR / TE</dt><dd>7296 / 117.9 ms</dd>
+          <dt>Files</dt><dd>30</dd>
+          <dt>Volume Shape</dt><dd>30 × 512 × 512</dd>
+          <dt>SNR</dt><dd>75.05</dd>
+          <dt>CNR</dt><dd>66.9</dd>
+          <dt>Quality Score</dt><dd>85.3</dd>
+          
+          <dt>Motion Severity</dt><dd>31.1</dd>
+          <dt>Symmetry Index</dt><dd>1.000</dd>
+          <dt>Anomalous Slices</dt><dd>0</dd>
+        </dl>
+        
+      </div>
+    </div>
+  </div>
+  
+  <div class="series-card">
+    <div class="card-header">
+      <span style="font-weight:700; font-size:15px;">13: BRAIN ANGIO</span>
+      <span class="grade-pill grade-b">B</span>
+      <span style="font-size:12px; opacity:.7;">T1-weighted</span>
+    </div>
+    <div class="card-body">
+      <div class="card-image">
+        
+        <div class="no-image">No montage available</div>
+        
+      </div>
+      <div>
+        <dl>
+          <dt>TR / TE</dt><dd>24 / 3.4 ms</dd>
+          <dt>Files</dt><dd>128</dd>
+          <dt>Volume Shape</dt><dd>128 × 512 × 512</dd>
+          <dt>SNR</dt><dd>4.43</dd>
+          <dt>CNR</dt><dd>1107.6</dd>
+          <dt>Quality Score</dt><dd>70.8</dd>
+          
+          <dt>Motion Severity</dt><dd>2.1</dd>
+          <dt>Symmetry Index</dt><dd>0.809</dd>
+          <dt>Anomalous Slices</dt><dd>1</dd>
+        </dl>
+        
+        <div style="margin-top:10px;">
+          
+          <span class="flag">Symmetry index 0.809 < 0.85</span>
+          
+          <span class="flag">1 anomalous slice(s)</span>
+          
+        </div>
+        
+      </div>
+    </div>
+  </div>
+  
+  <div class="series-card">
+    <div class="card-header">
+      <span style="font-weight:700; font-size:15px;">15: COR DWI</span>
+      <span class="grade-pill grade-d">D</span>
+      <span style="font-size:12px; opacity:.7;">DWI</span>
+    </div>
+    <div class="card-body">
+      <div class="card-image">
+        
+        <div class="no-image">No montage available</div>
+        
+      </div>
+      <div>
+        <dl>
+          <dt>TR / TE</dt><dd>9840 / 78.0 ms</dd>
+          <dt>Files</dt><dd>74</dd>
+          <dt>Volume Shape</dt><dd>74 × 256 × 256</dd>
+          <dt>SNR</dt><dd>2.00</dd>
+          <dt>CNR</dt><dd>1916.4</dd>
+          <dt>Quality Score</dt><dd>49.0</dd>
+          <dt>b-value</dt><dd>1200.0</dd>
+          <dt>Motion Severity</dt><dd>51.5</dd>
+          <dt>Symmetry Index</dt><dd>1.000</dd>
+          <dt>Anomalous Slices</dt><dd>0</dd>
+        </dl>
+        
+        <div style="margin-top:10px;">
+          
+          <span class="flag">Motion severity 51.5 > 50</span>
+          
+        </div>
+        
+      </div>
+    </div>
+  </div>
+  
+  <div class="series-card">
+    <div class="card-header">
+      <span style="font-weight:700; font-size:15px;">17: 3D Ax TOF NECK</span>
+      <span class="grade-pill grade-a">A</span>
+      <span style="font-size:12px; opacity:.7;">TOF MRA</span>
+    </div>
+    <div class="card-body">
+      <div class="card-image">
+        
+        <div class="no-image">No montage available</div>
+        
+      </div>
+      <div>
+        <dl>
+          <dt>TR / TE</dt><dd>23 / 3.4 ms</dd>
+          <dt>Files</dt><dd>200</dd>
+          <dt>Volume Shape</dt><dd>200 × 512 × 512</dd>
+          <dt>SNR</dt><dd>53.14</dd>
+          <dt>CNR</dt><dd>45.7</dd>
+          <dt>Quality Score</dt><dd>83.8</dd>
+          
+          <dt>Motion Severity</dt><dd>4.8</dd>
+          <dt>Symmetry Index</dt><dd>0.709</dd>
+          <dt>Anomalous Slices</dt><dd>0</dd>
+        </dl>
+        
+        <div style="margin-top:10px;">
+          
+          <span class="flag">Symmetry index 0.709 < 0.85</span>
+          
+        </div>
+        
+      </div>
+    </div>
+  </div>
+  
+  <div class="series-card">
+    <div class="card-header">
+      <span style="font-weight:700; font-size:15px;">18: 3D Ax T2 Cube HyperCube.</span>
+      <span class="grade-pill grade-a">A</span>
+      <span style="font-size:12px; opacity:.7;">CUBE (3D FSE)</span>
+    </div>
+    <div class="card-body">
+      <div class="card-image">
+        
+        <div class="no-image">No montage available</div>
+        
+      </div>
+      <div>
+        <dl>
+          <dt>TR / TE</dt><dd>2002 / 160.3 ms</dd>
+          <dt>Files</dt><dd>104</dd>
+          <dt>Volume Shape</dt><dd>104 × 512 × 512</dd>
+          <dt>SNR</dt><dd>64.35</dd>
+          <dt>CNR</dt><dd>52.0</dd>
+          <dt>Quality Score</dt><dd>83.2</dd>
+          
+          <dt>Motion Severity</dt><dd>6.0</dd>
+          <dt>Symmetry Index</dt><dd>0.502</dd>
+          <dt>Anomalous Slices</dt><dd>0</dd>
+        </dl>
+        
+        <div style="margin-top:10px;">
+          
+          <span class="flag">Symmetry index 0.502 < 0.85</span>
+          
+        </div>
+        
+      </div>
+    </div>
+  </div>
+  
+  <div class="series-card">
+    <div class="card-header">
+      <span style="font-weight:700; font-size:15px;">550: ADC (10^-6 mm²/s):Mar 23 2026 15-52-42 IST</span>
+      <span class="grade-pill grade-c">C</span>
+      <span style="font-size:12px; opacity:.7;">ADC Map</span>
+    </div>
+    <div class="card-body">
+      <div class="card-image">
+        
+        <div class="no-image">No montage available</div>
+        
+      </div>
+      <div>
+        <dl>
+          <dt>TR / TE</dt><dd>6034 / 74.5 ms</dd>
+          <dt>Files</dt><dd>25</dd>
+          <dt>Volume Shape</dt><dd>25 × 256 × 256</dd>
+          <dt>SNR</dt><dd>2.42</dd>
+          <dt>CNR</dt><dd>3211.7</dd>
+          <dt>Quality Score</dt><dd>57.3</dd>
+          <dt>b-value</dt><dd>1000.0</dd>
+          <dt>Motion Severity</dt><dd>27.1</dd>
+          <dt>Symmetry Index</dt><dd>0.659</dd>
+          <dt>Anomalous Slices</dt><dd>0</dd>
+        </dl>
+        
+        <div style="margin-top:10px;">
+          
+          <span class="flag">Symmetry index 0.659 < 0.85</span>
+          
+        </div>
+        
+      </div>
+    </div>
+  </div>
+  
+  <div class="series-card">
+    <div class="card-header">
+      <span style="font-weight:700; font-size:15px;">900: FILT_PHA: 3D Ax SWAN</span>
+      <span class="grade-pill grade-f">F</span>
+      <span style="font-size:12px; opacity:.7;">SWI (SWAN)</span>
+    </div>
+    <div class="card-body">
+      <div class="card-image">
+        
+        <div class="no-image">No montage available</div>
+        
+      </div>
+      <div>
+        <dl>
+          <dt>TR / TE</dt><dd>40 / 24.2 ms</dd>
+          <dt>Files</dt><dd>116</dd>
+          <dt>Volume Shape</dt><dd>116 × 512 × 512</dd>
+          <dt>SNR</dt><dd>2.22</dd>
+          <dt>CNR</dt><dd>1.9</dd>
+          <dt>Quality Score</dt><dd>32.0</dd>
+          
+          <dt>Motion Severity</dt><dd>52.4</dd>
+          <dt>Symmetry Index</dt><dd>0.013</dd>
+          <dt>Anomalous Slices</dt><dd>0</dd>
+        </dl>
+        
+        <div style="margin-top:10px;">
+          
+          <span class="flag">Motion severity 52.4 > 50</span>
+          
+          <span class="flag">Symmetry index 0.013 < 0.85</span>
+          
+        </div>
+        
+      </div>
+    </div>
+  </div>
+  
+  <div class="series-card">
+    <div class="card-header">
+      <span style="font-weight:700; font-size:15px;">1300: COL:BRAIN ANGIO</span>
+      <span class="grade-pill grade-b">B</span>
+      <span style="font-size:12px; opacity:.7;">Color MIP</span>
+    </div>
+    <div class="card-body">
+      <div class="card-image">
+        
+        <div class="no-image">No montage available</div>
+        
+      </div>
+      <div>
+        <dl>
+          <dt>TR / TE</dt><dd>24 / 3.4 ms</dd>
+          <dt>Files</dt><dd>1</dd>
+          <dt>Volume Shape</dt><dd>1 × 512 × 512</dd>
+          <dt>SNR</dt><dd>3.34</dd>
+          <dt>CNR</dt><dd>1132.1</dd>
+          <dt>Quality Score</dt><dd>77.2</dd>
+          
+          <dt>Motion Severity</dt><dd>0.7</dd>
+          <dt>Symmetry Index</dt><dd>1.000</dd>
+          <dt>Anomalous Slices</dt><dd>0</dd>
+        </dl>
+        
+      </div>
+    </div>
+  </div>
+  
+  <div class="series-card">
+    <div class="card-header">
+      <span style="font-weight:700; font-size:15px;">1301: PJN:BRAIN ANGIO</span>
+      <span class="grade-pill grade-a">A</span>
+      <span style="font-size:12px; opacity:.7;">Projection MIP</span>
+    </div>
+    <div class="card-body">
+      <div class="card-image">
+        
+        <div class="no-image">No montage available</div>
+        
+      </div>
+      <div>
+        <dl>
+          <dt>TR / TE</dt><dd>24 / 3.4 ms</dd>
+          <dt>Files</dt><dd>19</dd>
+          <dt>Volume Shape</dt><dd>19 × 512 × 512</dd>
+          <dt>SNR</dt><dd>65.13</dd>
+          <dt>CNR</dt><dd>58.5</dd>
+          <dt>Quality Score</dt><dd>90.1</dd>
+          
+          <dt>Motion Severity</dt><dd>12.7</dd>
+          <dt>Symmetry Index</dt><dd>0.869</dd>
+          <dt>Anomalous Slices</dt><dd>0</dd>
+        </dl>
+        
+      </div>
+    </div>
+  </div>
+  
+  <div class="series-card">
+    <div class="card-header">
+      <span style="font-weight:700; font-size:15px;">1350: Processed Images</span>
+      <span class="grade-pill grade-c">C</span>
+      <span style="font-size:12px; opacity:.7;">Processed/MIP</span>
+    </div>
+    <div class="card-body">
+      <div class="card-image">
+        
+        <div class="no-image">No montage available</div>
+        
+      </div>
+      <div>
+        <dl>
+          <dt>TR / TE</dt><dd>24 / 3.4 ms</dd>
+          <dt>Files</dt><dd>13</dd>
+          <dt>Volume Shape</dt><dd>13 × 910 × 1137</dd>
+          <dt>SNR</dt><dd>3.90</dd>
+          <dt>CNR</dt><dd>3.1</dd>
+          <dt>Quality Score</dt><dd>50.2</dd>
+          
+          <dt>Motion Severity</dt><dd>33.9</dd>
+          <dt>Symmetry Index</dt><dd>0.844</dd>
+          <dt>Anomalous Slices</dt><dd>1</dd>
+        </dl>
+        
+        <div style="margin-top:10px;">
+          
+          <span class="flag">Symmetry index 0.844 < 0.85</span>
+          
+          <span class="flag">1 anomalous slice(s)</span>
+          
+        </div>
+        
+      </div>
+    </div>
+  </div>
+  
+  <div class="series-card">
+    <div class="card-header">
+      <span style="font-weight:700; font-size:15px;">1351: Processed Images</span>
+      <span class="grade-pill grade-d">D</span>
+      <span style="font-size:12px; opacity:.7;">Processed/MIP</span>
+    </div>
+    <div class="card-body">
+      <div class="card-image">
+        
+        <div class="no-image">No montage available</div>
+        
+      </div>
+      <div>
+        <dl>
+          <dt>TR / TE</dt><dd>24 / 3.4 ms</dd>
+          <dt>Files</dt><dd>13</dd>
+          <dt>Volume Shape</dt><dd>13 × 910 × 1137</dd>
+          <dt>SNR</dt><dd>4.39</dd>
+          <dt>CNR</dt><dd>3.4</dd>
+          <dt>Quality Score</dt><dd>49.7</dd>
+          
+          <dt>Motion Severity</dt><dd>9.6</dd>
+          <dt>Symmetry Index</dt><dd>0.743</dd>
+          <dt>Anomalous Slices</dt><dd>0</dd>
+        </dl>
+        
+        <div style="margin-top:10px;">
+          
+          <span class="flag">Symmetry index 0.743 < 0.85</span>
+          
+        </div>
+        
+      </div>
+    </div>
+  </div>
+  
+  <div class="series-card">
+    <div class="card-header">
+      <span style="font-weight:700; font-size:15px;">1700: COL:3D Ax TOF NECK</span>
+      <span class="grade-pill grade-a">A</span>
+      <span style="font-size:12px; opacity:.7;">Color MIP</span>
+    </div>
+    <div class="card-body">
+      <div class="card-image">
+        
+        <div class="no-image">No montage available</div>
+        
+      </div>
+      <div>
+        <dl>
+          <dt>TR / TE</dt><dd>23 / 3.4 ms</dd>
+          <dt>Files</dt><dd>1</dd>
+          <dt>Volume Shape</dt><dd>1 × 512 × 512</dd>
+          <dt>SNR</dt><dd>25.83</dd>
+          <dt>CNR</dt><dd>20.9</dd>
+          <dt>Quality Score</dt><dd>100.0</dd>
+          
+          <dt>Motion Severity</dt><dd>0.7</dd>
+          <dt>Symmetry Index</dt><dd>1.000</dd>
+          <dt>Anomalous Slices</dt><dd>0</dd>
+        </dl>
+        
+      </div>
+    </div>
+  </div>
+  
+  <div class="series-card">
+    <div class="card-header">
+      <span style="font-weight:700; font-size:15px;">1701: PJN:3D Ax TOF NECK</span>
+      <span class="grade-pill grade-b">B</span>
+      <span style="font-size:12px; opacity:.7;">Projection MIP</span>
+    </div>
+    <div class="card-body">
+      <div class="card-image">
+        
+        <div class="no-image">No montage available</div>
+        
+      </div>
+      <div>
+        <dl>
+          <dt>TR / TE</dt><dd>23 / 3.4 ms</dd>
+          <dt>Files</dt><dd>19</dd>
+          <dt>Volume Shape</dt><dd>19 × 512 × 512</dd>
+          <dt>SNR</dt><dd>6.23</dd>
+          <dt>CNR</dt><dd>5.5</dd>
+          <dt>Quality Score</dt><dd>74.0</dd>
+          
+          <dt>Motion Severity</dt><dd>11.8</dd>
+          <dt>Symmetry Index</dt><dd>0.756</dd>
+          <dt>Anomalous Slices</dt><dd>0</dd>
+        </dl>
+        
+        <div style="margin-top:10px;">
+          
+          <span class="flag">Symmetry index 0.756 < 0.85</span>
+          
+        </div>
+        
+      </div>
+    </div>
+  </div>
+  
+  <div class="series-card">
+    <div class="card-header">
+      <span style="font-weight:700; font-size:15px;">1750: Processed Images</span>
+      <span class="grade-pill grade-c">C</span>
+      <span style="font-size:12px; opacity:.7;">Processed/MIP</span>
+    </div>
+    <div class="card-body">
+      <div class="card-image">
+        
+        <div class="no-image">No montage available</div>
+        
+      </div>
+      <div>
+        <dl>
+          <dt>TR / TE</dt><dd>23 / 3.4 ms</dd>
+          <dt>Files</dt><dd>13</dd>
+          <dt>Volume Shape</dt><dd>13 × 910 × 1137</dd>
+          <dt>SNR</dt><dd>7.41</dd>
+          <dt>CNR</dt><dd>5.0</dd>
+          <dt>Quality Score</dt><dd>51.9</dd>
+          
+          <dt>Motion Severity</dt><dd>17.1</dd>
+          <dt>Symmetry Index</dt><dd>0.602</dd>
+          <dt>Anomalous Slices</dt><dd>0</dd>
+        </dl>
+        
+        <div style="margin-top:10px;">
+          
+          <span class="flag">Symmetry index 0.602 < 0.85</span>
+          
+        </div>
+        
+      </div>
+    </div>
+  </div>
+  
+
+  
+  <div class="section">
+    <h2>Conformance Issues
+      <span style="font-size:13px; font-weight:400; color:#718096;">
+        (0 files with missing tags &bull; pass rate: 100.0%)
+      </span>
+    </h2>
+    
+    <p style="color:#48bb78;">All files pass conformance checks.</p>
+    
+  </div>
+
+  
+  <div class="section">
+    <h2>Anomaly Flags
+      <span style="font-size:13px; font-weight:400; color:#718096;">(15 series flagged)</span>
+    </h2>
+    
+    
+    <div class="anomaly-row">
+      <strong>Ax DWI</strong>
+      <span class="flag">Symmetry index 0.712 < 0.85</span>
+    </div>
+    
+    <div class="anomaly-row">
+      <strong>Ax T2 FLAIR</strong>
+      <span class="flag">Symmetry index 0.821 < 0.85</span>
+    </div>
+    
+    <div class="anomaly-row">
+      <strong>3D Ax SWAN</strong>
+      <span class="flag">Symmetry index 0.813 < 0.85</span>
+    </div>
+    
+    <div class="anomaly-row">
+      <strong>Ax T2 PROPELLER</strong>
+      <span class="flag">Symmetry index 0.779 < 0.85</span><span class="flag">1 anomalous slice(s)</span>
+    </div>
+    
+    <div class="anomaly-row">
+      <strong>AxT1 MEMP</strong>
+      <span class="flag">Symmetry index 0.710 < 0.85</span>
+    </div>
+    
+    <div class="anomaly-row">
+      <strong>BRAIN ANGIO</strong>
+      <span class="flag">Symmetry index 0.809 < 0.85</span><span class="flag">1 anomalous slice(s)</span>
+    </div>
+    
+    <div class="anomaly-row">
+      <strong>COR DWI</strong>
+      <span class="flag">Motion severity 51.5 > 50</span>
+    </div>
+    
+    <div class="anomaly-row">
+      <strong>3D Ax TOF NECK</strong>
+      <span class="flag">Symmetry index 0.709 < 0.85</span>
+    </div>
+    
+    <div class="anomaly-row">
+      <strong>3D Ax T2 Cube HyperCube.</strong>
+      <span class="flag">Symmetry index 0.502 < 0.85</span>
+    </div>
+    
+    <div class="anomaly-row">
+      <strong>ADC (10^-6 mm²/s):Mar 23 2026 15-52-42 IST</strong>
+      <span class="flag">Symmetry index 0.659 < 0.85</span>
+    </div>
+    
+    <div class="anomaly-row">
+      <strong>FILT_PHA: 3D Ax SWAN</strong>
+      <span class="flag">Motion severity 52.4 > 50</span><span class="flag">Symmetry index 0.013 < 0.85</span>
+    </div>
+    
+    <div class="anomaly-row">
+      <strong>Processed Images</strong>
+      <span class="flag">Symmetry index 0.844 < 0.85</span><span class="flag">1 anomalous slice(s)</span>
+    </div>
+    
+    <div class="anomaly-row">
+      <strong>Processed Images</strong>
+      <span class="flag">Symmetry index 0.743 < 0.85</span>
+    </div>
+    
+    <div class="anomaly-row">
+      <strong>PJN:3D Ax TOF NECK</strong>
+      <span class="flag">Symmetry index 0.756 < 0.85</span>
+    </div>
+    
+    <div class="anomaly-row">
+      <strong>Processed Images</strong>
+      <span class="flag">Symmetry index 0.602 < 0.85</span>
+    </div>
+    
+    
+  </div>
+
+</div><!-- /container -->
+
+<footer>
+  Pipeline version: 5.0.0 &bull;
+  Generated: 2026-05-03 07:02 UTC &bull;
+  Git SHA: 3e07508
+</footer>
+
+</body>
+</html>
