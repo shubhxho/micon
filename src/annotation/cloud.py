@@ -257,6 +257,63 @@ def _encode_image(path: str) -> str | None:
     return base64.b64encode(p.read_bytes()).decode() if p.exists() else None
 
 
+def _cache_provider(model_id: str) -> str:
+    """Detect caching strategy from model_id prefix.
+
+    Returns one of: "anthropic", "google", "openai", "other".
+    OpenAI handles caching automatically for prompts > 1024 tokens.
+    Anthropic and Google (Gemini) use cache_control markers via OpenRouter.
+    Other providers (Kimi, Qwen, Gemma) are no-op pass-through.
+    """
+    if model_id.startswith("anthropic/"):
+        return "anthropic"
+    if model_id.startswith("google/"):
+        return "google"
+    if model_id.startswith("openai/") or "/" not in model_id:
+        return "openai"
+    return "other"
+
+
+def _build_cached_user_content(
+    static_text: str,
+    dynamic_text: str,
+    image_b64: str | None,
+    model_id: str,
+) -> list[dict]:
+    """Build message content list with cache_control markers when the provider supports it.
+
+    For Anthropic and Google (Gemini): the large static text block gets
+    ``cache_control: {"type": "ephemeral"}``, causing OpenRouter to cache it
+    server-side. The dynamic suffix and image remain outside the cached prefix.
+    Content order: [static_cached, image, dynamic_suffix].
+    See: https://openrouter.ai/docs/features/prompt-caching
+
+    For OpenAI: no markers needed — prompts > 1024 tokens are auto-cached.
+
+    For other providers (Kimi, Qwen, Gemma): no-op, plain content returned.
+    """
+    provider_family = _cache_provider(model_id)
+    parts: list[dict] = []
+
+    if provider_family in ("anthropic", "google"):
+        parts.append(
+            {"type": "text", "text": static_text, "cache_control": {"type": "ephemeral"}}
+        )
+        if image_b64:
+            parts.append(
+                {"type": "image_url", "image_url": {"url": f"data:image/png;base64,{image_b64}"}}
+            )
+        parts.append({"type": "text", "text": dynamic_text})
+    else:
+        if image_b64:
+            parts.append(
+                {"type": "image_url", "image_url": {"url": f"data:image/png;base64,{image_b64}"}}
+            )
+        parts.append({"type": "text", "text": static_text + "\n" + dynamic_text})
+
+    return parts
+
+
 def _openrouter_extras(
     fallbacks: list[str] | None = None,
     sort_by_price: bool = True,
@@ -359,13 +416,9 @@ def _err(msg: str, with_reasoning: bool):
 
 # ── Per-model annotation ────────────────────────────────────────────────────
 
-ANNOTATION_PROMPT = """You are a board-certified radiologist annotating a medical imaging montage for a COMMERCIAL DATASET. Your annotation will be sold to AI/ML companies training diagnostic models (Qure.ai, Aidoc, Viz.ai tier). Quality and specificity directly determine dataset value.
+ANNOTATION_PROMPT_STATIC = """You are a board-certified radiologist annotating a medical imaging montage for a COMMERCIAL DATASET. Your annotation will be sold to AI/ML companies training diagnostic models (Qure.ai, Aidoc, Viz.ai tier). Quality and specificity directly determine dataset value.
 
 Your output is one of several model annotations that will be merged into a multi-model consensus. Be maximally specific, faithful to what you see, and use ACR Lexicon conventions.
-
-Series: {series_label}
-**Image:** Axial (top row), Coronal (middle row), Sagittal (bottom row) — 6 slices per plane.
-{quality_ctx}
 
 Return ONLY valid JSON (no markdown fences, no commentary), conforming exactly to this schema:
 
@@ -462,6 +515,15 @@ Hard rules:
 - Every finding MUST have a "slice_range" estimate so buyers can locate it.
 - Rate "training_value" honestly — a blurry, partial-coverage scan is "low" even if pathology-free."""
 
+# Dynamic header: series label + image description + quality context.
+# Kept separate so it is NOT cached — varies per annotation call.
+ANNOTATION_PROMPT_DYNAMIC = (
+    "Series: {series_label}\n"
+    "**Image:** Axial (top row), Coronal (middle row), Sagittal (bottom row) "
+    "\u2014 6 slices per plane.\n"
+    "{quality_ctx}"
+)
+
 
 def annotate_with_model(
     client: openai.OpenAI,
@@ -489,12 +551,15 @@ def annotate_with_model(
     if not b64:
         return {"model": model["name"], "error": "montage not found", "time_s": 0}
 
-    prompt = ANNOTATION_PROMPT.format(series_label=series_label, quality_ctx=quality_ctx)
-
-    content = [
-        {"type": "image_url", "image_url": {"url": f"data:image/png;base64,{b64}"}},
-        {"type": "text", "text": prompt},
-    ]
+    dynamic_header = ANNOTATION_PROMPT_DYNAMIC.format(
+        series_label=series_label, quality_ctx=quality_ctx
+    )
+    msg_content = _build_cached_user_content(
+        static_text=ANNOTATION_PROMPT_STATIC,
+        dynamic_text=dynamic_header,
+        image_b64=b64,
+        model_id=model_id,
+    )
 
     # OR-side fallback: if the primary slug 404s / rate-limits, OpenRouter
     # tries the next slug for us. Only set on cheap-tier models that have
@@ -503,7 +568,7 @@ def annotate_with_model(
     raw_or_pair = _call_model(
         client,
         model_id,
-        [{"role": "user", "content": content}],
+        [{"role": "user", "content": msg_content}],
         model["max_tokens"],
         fallbacks=fb,
         capture_reasoning=True,
@@ -1215,7 +1280,7 @@ def annotate_study_multi(
 
 # ── Long-form synthesis (cloud) ─────────────────────────────────────────────
 
-CLOUD_SYNTHESIS_PROMPT = """You are a board-certified radiologist dictating the FINAL REPORT for a medical imaging study. This report serves TWO audiences: (1) clinical — a referring clinician must be able to act on it, and (2) commercial — AI/ML dataset buyers will use it to assess data value and as training labels. Your input is a merged multi-model consensus over every series, plus study metadata. Use formal radiology dictation style.
+CLOUD_SYNTHESIS_PROMPT_STATIC = """You are a board-certified radiologist dictating the FINAL REPORT for a medical imaging study. This report serves TWO audiences: (1) clinical — a referring clinician must be able to act on it, and (2) commercial — AI/ML dataset buyers will use it to assess data value and as training labels. Your input is a merged multi-model consensus over every series, plus study metadata. Use formal radiology dictation style.
 
 Output the report as Markdown with these sections, exactly in this order, headings verbatim. Do not omit sections; if a section is N/A, write "Not applicable" with a brief reason.
 
@@ -1313,6 +1378,10 @@ Hard rules:
 - Prefer mm for measurements. Use "right"/"left" for laterality.
 - Prefer consensus findings (multiple models agreeing) over single-model claims; flag single-model claims explicitly in §9.
 
+"""
+
+# Dynamic tail: study metadata + per-series consensus (not cached — varies per study).
+_SYNTHESIS_PROMPT_DYNAMIC = """
 ## Study Metadata
 ```json
 {metadata_json}
@@ -1424,9 +1493,16 @@ def synthesize_cloud_report(
     }
     metadata_json = json.dumps(compact_meta, indent=2, default=str)[:3000]
 
-    prompt = CLOUD_SYNTHESIS_PROMPT.format(
+    dynamic_section = _SYNTHESIS_PROMPT_DYNAMIC.format(
         metadata_json=metadata_json,
         consensus_block=consensus_block[:10000],
+    )
+    synthesis_model_id = MODELS[model_key]["id"]
+    msg_content = _build_cached_user_content(
+        static_text=CLOUD_SYNTHESIS_PROMPT_STATIC,
+        dynamic_text=dynamic_section,
+        image_b64=None,
+        model_id=synthesis_model_id,
     )
 
     client = _client()
@@ -1438,8 +1514,8 @@ def synthesize_cloud_report(
     ]
     raw = _call_model(
         client,
-        MODELS[model_key]["id"],
-        [{"role": "user", "content": prompt}],
+        synthesis_model_id,
+        [{"role": "user", "content": msg_content}],
         max_tokens=max_tokens,
         fallbacks=fallback_chain,
     )
