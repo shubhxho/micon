@@ -115,35 +115,72 @@ def _sanitize_patient_info(info: dict | None) -> dict:
 
 # ── Models ──────────────────────────────────────────────────────────────────
 
+# Cost tiers: "cheap" runs by default; "premium" only when MICOM_PREMIUM=1.
+# Per-million-token prices below reflect OpenRouter list at edit time and are
+# advisory — the live cost is whatever OpenRouter charges. Source of truth for
+# routing is the `tier` field, not the price numbers.
 MODELS = {
+    # ── Cheap tier (the new default lineup) ────────────────────────────────
+    # Gemma 4 is primary -- proven on this dataset and the pipeline's
+    # synthesis prompt is tuned for its formatting quirks. The other cheap
+    # models cover Gemma's blind spots (Kimi for reasoning, Qwen for
+    # medical-specific anatomy, Gemini for high-recall fallback).
     "gemma4": {
-        "id": "google/gemma-4-31b-it",
-        "name": "Gemma 4 31B IT",
+        "id": "google/gemma-4-12b-it",
+        "name": "Gemma 4 12B IT",
         "vision": True,
-        "max_tokens": 4096,
+        "max_tokens": 3072,
         "openai_id": None,
+        "tier": "cheap",
+        # OpenRouter slugs to try in order when the primary id is unavailable.
+        # Gemma 3 27B is the proven Gemma fallback; Kimi VL is a multimodal
+        # backup that honors response_format and is the cheapest viable
+        # vision-capable substitute.
+        "fallback_ids": [
+            "google/gemma-3-27b-it",
+            "moonshotai/kimi-vl-a3b-thinking",
+        ],
     },
+    "kimi": {
+        "id": "moonshotai/kimi-vl-a3b-thinking",
+        "name": "Kimi VL A3B Thinking",
+        "vision": True,
+        "max_tokens": 3072,
+        "openai_id": None,
+        "tier": "cheap",
+    },
+    "gemini-lite": {
+        "id": "google/gemini-2.5-flash-lite",
+        "name": "Gemini 2.5 Flash Lite",
+        "vision": True,
+        "max_tokens": 3072,
+        "openai_id": None,
+        "tier": "cheap",
+    },
+    "qwen": {
+        "id": "qwen/qwen3-vl-30b-a3b-instruct",
+        "name": "Qwen3 VL 30B A3B",
+        "vision": True,
+        "max_tokens": 3072,
+        "openai_id": None,
+        "tier": "cheap",
+    },
+    # ── Premium tier (escalation only — gated by MICOM_PREMIUM=1) ──────────
     "gemini": {
-        "id": "google/gemini-2.5-flash-preview",
+        "id": "google/gemini-2.5-flash",
         "name": "Gemini 2.5 Flash",
         "vision": True,
         "max_tokens": 4096,
         "openai_id": None,
-    },
-    "qwen": {
-        "id": "qwen/qwen-2.5-vl-72b-instruct",
-        "name": "Qwen 2.5 VL 72B",
-        "vision": True,
-        "max_tokens": 4096,
-        "openai_id": None,
+        "tier": "premium",
     },
     "gpt4": {
         "id": "openai/gpt-4.1-mini",
         "name": "GPT-4.1 mini",
         "vision": True,
         "max_tokens": 4096,
-        # Direct-OpenAI slug — used when running through api.openai.com.
         "openai_id": "gpt-4.1-mini",
+        "tier": "premium",
     },
     "claude": {
         "id": "anthropic/claude-sonnet-4",
@@ -151,8 +188,20 @@ MODELS = {
         "vision": True,
         "max_tokens": 4096,
         "openai_id": None,
+        "tier": "premium",
     },
 }
+
+# Default lineup: only cheap-tier models run unless MICOM_PREMIUM=1 is set.
+_CHEAP_TIER = [k for k, v in MODELS.items() if v["tier"] == "cheap"]
+_PREMIUM_TIER = [k for k, v in MODELS.items() if v["tier"] == "premium"]
+
+
+def _default_lineup() -> list[str]:
+    """Return the active default model lineup based on MICOM_PREMIUM."""
+    if os.environ.get("MICOM_PREMIUM") == "1":
+        return list(MODELS.keys())
+    return list(_CHEAP_TIER)
 
 
 # ── OpenAI SDK transport ────────────────────────────────────────────────────
@@ -208,6 +257,37 @@ def _encode_image(path: str) -> str | None:
     return base64.b64encode(p.read_bytes()).decode() if p.exists() else None
 
 
+def _openrouter_extras(
+    fallbacks: list[str] | None = None,
+    sort_by_price: bool = True,
+    json_schema: dict | None = None,
+) -> dict:
+    """Build the OpenRouter-specific ``extra_body`` payload.
+
+    - ``models``: auto-failover chain — OpenRouter swaps to the next model
+      if the primary errors or rate-limits, no client-side retry needed.
+    - ``provider.sort=price``: routes through the cheapest provider that
+      serves the chosen model; can shave 30-60% off list price.
+    - ``response_format``: structured JSON Schema output. Cheap-tier models
+      (Kimi VL, Qwen3 VL, Gemini Flash Lite) honor this and emit guaranteed
+      parseable JSON, eliminating regex-extract fallbacks downstream.
+
+    Only the keys with a value are returned, so this is safe to pass
+    unconditionally even when no extras apply.
+    """
+    extras: dict = {}
+    if fallbacks:
+        extras["models"] = fallbacks
+    if sort_by_price:
+        extras["provider"] = {"sort": "price"}
+    if json_schema:
+        extras["response_format"] = {
+            "type": "json_schema",
+            "json_schema": {"name": "annotation", "strict": True, "schema": json_schema},
+        }
+    return extras
+
+
 def _call_model(
     client: openai.OpenAI,
     model_id: str,
@@ -215,34 +295,66 @@ def _call_model(
     max_tokens: int = 4096,
     retries: int = 3,
     request_timeout: float = 180.0,
-) -> str:
+    fallbacks: list[str] | None = None,
+    json_schema: dict | None = None,
+    temperature: float = 0.2,
+    capture_reasoning: bool = False,
+) -> str | tuple[str, str | None]:
     """Call a model with per-request timeout + bounded retry/backoff.
 
-    The per-call timeout matters: without it a hung HTTP socket ties up the
-    container until Modal's task-level timeout fires, which is much longer.
-    180s is plenty of headroom for a Gemma 4 vision response.
+    Adds OpenRouter ``extra_body``: cheapest-provider routing,
+    auto-failover model chain, and optional JSON Schema enforcement.
+    Locks ``temperature=0.2`` -- annotation is a labeling task, not a
+    creative one, and lower temperature gives stabler JSON parses on
+    Gemma 4 / Kimi VL.
+
+    When ``capture_reasoning=True`` returns ``(content, reasoning)``
+    where ``reasoning`` is the model's reasoning_content (Kimi/Qwen3
+    thinking models) or None.
     """
+    extra_body = _openrouter_extras(fallbacks=fallbacks, json_schema=json_schema)
     for attempt in range(retries):
         try:
             resp = client.with_options(timeout=request_timeout).chat.completions.create(
                 model=model_id,
                 max_tokens=max_tokens,
                 messages=messages,
+                temperature=temperature,
+                extra_body=extra_body or None,
             )
-            return resp.choices[0].message.content
+            msg = resp.choices[0].message
+            content = msg.content or ""
+            if capture_reasoning:
+                reasoning = getattr(msg, "reasoning_content", None) or getattr(
+                    msg, "reasoning", None
+                )
+                return content, reasoning
+            return content
         except openai.RateLimitError:
             if attempt < retries - 1:
                 time.sleep(4 * (attempt + 1))
             else:
-                return f"[rate limited after {retries} attempts]"
+                return _err(f"[rate limited after {retries} attempts]", capture_reasoning)
         except openai.APITimeoutError:
             if attempt < retries - 1:
                 time.sleep(2 * (attempt + 1))
             else:
-                return f"[timeout after {retries} attempts]"
+                return _err(f"[timeout after {retries} attempts]", capture_reasoning)
+        except openai.BadRequestError:
+            # Some models reject response_format / extra_body. Retry once
+            # without the extras before giving up.
+            if extra_body and attempt == 0:
+                extra_body = {}
+                continue
+            return _err("[bad request — model rejected request schema]", capture_reasoning)
         except Exception as e:
-            return f"[error: {e}]"
-    return ""
+            return _err(f"[error: {e}]", capture_reasoning)
+    return _err("", capture_reasoning)
+
+
+def _err(msg: str, with_reasoning: bool):
+    """Return the right shape for an error -- string or (string, None) tuple."""
+    return (msg, None) if with_reasoning else msg
 
 
 # ── Per-model annotation ────────────────────────────────────────────────────
@@ -384,7 +496,22 @@ def annotate_with_model(
         {"type": "text", "text": prompt},
     ]
 
-    raw = _call_model(client, model_id, [{"role": "user", "content": content}], model["max_tokens"])
+    # OR-side fallback: if the primary slug 404s / rate-limits, OpenRouter
+    # tries the next slug for us. Only set on cheap-tier models that have
+    # an explicit `fallback_ids` block (Gemma 4 -> Gemma 3 27B -> Kimi VL).
+    fb = model.get("fallback_ids") if provider == _PROVIDER_OPENROUTER else None
+    raw_or_pair = _call_model(
+        client,
+        model_id,
+        [{"role": "user", "content": content}],
+        model["max_tokens"],
+        fallbacks=fb,
+        capture_reasoning=True,
+    )
+    if isinstance(raw_or_pair, tuple):
+        raw, reasoning = raw_or_pair
+    else:
+        raw, reasoning = raw_or_pair, None
     elapsed = time.time() - t0
 
     # Parse JSON from response
@@ -409,8 +536,11 @@ def annotate_with_model(
     return {
         "model": model["name"],
         "model_key": model_key,
+        "model_id": model_id,
+        "tier": model.get("tier", "unknown"),
         "annotation": annotation,
         "raw": raw,
+        "reasoning": reasoning,
         "time_s": round(elapsed, 1),
         "error": None if annotation else "failed to parse JSON",
     }
@@ -608,7 +738,7 @@ def annotate_series_multi(
         return {"error": "No API key set (OPENROUTER_API_KEY or OPENAI_API_KEY)"}
 
     client = _client()
-    model_keys = _filter_supported(models or list(MODELS.keys()), provider)
+    model_keys = _filter_supported(models or _default_lineup(), provider)
     if not model_keys:
         return {"error": f"No supported models on provider={provider}"}
 
@@ -742,7 +872,47 @@ def _build_consensus(results: dict[str, dict]) -> dict:
         "notable": unique_notable[:10],
         "disagreements": disagreements,
         "models_used": [MODELS[k]["name"] for k in results],
+        # Cost-tier telemetry: lets the manifest filter on cheap-only runs
+        # vs runs that escalated to premium models.
+        "tiers_used": sorted({MODELS[k].get("tier", "unknown") for k in results}),
+        "premium_used": any(MODELS[k].get("tier") == "premium" for k in results),
+        # A2: per-series confidence -- weighted blend of sequence agreement
+        # and pathology agreement. Buyers use this to filter a "high-trust"
+        # subset for premium SKUs without rerunning anything.
+        "confidence": _series_confidence(seq_agreement, pathology_votes),
+        # A1: escalation hint. True when the cheap tier disagrees enough
+        # that calling premium models on this series would actually pay
+        # off. Callers run premium-tier annotation only on these.
+        "needs_escalation": _should_escalate(seq_agreement, pathology_votes),
     }
+
+
+def _series_confidence(seq_agreement: float, pathology_votes: dict[str, bool]) -> float:
+    """Blend sequence + pathology agreement into [0, 1] confidence."""
+    if not pathology_votes:
+        return round(seq_agreement, 3)
+    n = len(pathology_votes)
+    pos = sum(1 for v in pathology_votes.values() if v)
+    pathology_agreement = max(pos, n - pos) / n
+    return round(0.6 * seq_agreement + 0.4 * pathology_agreement, 3)
+
+
+def _should_escalate(seq_agreement: float, pathology_votes: dict[str, bool]) -> bool:
+    """Cheap-tier disagreement threshold for escalation to premium models.
+
+    Escalate when sequence is split (≤50%) or pathology is genuinely
+    contested (closer than 2/3 majority). Both signals are cheap to
+    compute from the existing consensus block.
+    """
+    if seq_agreement <= 0.5:
+        return True
+    if pathology_votes:
+        n = len(pathology_votes)
+        pos = sum(1 for v in pathology_votes.values() if v)
+        majority = max(pos, n - pos)
+        if majority / n < 0.67:
+            return True
+    return False
 
 
 # ── Full study annotation ───────────────────────────────────────────────────
@@ -793,7 +963,7 @@ def annotate_study_multi(
     ann_dir = out_dir / "annotations"
     ann_dir.mkdir(parents=True, exist_ok=True)
 
-    requested = models or list(MODELS.keys())
+    requested = models or _default_lineup()
     model_keys = _filter_supported(requested, provider)
     dropped = [k for k in requested if k not in model_keys]
     if not model_keys:
@@ -1213,7 +1383,7 @@ def synthesize_cloud_report(
     annotations: dict[str, dict],
     series_info: list[dict] | None = None,
     patient_info: dict | None = None,
-    model_key: str = "claude",
+    model_key: str = "gemma4",
     max_tokens: int = 8192,
 ) -> str:
     """Run the long-form §1–§10 dictation against a single OpenRouter model.
@@ -1260,11 +1430,18 @@ def synthesize_cloud_report(
     )
 
     client = _client()
+    # OpenRouter-side fallback chain: if the primary synthesis model is
+    # unavailable / rate-limited, OR auto-rolls to the next cheap-tier slug
+    # without us paying a client-side retry round-trip.
+    fallback_chain = [
+        MODELS[k]["id"] for k in _CHEAP_TIER if k != model_key and MODELS[k].get("vision") is True
+    ]
     raw = _call_model(
         client,
         MODELS[model_key]["id"],
         [{"role": "user", "content": prompt}],
         max_tokens=max_tokens,
+        fallbacks=fallback_chain,
     )
     if not raw or raw.startswith("["):
         raise RuntimeError(raw or "empty synthesis response")

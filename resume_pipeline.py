@@ -284,86 +284,100 @@ def pack_one_study_slices(study_dir_str: str) -> dict:
 # ── Worker: annotate one series via OpenRouter ───────────────────────────────
 
 
-@app.function(
+@app.cls(
     image=image,
     volumes={str(MOUNT_POINT): volume},
     secrets=[modal.Secret.from_name("openrouter")],
     # 900s ceiling -- the slowest OpenRouter response we've seen is ~150s,
     # but bursts during peak hours stack. Workers should never hit this.
     timeout=900,
-    memory=2048,
-    cpu=1.0,
+    memory=1024,
+    cpu=0.5,
     retries=modal.Retries(max_retries=2, initial_delay=4.0, backoff_coefficient=2.0),
 )
 # Higher fan-out -- each worker is mostly waiting on HTTP, so 32 in-flight
-# requests per container is comfortable.
+# requests per container is comfortable. The class form lets us reuse the
+# OpenAI client + module imports across all 32 concurrent calls in a warm
+# container instead of paying the import cost once per call.
 @modal.concurrent(max_inputs=32)
-def annotate_one(montage_path: str, series_label: str, quality_ctx: str, ann_dir: str) -> dict:
-    """Annotate ONE series via Gemma 4 on OpenRouter.
+class Annotator:
+    """Cost-aware annotation worker.
 
-    Annotation and tissue passes are fired in parallel within the worker so
-    the wall time per series is roughly one OpenRouter call instead of two.
+    @modal.enter() runs once per container boot; the OpenAI/OpenRouter client
+    + provider detection persist across every annotate() call, so a warm
+    container amortizes setup over thousands of montages.
     """
-    import sys
 
-    sys.path.insert(0, "/root")
-    from concurrent.futures import ThreadPoolExecutor
+    @modal.enter()
+    def setup(self):
+        import sys
 
-    from src.annotation.cloud import (
-        _client,
-        _detect_provider,
-        annotate_series_multi,
-        tissue_analysis_with_model,
-    )
+        sys.path.insert(0, "/root")
+        from src.annotation.cloud import _client, _detect_provider
 
-    def _do_annotation():
-        return annotate_series_multi(montage_path, series_label, quality_ctx, models=["gemma4"])
+        self.provider = _detect_provider()
+        self.client = _client()
 
-    def _do_tissue():
-        try:
-            provider = _detect_provider()
-            client = _client()
-            # Use a stub prior -- we race the two calls, so we don't have
-            # the real annotation yet. The tissue prompt only uses prior as
-            # light context anyway.
-            prior = json.dumps({"sequence_hint": "see montage"})
-            tissue = tissue_analysis_with_model(
-                client,
-                montage_path,
-                series_label,
-                prior_annotation=prior,
-                quality_ctx=quality_ctx,
-                model_key="gemma4",
-                provider=provider,
-            )
-            return tissue.get("tissue_analysis") if tissue else None
-        except Exception:
-            return None
+    @modal.method()
+    def annotate(
+        self, montage_path: str, series_label: str, quality_ctx: str, ann_dir: str
+    ) -> dict:
+        """Annotate ONE series. Annotation + tissue prompts race in parallel."""
+        from concurrent.futures import ThreadPoolExecutor
 
-    with ThreadPoolExecutor(max_workers=2) as inner:
-        f_annot = inner.submit(_do_annotation)
-        f_tissue = inner.submit(_do_tissue)
-        result = f_annot.result()
-        tissue = f_tissue.result()
+        from src.annotation.cloud import (
+            _default_lineup,
+            annotate_series_multi,
+            tissue_analysis_with_model,
+        )
 
-    if tissue:
-        result["tissue_analysis"] = tissue
+        # Cheap-tier lineup unless MICOM_PREMIUM=1 is set on the secret.
+        lineup = _default_lineup()
+        primary = lineup[0] if lineup else "kimi"
 
-    # Save. No per-worker volume.commit() -- the orchestrator commits once
-    # after the whole .starmap() completes (Stage 3). With max_inputs=32,
-    # per-worker commits would fire thousands of RPCs and saturate the
-    # volume metadata service with no benefit.
-    Path(ann_dir).mkdir(parents=True, exist_ok=True)
-    (Path(ann_dir) / f"{_safe_name(series_label)}.json").write_text(
-        json.dumps(result, indent=2, default=str)
-    )
+        def _do_annotation():
+            return annotate_series_multi(montage_path, series_label, quality_ctx, models=lineup)
 
-    return {
-        "series": series_label,
-        "sequence": result.get("consensus", {}).get("sequence_type", "?"),
-        "pathology": result.get("consensus", {}).get("pathology", {}).get("found", False),
-        "has_tissue": bool(result.get("tissue_analysis")),
-    }
+        def _do_tissue():
+            try:
+                prior = json.dumps({"sequence_hint": "see montage"})
+                tissue = tissue_analysis_with_model(
+                    self.client,
+                    montage_path,
+                    series_label,
+                    prior_annotation=prior,
+                    quality_ctx=quality_ctx,
+                    model_key=primary,
+                    provider=self.provider,
+                )
+                return tissue.get("tissue_analysis") if tissue else None
+            except Exception:
+                return None
+
+        with ThreadPoolExecutor(max_workers=2) as inner:
+            f_annot = inner.submit(_do_annotation)
+            f_tissue = inner.submit(_do_tissue)
+            result = f_annot.result()
+            tissue = f_tissue.result()
+
+        if tissue:
+            result["tissue_analysis"] = tissue
+
+        # Orchestrator commits the volume once per stage -- per-worker commits
+        # would saturate the metadata service with no benefit at max_inputs=32.
+        Path(ann_dir).mkdir(parents=True, exist_ok=True)
+        (Path(ann_dir) / f"{_safe_name(series_label)}.json").write_text(
+            json.dumps(result, indent=2, default=str)
+        )
+
+        consensus = result.get("consensus", {})
+        return {
+            "series": series_label,
+            "sequence": consensus.get("sequence_type", "?"),
+            "pathology": consensus.get("pathology", {}).get("found", False),
+            "has_tissue": bool(result.get("tissue_analysis")),
+            "models_used": result.get("models_used", []),
+        }
 
 
 # ── Main resume function ─────────────────────────────────────────────────────
@@ -618,7 +632,8 @@ def resume(
                         # stage on the first hung worker.
                         ann_results = []
                         failed = 0
-                        for r in annotate_one.starmap(ann_args, return_exceptions=True):
+                        annotator = Annotator()
+                        for r in annotator.annotate.starmap(ann_args, return_exceptions=True):
                             if isinstance(r, BaseException):
                                 failed += 1
                                 log(
