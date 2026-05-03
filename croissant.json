@@ -1,0 +1,323 @@
+{
+  "@context": {
+    "@language": "en",
+    "@vocab": "https://schema.org/",
+    "sc": "https://schema.org/",
+    "cr": "http://mlcommons.org/croissant/",
+    "dct": "http://purl.org/dc/terms/",
+    "cr:FileObject": {"@id": "cr:FileObject"},
+    "cr:FileSet": {"@id": "cr:FileSet"},
+    "cr:RecordSet": {"@id": "cr:RecordSet"},
+    "cr:Field": {"@id": "cr:Field"},
+    "cr:dataType": {"@id": "cr:dataType", "@type": "@vocab"},
+    "cr:source": {"@id": "cr:source"},
+    "cr:extract": {"@id": "cr:extract"},
+    "cr:transform": {"@id": "cr:transform"},
+    "cr:csvColumn": {"@id": "cr:csvColumn"},
+    "cr:fileProperty": {"@id": "cr:fileProperty"},
+    "cr:regex": {"@id": "cr:regex"},
+    "cr:includes": {"@id": "cr:includes"},
+    "cr:excludes": {"@id": "cr:excludes"},
+    "cr:references": {"@id": "cr:references"},
+    "cr:separator": {"@id": "cr:separator"},
+    "cr:isLiveDataset": {"@id": "cr:isLiveDataset"},
+    "cr:jsonPath": {"@id": "cr:jsonPath"},
+    "cr:format": {"@id": "cr:format"},
+    "cr:replace": {"@id": "cr:replace"},
+    "cr:lineDelimiter": {"@id": "cr:lineDelimiter"},
+    "cr:isEnumeration": {"@id": "cr:isEnumeration"},
+    "cr:parentField": {"@id": "cr:parentField"},
+    "cr:subField": {"@id": "cr:subField"},
+    "cr:key": {"@id": "cr:key"},
+    "sc:name": {"@id": "sc:name"},
+    "sc:description": {"@id": "sc:description"},
+    "sc:url": {"@id": "sc:url"},
+    "sc:license": {"@id": "sc:license"},
+    "sc:citation": {"@id": "sc:citation"},
+    "sc:sameAs": {"@id": "sc:sameAs"},
+    "sc:version": {"@id": "sc:version"},
+    "sc:isAccessibleForFree": {"@id": "sc:isAccessibleForFree"},
+    "sc:keywords": {"@id": "sc:keywords"},
+    "sc:creator": {"@id": "sc:creator"},
+    "sc:datePublished": {"@id": "sc:datePublished"},
+    "sc:contentUrl": {"@id": "sc:contentUrl"},
+    "sc:encodingFormat": {"@id": "sc:encodingFormat"},
+    "sc:sha256": {"@id": "sc:sha256"},
+    "sc:Integer": "sc:Integer",
+    "sc:Float": "sc:Float",
+    "sc:Text": "sc:Text",
+    "sc:Boolean": "sc:Boolean",
+    "sc:Date": "sc:Date"
+  },
+  "conformsTo": "http://mlcommons.org/croissant/1.0",
+  "@type": "sc:Dataset",
+  "name": "speall-mri",
+  "sc:name": "Speall MRI Brain Dataset",
+  "sc:description": "A clinical brain MRI collection of 1,105 patient studies containing 355,133 DICOM files (~66 GB raw, 34,574 series) acquired between December 2021 and October 2024. The corpus spans four scanner vendors (GE, Philips, Siemens, Toshiba) and both 3.0T and 1.5T field strengths. Each series ships a detail JSON with 240+ DICOM metadata columns, volumetric statistics, automated quality grading (A-F), an ML training score (0-100), multiplane montages, intensity histograms, contrast-enhanced views, and a slice tar archive.",
+  "sc:url": "https://huggingface.co/datasets/shubhxho/speall-mri",
+  "sc:license": "https://opensource.org/licenses/MIT",
+  "sc:version": "2026.04",
+  "sc:isAccessibleForFree": true,
+  "sc:datePublished": "2026-04-30",
+  "sc:keywords": [
+    "medical",
+    "mri",
+    "brain",
+    "dicom",
+    "neuroimaging",
+    "radiology",
+    "image-segmentation",
+    "image-classification"
+  ],
+  "sc:creator": {
+    "@type": "sc:Person",
+    "sc:name": "Shubh",
+    "sc:email": "shubh@shubhxho.com"
+  },
+  "sc:citation": "@dataset{speall_mri_2026, title={Speall MRI Brain Dataset: 1,105 Multi-Vendor Clinical Brain MRI Studies}, author={Shubh}, year={2026}, publisher={Hugging Face}, url={https://huggingface.co/datasets/shubhxho/speall-mri}, note={Acquired Dec 2021 -- Oct 2024 across GE, Philips, Siemens, Toshiba scanners}}",
+  "distribution": [
+    {
+      "@type": "cr:FileObject",
+      "@id": "manifest-parquet",
+      "sc:name": "manifest.parquet",
+      "sc:description": "Series-level manifest: one row per series with metadata, quality grades, ML scores, and paths to derived artifacts.",
+      "sc:contentUrl": "https://huggingface.co/datasets/shubhxho/speall-mri/resolve/main/manifest.parquet",
+      "sc:encodingFormat": "application/vnd.apache.parquet"
+    },
+    {
+      "@type": "cr:FileObject",
+      "@id": "study-manifest-parquet",
+      "sc:name": "study_manifest.parquet",
+      "sc:description": "Study-level manifest: one row per study with aggregate statistics, scanner information, and study-level quality summary.",
+      "sc:contentUrl": "https://huggingface.co/datasets/shubhxho/speall-mri/resolve/main/study_manifest.parquet",
+      "sc:encodingFormat": "application/vnd.apache.parquet"
+    },
+    {
+      "@type": "cr:FileSet",
+      "@id": "slice-tars",
+      "sc:name": "Slice tar shards",
+      "sc:description": "Per-series slice archives. Each tar contains the raw DICOM slices for one series.",
+      "sc:contentUrl": "https://huggingface.co/datasets/shubhxho/speall-mri/resolve/main/shards/",
+      "sc:encodingFormat": "application/x-tar",
+      "cr:includes": "shards/**/*.slices.tar"
+    }
+  ],
+  "recordSet": [
+    {
+      "@type": "cr:RecordSet",
+      "@id": "series",
+      "sc:name": "series",
+      "sc:description": "One record per MRI series. Contains DICOM metadata, quality grades, ML training scores, and paths to derived artifacts.",
+      "cr:key": "series_uid",
+      "cr:source": {
+        "@id": "manifest-parquet"
+      },
+      "cr:field": [
+        {
+          "@type": "cr:Field",
+          "@id": "series/study_id",
+          "sc:name": "study_id",
+          "sc:description": "Anonymised study identifier.",
+          "cr:dataType": "sc:Text",
+          "cr:source": {"cr:fileProperty": "manifest-parquet", "cr:csvColumn": "study_id"}
+        },
+        {
+          "@type": "cr:Field",
+          "@id": "series/series_uid",
+          "sc:name": "series_uid",
+          "sc:description": "Unique series instance UID (de-identified).",
+          "cr:dataType": "sc:Text",
+          "cr:source": {"cr:fileProperty": "manifest-parquet", "cr:csvColumn": "series_uid"}
+        },
+        {
+          "@type": "cr:Field",
+          "@id": "series/series_number",
+          "sc:name": "series_number",
+          "sc:description": "DICOM series number within the study.",
+          "cr:dataType": "sc:Integer",
+          "cr:source": {"cr:fileProperty": "manifest-parquet", "cr:csvColumn": "series_number"}
+        },
+        {
+          "@type": "cr:Field",
+          "@id": "series/series_description",
+          "sc:name": "series_description",
+          "sc:description": "DICOM SeriesDescription tag (e.g. 'Ax DWI', '3D Ax SWAN').",
+          "cr:dataType": "sc:Text",
+          "cr:source": {"cr:fileProperty": "manifest-parquet", "cr:csvColumn": "series_description"}
+        },
+        {
+          "@type": "cr:Field",
+          "@id": "series/sequence_type",
+          "sc:name": "sequence_type",
+          "sc:description": "Classified sequence type (e.g. DWI, FLAIR, T1, TOF).",
+          "cr:dataType": "sc:Text",
+          "cr:source": {"cr:fileProperty": "manifest-parquet", "cr:csvColumn": "sequence_type"}
+        },
+        {
+          "@type": "cr:Field",
+          "@id": "series/vendor",
+          "sc:name": "vendor",
+          "sc:description": "Scanner manufacturer (GE, Philips, Siemens, Toshiba).",
+          "cr:dataType": "sc:Text",
+          "cr:source": {"cr:fileProperty": "manifest-parquet", "cr:csvColumn": "vendor"}
+        },
+        {
+          "@type": "cr:Field",
+          "@id": "series/model",
+          "sc:name": "model",
+          "sc:description": "Scanner model name (e.g. SIGNA Pioneer, Achieva).",
+          "cr:dataType": "sc:Text",
+          "cr:source": {"cr:fileProperty": "manifest-parquet", "cr:csvColumn": "model"}
+        },
+        {
+          "@type": "cr:Field",
+          "@id": "series/field_strength_T",
+          "sc:name": "field_strength_T",
+          "sc:description": "Static magnetic field strength in Tesla (1.5 or 3.0).",
+          "cr:dataType": "sc:Float",
+          "cr:source": {"cr:fileProperty": "manifest-parquet", "cr:csvColumn": "field_strength_T"}
+        },
+        {
+          "@type": "cr:Field",
+          "@id": "series/file_count",
+          "sc:name": "file_count",
+          "sc:description": "Number of DICOM files in the series.",
+          "cr:dataType": "sc:Integer",
+          "cr:source": {"cr:fileProperty": "manifest-parquet", "cr:csvColumn": "file_count"}
+        },
+        {
+          "@type": "cr:Field",
+          "@id": "series/quality_grade",
+          "sc:name": "quality_grade",
+          "sc:description": "Automated quality grade (A–F) based on SNR, CNR, uniformity, coverage, and entropy.",
+          "cr:dataType": "sc:Text",
+          "cr:source": {"cr:fileProperty": "manifest-parquet", "cr:csvColumn": "quality_grade"}
+        },
+        {
+          "@type": "cr:Field",
+          "@id": "series/quality_score",
+          "sc:name": "quality_score",
+          "sc:description": "Numeric quality score (0–100) corresponding to the quality grade.",
+          "cr:dataType": "sc:Float",
+          "cr:source": {"cr:fileProperty": "manifest-parquet", "cr:csvColumn": "quality_score"}
+        },
+        {
+          "@type": "cr:Field",
+          "@id": "series/ml_score",
+          "sc:name": "ml_score",
+          "sc:description": "Composite ML training suitability score (0–100) weighted by CNR, noise, bias, sharpness, histogram separation, and inter-slice consistency.",
+          "cr:dataType": "sc:Float",
+          "cr:source": {"cr:fileProperty": "manifest-parquet", "cr:csvColumn": "ml_score"}
+        },
+        {
+          "@type": "cr:Field",
+          "@id": "series/ml_grade",
+          "sc:name": "ml_grade",
+          "sc:description": "ML training grade (A–F) derived from ml_score.",
+          "cr:dataType": "sc:Text",
+          "cr:source": {"cr:fileProperty": "manifest-parquet", "cr:csvColumn": "ml_grade"}
+        },
+        {
+          "@type": "cr:Field",
+          "@id": "series/commercial_tier",
+          "sc:name": "commercial_tier",
+          "sc:description": "ML training tier label: premium, standard, usable, limited, or exclude.",
+          "cr:dataType": "sc:Text",
+          "cr:source": {"cr:fileProperty": "manifest-parquet", "cr:csvColumn": "commercial_tier"}
+        },
+        {
+          "@type": "cr:Field",
+          "@id": "series/detail_path",
+          "sc:name": "detail_path",
+          "sc:description": "Relative path to the per-series detail JSON file.",
+          "cr:dataType": "sc:Text",
+          "cr:source": {"cr:fileProperty": "manifest-parquet", "cr:csvColumn": "detail_path"}
+        },
+        {
+          "@type": "cr:Field",
+          "@id": "series/montage_path",
+          "sc:name": "montage_path",
+          "sc:description": "Relative path to the multiplane montage PNG (axial, coronal, sagittal).",
+          "cr:dataType": "sc:Text",
+          "cr:source": {"cr:fileProperty": "manifest-parquet", "cr:csvColumn": "montage_path"}
+        }
+      ]
+    },
+    {
+      "@type": "cr:RecordSet",
+      "@id": "studies",
+      "sc:name": "studies",
+      "sc:description": "One record per patient study. Contains study-level aggregates, scanner information, and study acquisition metadata.",
+      "cr:key": "study_id",
+      "cr:source": {
+        "@id": "study-manifest-parquet"
+      },
+      "cr:field": [
+        {
+          "@type": "cr:Field",
+          "@id": "studies/study_id",
+          "sc:name": "study_id",
+          "sc:description": "Anonymised study identifier.",
+          "cr:dataType": "sc:Text",
+          "cr:source": {"cr:fileProperty": "study-manifest-parquet", "cr:csvColumn": "study_id"}
+        },
+        {
+          "@type": "cr:Field",
+          "@id": "studies/study_date",
+          "sc:name": "study_date",
+          "sc:description": "Date the study was acquired (de-identified; year and month preserved).",
+          "cr:dataType": "sc:Date",
+          "cr:source": {"cr:fileProperty": "study-manifest-parquet", "cr:csvColumn": "study_date"}
+        },
+        {
+          "@type": "cr:Field",
+          "@id": "studies/n_series",
+          "sc:name": "n_series",
+          "sc:description": "Number of series in the study.",
+          "cr:dataType": "sc:Integer",
+          "cr:source": {"cr:fileProperty": "study-manifest-parquet", "cr:csvColumn": "n_series"}
+        },
+        {
+          "@type": "cr:Field",
+          "@id": "studies/n_files",
+          "sc:name": "n_files",
+          "sc:description": "Total DICOM file count for the study.",
+          "cr:dataType": "sc:Integer",
+          "cr:source": {"cr:fileProperty": "study-manifest-parquet", "cr:csvColumn": "n_files"}
+        },
+        {
+          "@type": "cr:Field",
+          "@id": "studies/vendor",
+          "sc:name": "vendor",
+          "sc:description": "Primary scanner manufacturer for the study.",
+          "cr:dataType": "sc:Text",
+          "cr:source": {"cr:fileProperty": "study-manifest-parquet", "cr:csvColumn": "vendor"}
+        },
+        {
+          "@type": "cr:Field",
+          "@id": "studies/model",
+          "sc:name": "model",
+          "sc:description": "Primary scanner model for the study.",
+          "cr:dataType": "sc:Text",
+          "cr:source": {"cr:fileProperty": "study-manifest-parquet", "cr:csvColumn": "model"}
+        },
+        {
+          "@type": "cr:Field",
+          "@id": "studies/field_strength_T",
+          "sc:name": "field_strength_T",
+          "sc:description": "Static magnetic field strength in Tesla.",
+          "cr:dataType": "sc:Float",
+          "cr:source": {"cr:fileProperty": "study-manifest-parquet", "cr:csvColumn": "field_strength_T"}
+        },
+        {
+          "@type": "cr:Field",
+          "@id": "studies/study_description",
+          "sc:name": "study_description",
+          "sc:description": "DICOM StudyDescription tag (e.g. 'BRAIN P+C', 'BRAIN ANGIO').",
+          "cr:dataType": "sc:Text",
+          "cr:source": {"cr:fileProperty": "study-manifest-parquet", "cr:csvColumn": "study_description"}
+        }
+      ]
+    }
+  ]
+}
