@@ -21,6 +21,8 @@ from typing import Any
 
 import polars as pl
 
+from src.manifest.confidence_summary import study_confidence_rollup
+
 # ---------------------------------------------------------------------------
 # Plane inference
 # ---------------------------------------------------------------------------
@@ -230,6 +232,10 @@ def build_study_manifest(series_df: pl.DataFrame, root: Path) -> pl.DataFrame:
             except OSError:
                 size_mb = None
 
+        # Confidence rollup from per-series annotation consensus blocks
+        _annotations_dir = root / sid / "annotations"
+        _rollup = study_confidence_rollup(_annotations_dir)
+
         row: dict[str, Any] = {
             "study_id": sid,
             "n_series": len(group),
@@ -245,6 +251,13 @@ def build_study_manifest(series_df: pl.DataFrame, root: Path) -> pl.DataFrame:
             "has_t2": any(_SEQ_FLAGS["has_t2"](s) for s in seq_types),
             "total_size_mb": size_mb,
             "tar_shard_path": tar_shard_path_str,
+            # confidence rollup
+            "confidence_n_series": _rollup["n_series"],
+            "confidence_mean": _rollup["mean_confidence"],
+            "confidence_min": _rollup["min_confidence"],
+            "confidence_pct_low": _rollup["pct_low_confidence"],
+            "confidence_n_needs_escalation": _rollup["n_needs_escalation"],
+            "confidence_pct_premium_used": _rollup["pct_premium_used"],
         }
         study_rows.append(row)
 
@@ -263,6 +276,13 @@ def build_study_manifest(series_df: pl.DataFrame, root: Path) -> pl.DataFrame:
         "has_t2": pl.Boolean,
         "total_size_mb": pl.Float64,
         "tar_shard_path": pl.Utf8,
+        # confidence rollup columns (additive)
+        "confidence_n_series": pl.Int64,
+        "confidence_mean": pl.Float64,
+        "confidence_min": pl.Float64,
+        "confidence_pct_low": pl.Float64,
+        "confidence_n_needs_escalation": pl.Int64,
+        "confidence_pct_premium_used": pl.Float64,
     }
 
     if not study_rows:
