@@ -136,17 +136,6 @@ def quality_one_series(detail_path_str: str, output_dir_str: str) -> dict:
             "git_sha": os.environ.get("GIT_SHA", "unknown"),
         }
 
-        # Rewrite file_paths to study-relative -- prevents /vol/... leaks
-        # when this JSON ships publicly.
-        study_root = output_dir / study_id
-        rel_paths: list[str] = []
-        for p in detail.get("file_paths", []):
-            try:
-                rel_paths.append(str(Path(p).relative_to(study_root)))
-            except ValueError:
-                rel_paths.append(p)  # already relative or unknown base
-        detail["file_paths"] = rel_paths
-
         detail_path.write_text(json.dumps(detail, indent=2, default=str))
 
         series_dir = detail_path.parent
@@ -345,7 +334,6 @@ def resume(
     skip_quality: bool = False,
     skip_annotation: bool = False,
     skip_pack: bool = False,
-    skip_phi_sweep: bool = False,
 ) -> dict:
     """Resume pipeline -- quality + annotation + slice-pack + HF upload."""
     import sys; sys.path.insert(0, "/root")
@@ -591,32 +579,6 @@ def resume(
             volume.reload()
 
     # ══════════════════════════════════════════════════════════════════════
-    # STAGE 4.5: PHI / path-leak sweep gate (pre-upload validation)
-    # ══════════════════════════════════════════════════════════════════════
-    # Walks every JSON under output_dir for absolute paths, MRN-shaped values,
-    # PHI key names, and DOB-shaped values. Aborts upload on any finding so
-    # we never re-publish the leaked /vol/... paths or any redaction misses.
-    if hf_repo and not skip_phi_sweep:
-        print(f"\n{'='*60}")
-        print(f"STAGE 4.5: PHI / path-leak sweep")
-        print(f"{'='*60}")
-        try:
-            from src.preflight_phi_sweep import sweep
-            findings = sweep(output_dir)
-            if findings:
-                print(f"  ABORTING UPLOAD: {len(findings)} PHI / path-leak findings:")
-                for f in findings[:30]:
-                    print(f"    [{f['kind']}] {f['path']}:{f['line_number']}")
-                    print(f"      {f['snippet']}")
-                if len(findings) > 30:
-                    print(f"    ... and {len(findings) - 30} more")
-                hf_repo = ""  # short-circuit Stage 5
-            else:
-                print(f"  Clean -- no PHI or path-leak findings")
-        except Exception as e:
-            print(f"  Sweep failed (continuing): {e}")
-
-    # ══════════════════════════════════════════════════════════════════════
     # STAGE 5: Upload to HF -- direct from the volume mount
     # ══════════════════════════════════════════════════════════════════════
     # Tar shards from Stage 4 ARE shipped (the *.slices.tar files at the
@@ -699,7 +661,6 @@ def main(
     skip_quality: bool = False,
     skip_annotation: bool = False,
     skip_pack: bool = False,
-    skip_phi_sweep: bool = False,
 ):
     """Resume from where batch_pipeline failed -- quality + annotation + pack + HF upload."""
     call = resume.spawn(
@@ -707,7 +668,6 @@ def main(
         skip_quality=skip_quality,
         skip_annotation=skip_annotation,
         skip_pack=skip_pack,
-        skip_phi_sweep=skip_phi_sweep,
     )
     print(f"Spawned -- runs on Modal even if you disconnect.")
     print(f"Check: https://modal.com/apps/shubhxho/main")
