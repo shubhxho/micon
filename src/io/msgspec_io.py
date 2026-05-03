@@ -83,6 +83,9 @@ def loads(data: str | bytes | bytearray | memoryview) -> Any:
         return _MSGSPEC_DECODER.decode(data)
     if _orjson is not None:
         return _orjson.loads(data)
+    # stdlib json.loads doesn't accept memoryview; convert to bytes
+    if isinstance(data, memoryview):
+        data = bytes(data)
     return _stdlib_json.loads(data)
 
 
