@@ -19,7 +19,7 @@ dependencies = [
     "pillow>=11.0",
     "python-dotenv>=1.0",
     "mlx>=0.22",
-    "modal>=0.73",
+    "modal>=1.4",
     "huggingface_hub>=0.25",
     "cupy-cuda12x>=13.0; platform_machine == 'x86_64'",
     "pydeface>=2.0.2",
