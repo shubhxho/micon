@@ -32,6 +32,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 
 import openai
+import stamina
 from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
@@ -299,9 +300,7 @@ def _build_cached_user_content(
     parts: list[dict] = []
 
     if provider_family in ("anthropic", "google"):
-        parts.append(
-            {"type": "text", "text": static_text, "cache_control": {"type": "ephemeral"}}
-        )
+        parts.append({"type": "text", "text": static_text, "cache_control": {"type": "ephemeral"}})
         if image_b64:
             parts.append(
                 {"type": "image_url", "image_url": {"url": f"data:image/png;base64,{image_b64}"}}
@@ -371,45 +370,60 @@ def _call_model(
     When ``capture_reasoning=True`` returns ``(content, reasoning)``
     where ``reasoning`` is the model's reasoning_content (Kimi/Qwen3
     thinking models) or None.
+
+    Uses ``stamina`` for exponential back-off on transient errors
+    (RateLimitError, APITimeoutError). BadRequestError is handled
+    manually: strip extra_body once and retry, then give up.
     """
     extra_body = _openrouter_extras(fallbacks=fallbacks, json_schema=json_schema)
-    for attempt in range(retries):
-        try:
-            resp = client.with_options(timeout=request_timeout).chat.completions.create(
-                model=model_id,
-                max_tokens=max_tokens,
-                messages=messages,
-                temperature=temperature,
-                extra_body=extra_body or None,
+
+    @stamina.retry(
+        on=(openai.RateLimitError, openai.APITimeoutError),
+        attempts=retries,
+        wait_initial=2.0,
+        wait_jitter=1.0,
+        wait_exp_base=2.0,
+    )
+    def _request_once(eb: dict) -> str | tuple[str, str | None]:
+        resp = client.with_options(timeout=request_timeout).chat.completions.create(
+            model=model_id,
+            max_tokens=max_tokens,
+            messages=messages,
+            temperature=temperature,
+            extra_body=eb or None,
+        )
+        msg = resp.choices[0].message
+        c = msg.content or ""
+        if capture_reasoning:
+            reasoning = getattr(msg, "reasoning_content", None) or getattr(
+                msg, "reasoning", None
             )
-            msg = resp.choices[0].message
-            content = msg.content or ""
-            if capture_reasoning:
-                reasoning = getattr(msg, "reasoning_content", None) or getattr(
-                    msg, "reasoning", None
-                )
-                return content, reasoning
-            return content
-        except openai.RateLimitError:
-            if attempt < retries - 1:
-                time.sleep(4 * (attempt + 1))
-            else:
+            return c, reasoning
+        return c
+
+    try:
+        return _request_once(extra_body)
+    except openai.BadRequestError:
+        # Some models reject response_format / extra_body. Retry once
+        # without the extras before giving up.
+        if extra_body:
+            try:
+                return _request_once({})
+            except openai.RateLimitError:
                 return _err(f"[rate limited after {retries} attempts]", capture_reasoning)
-        except openai.APITimeoutError:
-            if attempt < retries - 1:
-                time.sleep(2 * (attempt + 1))
-            else:
+            except openai.APITimeoutError:
                 return _err(f"[timeout after {retries} attempts]", capture_reasoning)
-        except openai.BadRequestError:
-            # Some models reject response_format / extra_body. Retry once
-            # without the extras before giving up.
-            if extra_body and attempt == 0:
-                extra_body = {}
-                continue
-            return _err("[bad request — model rejected request schema]", capture_reasoning)
-        except Exception as e:
-            return _err(f"[error: {e}]", capture_reasoning)
-    return _err("", capture_reasoning)
+            except openai.BadRequestError:
+                pass
+            except Exception as e:
+                return _err(f"[error: {e}]", capture_reasoning)
+        return _err("[bad request — model rejected request schema]", capture_reasoning)
+    except openai.RateLimitError:
+        return _err(f"[rate limited after {retries} attempts]", capture_reasoning)
+    except openai.APITimeoutError:
+        return _err(f"[timeout after {retries} attempts]", capture_reasoning)
+    except Exception as e:
+        return _err(f"[error: {e}]", capture_reasoning)
 
 
 def _err(msg: str, with_reasoning: bool):
