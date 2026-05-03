@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import json
-import logging
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -16,6 +14,7 @@ import SimpleITK as sitk
 # These fire on DWI, angiography, multi-echo — normal for these sequences.
 sitk.ProcessObject.SetGlobalWarningDisplay(False)
 
+from ._logging import get_logger
 from .constants import NON_IMAGE_SOP, SOP_CLASS_NAMES
 from .exports import (
     export_enhanced_views,
@@ -25,9 +24,10 @@ from .exports import (
 )
 from .extraction import classify_sequence, shm_read, volume_stats
 from .helpers import safe_getfloat, safe_squeeze, to_json
+from .io.msgspec_io import dumps_bytes, write_detail
 from .quality import analyze_volume_quality
 
-log = logging.getLogger(__name__)
+log = get_logger(__name__)
 
 # Study-level SimpleITK probe: if the first file can't be read by SimpleITK,
 # skip it for all series (avoids N×failed attempts). Reset per pipeline run.
@@ -104,7 +104,7 @@ def _read_one_slice(fp: str, shm_rec: dict | None) -> tuple[str, np.ndarray | No
         offset = float(getattr(ds, "RescaleIntercept", 0.0))
         return fp, raw * slope + offset
     except Exception as e:
-        log.debug("Slice read failed for %s: %s", fp, e)
+        log.debug("Slice read failed for {}: {}", fp, e)
         return fp, None
 
 
@@ -268,10 +268,10 @@ def process_one_series(
             _sitk_works = True
         except Exception as e:
             if _sitk_works is None:
-                log.debug("SimpleITK probe failed — skipping for remaining series: %s", e)
+                log.debug("SimpleITK probe failed — skipping for remaining series: {}", e)
                 _sitk_works = False
             else:
-                log.debug("SimpleITK failed for %s: %s", desc, e)
+                log.debug("SimpleITK failed for {}: {}", desc, e)
 
     if vol is not None:
         vol = safe_squeeze(vol)
@@ -457,7 +457,7 @@ def _write_series_detail(
         ]
 
     p = series_out / f"{safe_name}_detail.json"
-    p.write_text(json.dumps(to_json(detail), indent=2, default=str))
+    write_detail(p, to_json(detail), indent=2)
 
 
 def _write_series_mcap(
@@ -491,7 +491,7 @@ def _write_series_mcap(
 
         mcap_path = series_out / f"{safe_name}.mcap"
 
-        record_schema = json.dumps(
+        record_schema = dumps_bytes(
             {
                 "type": "object",
                 "properties": {
@@ -504,7 +504,7 @@ def _write_series_mcap(
                 },
             }
         )
-        summary_schema = json.dumps(
+        summary_schema = dumps_bytes(
             {
                 "type": "object",
                 "properties": {
@@ -528,12 +528,12 @@ def _write_series_mcap(
                 rec_schema_id = writer.register_schema(
                     name="dicom_record",
                     encoding="jsonschema",
-                    data=record_schema.encode(),
+                    data=record_schema,
                 )
                 sum_schema_id = writer.register_schema(
                     name="series_summary",
                     encoding="jsonschema",
-                    data=summary_schema.encode(),
+                    data=summary_schema,
                 )
 
                 snum = info.get("series_number", "?")
@@ -590,7 +590,7 @@ def _write_series_mcap(
                         channel_id=ch_id,
                         log_time=now,
                         publish_time=now,
-                        data=json.dumps(msg, default=str).encode(),
+                        data=dumps_bytes(msg),
                         sequence=seq,
                     )
 
@@ -600,16 +600,15 @@ def _write_series_mcap(
                     channel_id=sum_ch_id,
                     log_time=now,
                     publish_time=now,
-                    data=json.dumps(
+                    data=dumps_bytes(
                         {
                             "series_uid": uid,
                             "series_description": desc,
                             "file_count": len(file_records),
                             "volume_stats": info.get("volume_stats", {}),
                             "quality_analysis": info.get("quality_analysis", {}),
-                        },
-                        default=str,
-                    ).encode(),
+                        }
+                    ),
                     sequence=0,
                 )
 
@@ -664,7 +663,7 @@ def _write_series_mcap(
         return mcap_path
 
     except Exception as e:
-        log.debug("Per-series MCAP write failed for %s: %s", safe_name, e)
+        log.debug("Per-series MCAP write failed for {}: {}", safe_name, e)
         return None
 
 
@@ -708,7 +707,7 @@ def _extract_seq_params(file_records: list[dict] | None, file_paths: list[str]) 
                 "b_value": safe_getfloat(ds, "DiffusionBValue"),
             }
         except Exception as e:
-            log.debug("Failed to read seq params from %s: %s", fp, e)
+            log.debug("Failed to read seq params from {}: {}", fp, e)
     return {}
 
 
@@ -716,13 +715,13 @@ def _safe_export_nifti(file_paths: list[str], out_path: str) -> None:
     try:
         export_nifti(file_paths, out_path)
     except Exception as e:
-        log.debug("NIfTI export failed for %s: %s", out_path, e)
+        log.debug("NIfTI export failed for {}: {}", out_path, e)
 
 
 def _safe_write_zarr(
-    vol: 'np.ndarray',
-    sitk_img: 'sitk.Image | None',
-    series_folder: 'Path',
+    vol: np.ndarray,
+    sitk_img: sitk.Image | None,
+    series_folder: Path,
     safe_name: str,
     uid: str,
     info: dict,
@@ -743,12 +742,10 @@ def _safe_write_zarr(
             sp_zyx = (float(sp_xyz[2]), float(sp_xyz[1]), float(sp_xyz[0]))
         else:
             sp_mm = info.get("volume_stats", {}).get("spacing_mm", [1.0, 1.0, 1.0])
-            sp_mm = (list(sp_mm) + [1.0, 1.0, 1.0])[:3]
+            sp_mm = ([*list(sp_mm), 1.0, 1.0, 1.0])[:3]
             sp_zyx = (float(sp_mm[2]), float(sp_mm[1]), float(sp_mm[0]))
 
-        seq_type = (
-            info.get("sequence_classification", {}).get("sequence_type") or None
-        )
+        seq_type = info.get("sequence_classification", {}).get("sequence_type") or None
         zarr_path = series_folder / f"{safe_name}.zarr"
         series_volume_to_omezarr(
             vol,
@@ -758,4 +755,4 @@ def _safe_write_zarr(
             sequence_type=seq_type,
         )
     except Exception as exc:
-        log.debug("OME-Zarr write failed for %s: %s", safe_name, exc)
+        log.debug("OME-Zarr write failed for {}: {}", safe_name, exc)

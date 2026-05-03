@@ -1,155 +1,200 @@
-"""
-Faster JSON I/O using msgspec for the detail.json read/write hot path.
+"""Fast JSON I/O — msgspec → orjson → stdlib fallback chain.
 
-msgspec provides 5-10x faster JSON parsing than stdlib ``json`` because it
-avoids object-graph construction overhead by using typed structs internally.
-When used with ``dict`` decode it still beats stdlib by 3-5x on large files.
+Encoding hot paths (``detail.json``, manifests, JSONL streams) go through a
+two-tier accelerator:
 
-Lazy import strategy
---------------------
-msgspec is imported lazily inside each function so that the module is usable
-without msgspec installed (a one-line deprecation print is emitted and the
-code falls back to stdlib ``json``).
+1. ``msgspec.json``  (typed, fastest decode)
+2. ``orjson``        (fastest encode, best ``numpy``/``datetime`` support)
+3. stdlib ``json``   (always-available last resort)
 
-Functions
----------
-read_detail(path)        -- fast JSON parse of a single detail.json file
-write_detail(path, data) -- atomic write (tmp + rename) of a detail.json file
-read_jsonl(path)         -- iterator over lines of a .jsonl file
-write_jsonl(path, rows)  -- write rows to a .jsonl file (overwrites)
+The encoders are resolved once at import and cached. Modules that previously
+called ``json.loads(path.read_text())`` / ``json.dump(data, fh)`` should call
+``read_detail`` / ``write_detail`` (or ``loads`` / ``dumps``) instead — the
+public API mirrors stdlib ``json`` closely enough for a 1:1 swap.
+
+Additionally, ``fast_dumps`` / ``fast_loads`` / ``write_json`` / ``read_json``
+are provided as canonical hot-path aliases used by series.py, schema_utils.py,
+and manifest/builder.py.
 """
 
 from __future__ import annotations
 
-import json
+import json as _stdlib_json
 import os
 import tempfile
-from collections.abc import Iterator
+from collections.abc import Iterable, Iterator
 from pathlib import Path
 from typing import Any
 
+__all__ = [
+    "dumps",
+    "dumps_bytes",
+    "fast_dumps",
+    "fast_loads",
+    "loads",
+    "read_detail",
+    "read_json",
+    "read_jsonl",
+    "write_detail",
+    "write_json",
+    "write_jsonl",
+]
 
-def _msgspec_encoder() -> Any:
-    """Return a msgspec JSON encoder, or None if msgspec is unavailable."""
-    try:
-        import msgspec.json as _mj  # noqa: PLC0415
 
-        return _mj
-    except ImportError:
-        print(
-            "DeprecationWarning: msgspec not installed; falling back to stdlib json. "
-            "Install msgspec>=0.18 for faster I/O."
-        )
-        return None
+try:
+    import msgspec.json as _msgspec_json  # type: ignore[import-not-found]
+
+    _MSGSPEC_DECODER = _msgspec_json.Decoder()
+    _MSGSPEC_ENCODER = _msgspec_json.Encoder()
+except ImportError:
+    _msgspec_json = None
+    _MSGSPEC_DECODER = None
+    _MSGSPEC_ENCODER = None
 
 
-def read_detail(path: Path) -> dict[str, Any]:
-    """Parse a detail.json file and return its contents as a dict.
+try:
+    import orjson as _orjson  # type: ignore[import-not-found]
+except ImportError:
+    _orjson = None
 
-    Uses msgspec for 5-10x speedup over stdlib json on large files.
-    Falls back to stdlib json if msgspec is not installed.
 
-    Parameters
-    ----------
-    path:
-        Path to the JSON file to read.
+_ORJSON_OPTS = 0
+if _orjson is not None:
+    _ORJSON_OPTS = (
+        _orjson.OPT_SERIALIZE_NUMPY
+        | _orjson.OPT_NON_STR_KEYS
+        | _orjson.OPT_SERIALIZE_DATACLASS
+    )
 
-    Returns
-    -------
-    dict[str, Any]
-        Parsed JSON contents.
+# Options for the fast_dumps canonical hot-path (includes OPT_INDENT_2)
+_FAST_DUMPS_OPTS = 0
+if _orjson is not None:
+    _FAST_DUMPS_OPTS = (
+        _orjson.OPT_INDENT_2
+        | _orjson.OPT_SERIALIZE_NUMPY
+        | _orjson.OPT_NON_STR_KEYS
+        | _orjson.OPT_SERIALIZE_DATACLASS
+    )
+
+
+def loads(data: str | bytes | bytearray | memoryview) -> Any:
+    """Parse a JSON document — msgspec → orjson → stdlib."""
+    if isinstance(data, str):
+        data = data.encode("utf-8")
+    if _MSGSPEC_DECODER is not None:
+        return _MSGSPEC_DECODER.decode(data)
+    if _orjson is not None:
+        return _orjson.loads(data)
+    return _stdlib_json.loads(data)
+
+
+def dumps_bytes(obj: Any, *, indent: int | None = None) -> bytes:
+    """Encode *obj* to JSON bytes — orjson → msgspec → stdlib."""
+    if _orjson is not None:
+        opts = _ORJSON_OPTS
+        if indent == 2:
+            opts |= _orjson.OPT_INDENT_2
+        return _orjson.dumps(obj, option=opts)
+    if _MSGSPEC_ENCODER is not None and indent is None:
+        return _MSGSPEC_ENCODER.encode(obj)
+    return _stdlib_json.dumps(obj, ensure_ascii=False, indent=indent).encode("utf-8")
+
+
+def dumps(obj: Any, *, indent: int | None = None) -> str:
+    """Encode *obj* to a JSON string."""
+    return dumps_bytes(obj, indent=indent).decode("utf-8")
+
+
+# ---------------------------------------------------------------------------
+# Canonical hot-path aliases (fast_dumps / fast_loads / write_json / read_json)
+# ---------------------------------------------------------------------------
+
+
+def fast_dumps(obj: Any) -> bytes:
+    """Encode *obj* to indented JSON bytes using orjson with numpy/datetime support.
+
+    Uses ``OPT_INDENT_2 | OPT_SERIALIZE_NUMPY`` for byte-compatible output with
+    ``json.dumps(indent=2, default=str)``.  Falls back to stdlib ``json.dumps``
+    for objects orjson cannot handle (e.g. custom non-serialisable types).
     """
-    path = Path(path)
-    raw = path.read_bytes()
-
-    mj = _msgspec_encoder()
-    if mj is not None:
-        return mj.decode(raw, type=dict)  # type: ignore[return-value]
-
-    return json.loads(raw)
+    if _orjson is not None:
+        try:
+            return _orjson.dumps(obj, option=_FAST_DUMPS_OPTS)
+        except TypeError:
+            pass
+    return _stdlib_json.dumps(obj, indent=2, default=str).encode("utf-8")
 
 
-def write_detail(path: Path, data: dict[str, Any]) -> None:
-    """Write *data* as JSON to *path* atomically (via tmp file + rename).
+def fast_loads(data: bytes | str) -> Any:
+    """Parse a JSON document using orjson (fastest) -> stdlib fallback."""
+    if _orjson is not None:
+        return _orjson.loads(data)
+    return _stdlib_json.loads(data)
 
-    The atomic write ensures that a crash mid-write never leaves a partial
-    file at the target path.
 
-    Parameters
-    ----------
-    path:
-        Destination file path.
-    data:
-        Dict to serialize as JSON.
+def read_json(path: Path | str) -> Any:
+    """Read and parse a JSON file, returning the decoded object."""
+    return fast_loads(Path(path).read_bytes())
+
+
+def write_json(path: Path | str, obj: Any) -> None:
+    """Atomically write *obj* as indented JSON to *path* (tmp + rename).
+
+    Equivalent to ``write_detail(path, obj, indent=2)`` -- provided as a
+    public alias for call sites that write non-detail JSON (e.g. manifests).
     """
+    write_detail(path, obj, indent=2)
+
+
+# ---------------------------------------------------------------------------
+# Core I/O helpers
+# ---------------------------------------------------------------------------
+
+
+def read_detail(path: Path | str) -> dict[str, Any]:
+    """Parse a JSON file (typically ``detail.json``) and return a dict."""
+    return loads(Path(path).read_bytes())
+
+
+def write_detail(
+    path: Path | str,
+    data: dict[str, Any],
+    *,
+    indent: int | None = None,
+    fsync: bool = True,
+) -> None:
+    """Atomically write *data* as JSON to *path* (tmp + rename)."""
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
 
-    mj = _msgspec_encoder()
-    if mj is not None:
-        payload = mj.encode(data)
-    else:
-        payload = json.dumps(data, ensure_ascii=False).encode("utf-8")
+    payload = dumps_bytes(data, indent=indent)
 
-    # Write to a temp file in the same directory, then rename (atomic on POSIX).
     fd, tmp_path = tempfile.mkstemp(dir=path.parent, suffix=".tmp")
     try:
         os.write(fd, payload)
-        os.fsync(fd)
+        if fsync:
+            os.fsync(fd)
     finally:
         os.close(fd)
 
     os.replace(tmp_path, path)
 
 
-def read_jsonl(path: Path) -> Iterator[dict[str, Any]]:
-    """Iterate over records in a newline-delimited JSON file.
-
-    Empty lines and lines consisting only of whitespace are skipped.
-
-    Parameters
-    ----------
-    path:
-        Path to the ``.jsonl`` file.
-
-    Yields
-    ------
-    dict[str, Any]
-        One parsed record per non-empty line.
-    """
-    path = Path(path)
-    mj = _msgspec_encoder()
-
-    with path.open("rb") as fh:
+def read_jsonl(path: Path | str) -> Iterator[dict[str, Any]]:
+    """Iterate parsed records from a newline-delimited JSON file."""
+    with Path(path).open("rb") as fh:
         for raw_line in fh:
             stripped = raw_line.strip()
             if not stripped:
                 continue
-            if mj is not None:
-                yield mj.decode(stripped, type=dict)  # type: ignore[misc]
-            else:
-                yield json.loads(stripped)
+            yield loads(stripped)
 
 
-def write_jsonl(path: Path, rows: Iterator[dict[str, Any]]) -> None:
-    """Write *rows* to *path* as newline-delimited JSON (overwrites existing).
-
-    Parameters
-    ----------
-    path:
-        Destination ``.jsonl`` file path.
-    rows:
-        Iterable of dicts to serialize one-per-line.
-    """
+def write_jsonl(path: Path | str, rows: Iterable[dict[str, Any]]) -> None:
+    """Write *rows* as newline-delimited JSON, overwriting *path*."""
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
-
-    mj = _msgspec_encoder()
-
     with path.open("wb") as fh:
         for record in rows:
-            if mj is not None:
-                line = mj.encode(record) + b"\n"
-            else:
-                line = json.dumps(record, ensure_ascii=False).encode("utf-8") + b"\n"
-            fh.write(line)
+            fh.write(dumps_bytes(record))
+            fh.write(b"\n")

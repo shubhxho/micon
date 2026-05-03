@@ -6,13 +6,15 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from src.io.msgspec_io import read_json
 from src.schemas import SeriesDetail
 
 
 def load_detail(path: Path) -> SeriesDetail:
     """Load and validate a ``*_detail.json`` file, returning a ``SeriesDetail``."""
     path = Path(path)
-    return SeriesDetail.from_json_file(path)
+    data = read_json(path)
+    return SeriesDetail.model_validate(data)
 
 
 def validate_directory(root: Path) -> list[tuple[Path, str]]:
@@ -26,7 +28,8 @@ def validate_directory(root: Path) -> list[tuple[Path, str]]:
 
     for detail_path in sorted(root.rglob("*_detail.json")):
         try:
-            SeriesDetail.from_json_file(detail_path)
+            data = read_json(detail_path)
+            SeriesDetail.model_validate(data)
         except Exception as exc:
             errors.append((detail_path, str(exc)))
 

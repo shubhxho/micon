@@ -13,7 +13,6 @@ Usage:
 from __future__ import annotations
 
 import argparse
-import json
 import os
 import sys
 from pathlib import Path
@@ -21,6 +20,7 @@ from typing import Any
 
 import polars as pl
 
+from src.io.msgspec_io import read_json
 from src.manifest.confidence_summary import study_confidence_rollup
 
 # ---------------------------------------------------------------------------
@@ -52,8 +52,7 @@ def _infer_plane(description: str | None) -> str | None:
 def _parse_detail(path: Path, root: Path) -> dict[str, Any] | None:
     """Parse one detail JSON into a flat dict suitable for a DataFrame row."""
     try:
-        with path.open() as fh:
-            data = json.load(fh)
+        data = read_json(path)
     except Exception as exc:
         print(f"WARNING: could not read {path}: {exc}", file=sys.stderr)
         return None
