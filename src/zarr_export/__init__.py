@@ -17,4 +17,4 @@ Quick start::
 
 from __future__ import annotations
 
-__all__ = ["nifti_to_omezarr", "study_to_omezarr", "build_pyramid"]
+__all__ = ["nifti_to_omezarr", "study_to_omezarr", "build_pyramid", "series_volume_to_omezarr"]

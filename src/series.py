@@ -188,6 +188,7 @@ def process_one_series(
     conformance_issues: list[dict] | None = None,
     n_workers: int = 8,
     mcap_only: bool = False,
+    enable_zarr: bool = False,
 ) -> SeriesResult:
     """Process a single series: load volume, compute stats, export outputs.
 
@@ -307,6 +308,9 @@ def process_one_series(
 
         series_folder.mkdir(parents=True, exist_ok=True)
         result.series_folder = str(series_folder)
+
+        if enable_zarr and vol.ndim == 3:
+            _safe_write_zarr(vol, sitk_img, series_folder, safe_name, uid, info)
 
         if mcap_only:
             # Lightweight path: only MCAP + detail JSON, no image exports
@@ -713,3 +717,45 @@ def _safe_export_nifti(file_paths: list[str], out_path: str) -> None:
         export_nifti(file_paths, out_path)
     except Exception as e:
         log.debug("NIfTI export failed for %s: %s", out_path, e)
+
+
+def _safe_write_zarr(
+    vol: 'np.ndarray',
+    sitk_img: 'sitk.Image | None',
+    series_folder: 'Path',
+    safe_name: str,
+    uid: str,
+    info: dict,
+) -> None:
+    """Write per-series OME-Zarr group next to detail.json; silent on failure.
+
+    Voxel spacing is read from sitk_img if available (XYZ order from ITK,
+    reversed to ZYX for OME-Zarr).  Falls back to volume_stats spacing_mm
+    which is also in XYZ order.  A 1 mm isotropic default is used if neither
+    is available.
+    """
+    try:
+        from .zarr_export.series_writer import series_volume_to_omezarr
+
+        # Derive ZYX spacing: SimpleITK GetSpacing() -> (sx, sy, sz) XYZ
+        if sitk_img is not None:
+            sp_xyz = list(sitk_img.GetSpacing())[:3]
+            sp_zyx = (float(sp_xyz[2]), float(sp_xyz[1]), float(sp_xyz[0]))
+        else:
+            sp_mm = info.get("volume_stats", {}).get("spacing_mm", [1.0, 1.0, 1.0])
+            sp_mm = (list(sp_mm) + [1.0, 1.0, 1.0])[:3]
+            sp_zyx = (float(sp_mm[2]), float(sp_mm[1]), float(sp_mm[0]))
+
+        seq_type = (
+            info.get("sequence_classification", {}).get("sequence_type") or None
+        )
+        zarr_path = series_folder / f"{safe_name}.zarr"
+        series_volume_to_omezarr(
+            vol,
+            zarr_path,
+            voxel_spacing_mm=sp_zyx,
+            series_uid=uid,
+            sequence_type=seq_type,
+        )
+    except Exception as exc:
+        log.debug("OME-Zarr write failed for %s: %s", safe_name, exc)
