@@ -24,7 +24,7 @@ upload repo="shubhxho/speall-mri":
 
 # Build manifest.parquet locally from a root output directory
 manifest root out="manifests/":
-    python -m src.build_manifest --root "{{root}}" --out "{{out}}"
+    python -m src.manifest.builder --root "{{root}}" --out "{{out}}"
 
 # Regenerate the Speall MRI prospectus PDF
 pdf:
@@ -36,4 +36,4 @@ status:
 
 # Run the CLI planner against a local output directory
 plan root:
-    python -m src.cli_planner --root "{{root}}"
+    python -m src.pipeline.cli_planner --root "{{root}}"

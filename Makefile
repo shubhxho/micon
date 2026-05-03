@@ -49,7 +49,7 @@ upload:
 
 # Build manifest.parquet locally from a root output directory
 manifest:
-	python -m src.build_manifest --root "$(ROOT)" --out "$(OUT)"
+	python -m src.manifest.builder --root "$(ROOT)" --out "$(OUT)"
 
 # Regenerate the Speall MRI prospectus PDF
 pdf:
@@ -61,4 +61,4 @@ status:
 
 # Run the CLI planner against a local output directory
 plan:
-	python -m src.cli_planner --root "$(ROOT)"
+	python -m src.pipeline.cli_planner --root "$(ROOT)"
