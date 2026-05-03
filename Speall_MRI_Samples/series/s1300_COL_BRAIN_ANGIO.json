@@ -1,0 +1,140 @@
+{
+  "series": {
+    "uid": "1.2.826.0.1.3680043.10.60577089127295902377070488281",
+    "number": 1300,
+    "description": "COL:BRAIN ANGIO",
+    "modality": "MR",
+    "sop_class": "MR Image Storage",
+    "file_count": 1,
+    "source_subdir": ""
+  },
+  "sequence_classification": {
+    "sequence_type": "Color MIP",
+    "confidence": "high",
+    "reasoning": [
+      "Name matches '\\bCOL:'"
+    ],
+    "parameters": {
+      "TR_ms": 24.0,
+      "TE_ms": 3.4,
+      "TI_ms": null,
+      "flip_angle_deg": 15.0,
+      "b_value": null
+    }
+  },
+  "sequence_params": {
+    "tr": 24.0,
+    "te": 3.4,
+    "ti": null,
+    "fa": 15.0,
+    "b_value": null,
+    "slice_thickness": null,
+    "spacing_between_slices": null,
+    "rows": null,
+    "columns": null,
+    "field_strength": null,
+    "pixel_spacing": ""
+  },
+  "volume_stats": {
+    "volume_shape": [
+      1,
+      512,
+      512
+    ],
+    "volume_voxel_count": 262144,
+    "spacing_mm": [
+      0.4297,
+      0.4297,
+      0.8
+    ],
+    "origin_mm": [
+      -114.526,
+      -193.03,
+      -30.8949
+    ],
+    "direction_cosines": [
+      0.9965756628785061,
+      -0.01529997091095796,
+      -0.08125797836760558,
+      0.029304211258899957,
+      0.9842981286049622,
+      0.17406452029998387,
+      0.07731889394423705,
+      -0.17584966566614105,
+      0.9813759135643928
+    ],
+    "voxel_volume_mm3": 0.14771367200000005,
+    "total_volume_mm3": 38722.25283276801,
+    "total_volume_cc": 38.722252832768014,
+    "fov_mm": [
+      0.8,
+      220.0064,
+      220.0064
+    ],
+    "volume_min": 0.0,
+    "volume_max": 1258.0,
+    "volume_mean": 214.39634704589844,
+    "volume_std": 208.9850311279297,
+    "volume_median": 296.0,
+    "volume_p1": 0.0,
+    "volume_p5": 0.0,
+    "volume_p25": 0.0,
+    "volume_p75": 368.0,
+    "volume_p95": 489.0,
+    "volume_p99": 866.0,
+    "volume_iqr": 368.0,
+    "volume_dynamic_range": 1258.0,
+    "volume_snr_estimate": 3.343107180102561,
+    "volume_snr_naive": 1.0258933133290438,
+    "volume_cnr": 1132.093453369453,
+    "background_noise_std": 0.31580829938326277,
+    "otsu_threshold": 203.93359375,
+    "volume_nonzero_pct": 72.29461669921875,
+    "volume_tissue_pct": 52.02293395996094,
+    "volume_entropy": 5.0253470769907755,
+    "volume_skewness": 0.6938127503086351,
+    "volume_kurtosis": 0.5834646763124729,
+    "slice_snr_mean": 1.0258933133290438,
+    "slice_snr_std": 0.0,
+    "slice_snr_min": 1.0258933133290438,
+    "slice_snr_max": 1.0258933133290438,
+    "slice_intensity_uniformity": 1.0,
+    "quality_grade": "B",
+    "quality_score": 77.2
+  },
+  "files": [
+    "IM-8521-0001.dcm"
+  ],
+  "file_paths": [
+    "output/redacted/IM-8521-0001.dcm"
+  ],
+  "conformance_issues": [
+    {
+      "filename": "IM-8521-0001.dcm",
+      "missing_tags": [
+        "PatientID",
+        "PatientName",
+        "PatientBirthDate"
+      ],
+      "missing_count": 3,
+      "completeness_pct": 88.5
+    }
+  ],
+  "conformance_summary": {
+    "total_files": 1,
+    "files_with_issues": 1,
+    "pass_rate": 0.0
+  },
+  "per_file_stats": [
+    {
+      "filename": "IM-8521-0001.dcm",
+      "pixel_shape": null,
+      "pixel_min": null,
+      "pixel_max": null,
+      "pixel_mean": null,
+      "pixel_std": null,
+      "pixel_entropy": null,
+      "nonzero_ratio": null
+    }
+  ]
+}

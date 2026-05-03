@@ -1,0 +1,139 @@
+{
+  "series_number": 5,
+  "series_label": "Ax DWI",
+  "model": "Gemma 4 31B IT",
+  "model_id": "google/gemma-4-31b-it",
+  "provider": "openrouter",
+  "kind": "primary",
+  "stage_1_annotation": {
+    "annotation": {
+      "sequence_type": "DWI",
+      "sequence_confidence": "high",
+      "sequence_evidence": "The series is explicitly labeled as Ax DWI. Images show typical diffusion-weighted contrast with dark CSF and bright areas of restricted diffusion or T2-shine through.",
+      "plane": "mixed",
+      "acquisition": "2D",
+      "anatomical_coverage": {
+        "extent": "full",
+        "structures_visualized": [
+          "cerebral cortex",
+          "basal ganglia",
+          "thalamus",
+          "ventricles",
+          "cerebellum",
+          "brainstem"
+        ],
+        "laterality_assessment": "symmetric"
+      },
+      "pathology": {
+        "found": false,
+        "normal_statement": "No evidence of acute ischemic stroke or restricted diffusion is visualized across the sampled slices.",
+        "findings": [],
+        "differential": []
+      },
+      "quality": {
+        "contrast": "moderate",
+        "snr": "marginal",
+        "artifacts": {
+          "present": [
+            "geometric distortion",
+            "ringing"
+          ],
+          "severity": "moderate"
+        },
+        "diagnostic_adequacy": "diagnostic",
+        "grade": "B",
+        "grade_rationale": "Typical DWI image quality with some distortion in Coronal/Sagittal reconstructions but sufficient for acute stroke screening.",
+        "ml_training_suitability": "acceptable"
+      },
+      "ml_labels": {
+        "classification_tags": [
+          "normal_brain",
+          "dwi"
+        ],
+        "detection_targets": [],
+        "segmentation_regions": [],
+        "training_value": "medium",
+        "training_value_rationale": "Provides a clean example of a normal DWI scan without pathology."
+      },
+      "notable": [],
+      "actionable": "none"
+    },
+    "raw": null,
+    "time_s": 96.78,
+    "ok": true
+  },
+  "stage_2_tissue_analysis": {
+    "tissue_analysis": {
+      "tissue_analysis": {
+        "gray_matter": {
+          "cortical_thickness": "not assessable",
+          "deep_gray_nuclei": {
+            "caudate": "not assessable",
+            "putamen": "not assessable",
+            "thalamus": "not assessable",
+            "globus_pallidus": "not assessable"
+          }
+        },
+        "white_matter": {
+          "periventricular": "not assessable",
+          "deep_white_matter": "not assessable",
+          "fazekas_score": "not applicable",
+          "white_matter_disease_pattern": "not assessable"
+        },
+        "csf_spaces": {
+          "ventricles": "not assessable",
+          "sulci": "not assessable",
+          "midline_shift_mm": 0,
+          "hydrocephalus": "none"
+        },
+        "brainstem_cerebellum": {
+          "brainstem": "not assessable",
+          "cerebellum": "not assessable",
+          "tonsillar_position": "not assessable"
+        },
+        "vascular": {
+          "flow_voids": "not assessable",
+          "vessel_caliber": "not assessable",
+          "aneurysm_suspected": false
+        }
+      },
+      "age_assessment": {
+        "brain_age_estimate": "middle-aged",
+        "age_appropriate_changes": true,
+        "premature_aging_signs": []
+      },
+      "clinical_correlation": {
+        "most_likely_clinical_scenario": "Uninterpretable imaging due to severe artifact",
+        "supporting_evidence": [
+          "Severe ghosting/ringing artifacts across all planes",
+          "Low signal-to-noise ratio (SNR 1.90)",
+          "Poor spatial resolution and image quality"
+        ],
+        "follow_up_imaging": "repeat in X months"
+      },
+      "dataset_value_assessment": {
+        "teaching_value": "low",
+        "rarity": "common",
+        "pathology_complexity": "none",
+        "suggested_price_tier": "exclude"
+      },
+      "health_recommendations": {
+        "urgency": "routine",
+        "summary": "The provided imaging is of very poor technical quality and cannot be used for medical diagnosis.",
+        "key_findings_plain_language": [
+          "The images are too blurry and distorted (artifacts) to see brain details."
+        ],
+        "lifestyle_recommendations": [],
+        "when_to_see_doctor": [
+          "Consult your physician regarding the failure of this imaging study."
+        ],
+        "follow_up_recommendation": "none",
+        "brain_health_score": "F",
+        "disclaimer": "AI-generated. Not medical advice."
+      }
+    },
+    "raw": null,
+    "time_s": 40.67,
+    "ok": true
+  }
+}

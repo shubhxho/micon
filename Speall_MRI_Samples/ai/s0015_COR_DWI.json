@@ -1,0 +1,142 @@
+{
+  "series_number": 15,
+  "series_label": "COR DWI",
+  "model": "Gemma 4 31B IT",
+  "model_id": "google/gemma-4-31b-it",
+  "provider": "openrouter",
+  "kind": "primary",
+  "stage_1_annotation": {
+    "annotation": {
+      "sequence_type": "DWI",
+      "sequence_confidence": "high",
+      "sequence_evidence": "The series title explicitly states 'COR DWI'. The images show typical diffusion-weighted contrast with high signal in the CSF of the ventricles in certain slices and typical GM/WM signal patterns for b=1000 imaging.",
+      "plane": "mixed",
+      "acquisition": "2D",
+      "anatomical_coverage": {
+        "extent": "full",
+        "structures_visualized": [
+          "cerebral cortex",
+          "basal ganglia",
+          "ventricles",
+          "corpus callosum",
+          "cerebellum",
+          "brainstem"
+        ],
+        "laterality_assessment": "symmetric"
+      },
+      "pathology": {
+        "found": false,
+        "normal_statement": "No areas of restricted diffusion are identified. Ventricular size and morphology are within normal limits for age.",
+        "findings": [],
+        "differential": []
+      },
+      "quality": {
+        "contrast": "poor",
+        "snr": "poor",
+        "artifacts": {
+          "present": [
+            "severe ghosting",
+            "aliasing",
+            "geometric distortion",
+            "inter-slice gaps"
+          ],
+          "severity": "severe"
+        },
+        "diagnostic_adequacy": "non-diagnostic",
+        "grade": "F",
+        "grade_rationale": "The images suffer from extreme acquisition artifacts, including severe ghosting and signal loss, rendering the majority of the volume uninterpretable.",
+        "ml_training_suitability": "unusable"
+      },
+      "ml_labels": {
+        "classification_tags": [
+          "artifact_severe",
+          "non_diagnostic"
+        ],
+        "detection_targets": [],
+        "segmentation_regions": [],
+        "training_value": "low",
+        "training_value_rationale": "The image quality is too poor to provide useful anatomical or pathological ground truth for a training set."
+      },
+      "notable": [
+        "Severe image corruption/artifacts across all planes"
+      ],
+      "actionable": "none"
+    },
+    "raw": null,
+    "time_s": 51.76,
+    "ok": true
+  },
+  "stage_2_tissue_analysis": {
+    "tissue_analysis": {
+      "tissue_analysis": {
+        "gray_matter": {
+          "cortical_thickness": "not assessable",
+          "deep_gray_nuclei": {
+            "caudate": "not assessable",
+            "putamen": "not assessable",
+            "thalamus": "not assessable",
+            "globus_pallidus": "not assessable"
+          }
+        },
+        "white_matter": {
+          "periventricular": "not assessable",
+          "deep_white_matter": "not assessable",
+          "fazekas_score": "not assessable",
+          "white_matter_disease_pattern": "not assessable"
+        },
+        "csf_spaces": {
+          "ventricles": "not assessable",
+          "sulci": "not assessable",
+          "midline_shift_mm": 0,
+          "hydrocephalus": "none"
+        },
+        "brainstem_cerebellum": {
+          "brainstem": "not assessable",
+          "cerebellum": "not assessable",
+          "tonsillar_position": "not assessable"
+        },
+        "vascular": {
+          "flow_voids": "not assessable",
+          "vessel_caliber": "not assessable",
+          "aneurysm_suspected": false
+        }
+      },
+      "age_assessment": {
+        "brain_age_estimate": "pediatric",
+        "age_appropriate_changes": true,
+        "premature_aging_signs": []
+      },
+      "clinical_correlation": {
+        "most_likely_clinical_scenario": "Technical failure/Severe motion artifact",
+        "supporting_evidence": [
+          "Severe ghosting and motion artifacts throughout the Coronal DWI montage",
+          "Non-diagnostic image quality"
+        ],
+        "follow_up_imaging": "repeat in X months"
+      },
+      "dataset_value_assessment": {
+        "teaching_value": "low",
+        "rarity": "common",
+        "pathology_complexity": "none",
+        "suggested_price_tier": "exclude"
+      },
+      "health_recommendations": {
+        "urgency": "routine",
+        "summary": "The provided images are too blurry and distorted to be interpreted.",
+        "key_findings_plain_language": [
+          "The scan is non-diagnostic due to motion artifacts."
+        ],
+        "lifestyle_recommendations": [],
+        "when_to_see_doctor": [
+          "Discuss the quality of the scan with your physician."
+        ],
+        "follow_up_recommendation": "none",
+        "brain_health_score": "F",
+        "disclaimer": "AI-generated. Not medical advice."
+      }
+    },
+    "raw": null,
+    "time_s": 43.31,
+    "ok": true
+  }
+}

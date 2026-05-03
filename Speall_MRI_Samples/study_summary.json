@@ -1,0 +1,586 @@
+{
+  "study": {
+    "study_date": "20260323",
+    "study_description": "BRAIN + ANGIO CISS",
+    "institution": "PULSE HITECH SERVICES PVT LTD",
+    "manufacturer": "GE MEDICAL SYSTEMS",
+    "model": "SIGNA Pioneer",
+    "field_strength_T": "3",
+    "software": "['27', 'LX', 'MR Software release:PX26.1_R03_2128.b']",
+    "station": "GEHC"
+  },
+  "patient": {
+    "sex": "M",
+    "weight_kg": "80"
+  },
+  "totals": {
+    "series_count": 19,
+    "dicom_files": 997
+  },
+  "sequence_type_counts": {
+    "DWI": 2,
+    "FLAIR": 1,
+    "SWI (SWAN)": 2,
+    "T2-weighted": 2,
+    "T1-weighted": 2,
+    "TOF MRA": 1,
+    "CUBE (3D FSE)": 1,
+    "ADC Map": 1,
+    "Color MIP": 2,
+    "Projection MIP": 2,
+    "Processed/MIP": 3
+  },
+  "series": [
+    {
+      "series_number": 5,
+      "series_description": "Ax DWI",
+      "sequence_type": "DWI",
+      "sequence_confidence": "high",
+      "file_count": 50,
+      "tr_ms": 6034.0,
+      "te_ms": 74.5,
+      "b_value": 1000.0,
+      "volume_shape": [
+        50,
+        256,
+        256
+      ],
+      "spacing_mm": [
+        1.0938,
+        1.0938,
+        2.938777180173137
+      ],
+      "fov_mm": [
+        146.93885900865683,
+        280.0128,
+        280.0128
+      ],
+      "quality_grade": "D",
+      "quality_score": 44.5,
+      "volume_snr": 1.8974521811232614,
+      "volume_cnr": 1768.9993562233644
+    },
+    {
+      "series_number": 7,
+      "series_description": "Ax T2 FLAIR",
+      "sequence_type": "FLAIR",
+      "sequence_confidence": "high",
+      "file_count": 25,
+      "tr_ms": 9000.0,
+      "te_ms": 119.504,
+      "b_value": null,
+      "volume_shape": [
+        25,
+        512,
+        512
+      ],
+      "spacing_mm": [
+        0.4688,
+        0.4688,
+        6.000002861325996
+      ],
+      "fov_mm": [
+        150.00007153314988,
+        240.0256,
+        240.0256
+      ],
+      "quality_grade": "A",
+      "quality_score": 84.3,
+      "volume_snr": 37.00279937698136,
+      "volume_cnr": 30.586681537986923
+    },
+    {
+      "series_number": 9,
+      "series_description": "3D Ax SWAN",
+      "sequence_type": "SWI (SWAN)",
+      "sequence_confidence": "high",
+      "file_count": 116,
+      "tr_ms": 40.2,
+      "te_ms": 24.23,
+      "b_value": null,
+      "volume_shape": [
+        116,
+        512,
+        512
+      ],
+      "spacing_mm": [
+        0.4688,
+        0.4688,
+        1.2999952089046511
+      ],
+      "fov_mm": [
+        150.79944423293952,
+        240.0256,
+        240.0256
+      ],
+      "quality_grade": "B",
+      "quality_score": 65.5,
+      "volume_snr": 4.60865943825696,
+      "volume_cnr": 2453.3331552337395
+    },
+    {
+      "series_number": 10,
+      "series_description": "Ax T2 PROPELLER",
+      "sequence_type": "T2-weighted",
+      "sequence_confidence": "high",
+      "file_count": 25,
+      "tr_ms": 6500.0,
+      "te_ms": 112.59,
+      "b_value": null,
+      "volume_shape": [
+        25,
+        512,
+        512
+      ],
+      "spacing_mm": [
+        0.4688,
+        0.4688,
+        6.000002861325996
+      ],
+      "fov_mm": [
+        150.00007153314988,
+        240.0256,
+        240.0256
+      ],
+      "quality_grade": "C",
+      "quality_score": 64.2,
+      "volume_snr": 2.3717363808938554,
+      "volume_cnr": 6505.222112147005
+    },
+    {
+      "series_number": 11,
+      "series_description": "AxT1 MEMP",
+      "sequence_type": "T1-weighted",
+      "sequence_confidence": "medium",
+      "file_count": 25,
+      "tr_ms": 460.0,
+      "te_ms": 10.0,
+      "b_value": null,
+      "volume_shape": [
+        25,
+        512,
+        512
+      ],
+      "spacing_mm": [
+        0.4688,
+        0.4688,
+        6.000002861325996
+      ],
+      "fov_mm": [
+        150.00007153314988,
+        240.0256,
+        240.0256
+      ],
+      "quality_grade": "A",
+      "quality_score": 86.6,
+      "volume_snr": 59.274555448163206,
+      "volume_cnr": 53.124689613685284
+    },
+    {
+      "series_number": 12,
+      "series_description": " SAG T2",
+      "sequence_type": "T2-weighted",
+      "sequence_confidence": "high",
+      "file_count": 30,
+      "tr_ms": 7296.0,
+      "te_ms": 117.9,
+      "b_value": null,
+      "volume_shape": [
+        30,
+        512,
+        512
+      ],
+      "spacing_mm": [
+        0.4688,
+        0.4688,
+        4.9999970219896
+      ],
+      "fov_mm": [
+        149.999910659688,
+        240.0256,
+        240.0256
+      ],
+      "quality_grade": "A",
+      "quality_score": 85.3,
+      "volume_snr": 75.04544858289883,
+      "volume_cnr": 66.92721237376887
+    },
+    {
+      "series_number": 13,
+      "series_description": "BRAIN ANGIO",
+      "sequence_type": "T1-weighted",
+      "sequence_confidence": "medium",
+      "file_count": 128,
+      "tr_ms": 24.0,
+      "te_ms": 3.4,
+      "b_value": null,
+      "volume_shape": [
+        128,
+        512,
+        512
+      ],
+      "spacing_mm": [
+        0.4297,
+        0.4297,
+        0.8000010107335205
+      ],
+      "fov_mm": [
+        102.40012937389062,
+        220.0064,
+        220.0064
+      ],
+      "quality_grade": "B",
+      "quality_score": 70.8,
+      "volume_snr": 4.425127224221058,
+      "volume_cnr": 1107.581803863747
+    },
+    {
+      "series_number": 15,
+      "series_description": "COR DWI",
+      "sequence_type": "DWI",
+      "sequence_confidence": "high",
+      "file_count": 74,
+      "tr_ms": 9840.0,
+      "te_ms": 78.0,
+      "b_value": 1200.0,
+      "volume_shape": [
+        74,
+        256,
+        256
+      ],
+      "spacing_mm": [
+        0.9375,
+        0.9375,
+        1.9232816898025864
+      ],
+      "fov_mm": [
+        142.3228450453914,
+        240.0,
+        240.0
+      ],
+      "quality_grade": "D",
+      "quality_score": 49.0,
+      "volume_snr": 1.9956761982741893,
+      "volume_cnr": 1916.350840109559
+    },
+    {
+      "series_number": 17,
+      "series_description": "3D Ax TOF NECK",
+      "sequence_type": "TOF MRA",
+      "sequence_confidence": "high",
+      "file_count": 200,
+      "tr_ms": 23.0,
+      "te_ms": 3.4,
+      "b_value": null,
+      "volume_shape": [
+        200,
+        512,
+        512
+      ],
+      "spacing_mm": [
+        0.5078,
+        0.5078,
+        0.9999994878567411
+      ],
+      "fov_mm": [
+        199.9998975713482,
+        259.9936,
+        259.9936
+      ],
+      "quality_grade": "A",
+      "quality_score": 83.8,
+      "volume_snr": 53.138776051626515,
+      "volume_cnr": 45.6642169278736
+    },
+    {
+      "series_number": 18,
+      "series_description": "3D Ax T2 Cube HyperCube.",
+      "sequence_type": "CUBE (3D FSE)",
+      "sequence_confidence": "high",
+      "file_count": 104,
+      "tr_ms": 2002.0,
+      "te_ms": 160.294,
+      "b_value": null,
+      "volume_shape": [
+        104,
+        512,
+        512
+      ],
+      "spacing_mm": [
+        0.332,
+        0.332,
+        0.5999994257899347
+      ],
+      "fov_mm": [
+        62.39994028215321,
+        169.984,
+        169.984
+      ],
+      "quality_grade": "A",
+      "quality_score": 83.2,
+      "volume_snr": 64.3486769044922,
+      "volume_cnr": 51.95394798162723
+    },
+    {
+      "series_number": 550,
+      "series_description": "ADC (10^-6 mm\u00b2/s):Mar 23 2026 15-52-42 IST",
+      "sequence_type": "ADC Map",
+      "sequence_confidence": "high",
+      "file_count": 25,
+      "tr_ms": 6034.0,
+      "te_ms": 74.5,
+      "b_value": 1000.0,
+      "volume_shape": [
+        25,
+        256,
+        256
+      ],
+      "spacing_mm": [
+        1.093799949,
+        1.093799949,
+        6.000003558274283
+      ],
+      "fov_mm": [
+        150.00008895685707,
+        280.012786944,
+        280.012786944
+      ],
+      "quality_grade": "C",
+      "quality_score": 57.3,
+      "volume_snr": 2.4219048075866576,
+      "volume_cnr": 3211.6886778545722
+    },
+    {
+      "series_number": 900,
+      "series_description": "FILT_PHA: 3D Ax SWAN",
+      "sequence_type": "SWI (SWAN)",
+      "sequence_confidence": "high",
+      "file_count": 116,
+      "tr_ms": 40.2,
+      "te_ms": 24.23,
+      "b_value": null,
+      "volume_shape": [
+        116,
+        512,
+        512
+      ],
+      "spacing_mm": [
+        0.4688,
+        0.4688,
+        1.2999952089046511
+      ],
+      "fov_mm": [
+        150.79944423293952,
+        240.0256,
+        240.0256
+      ],
+      "quality_grade": "F",
+      "quality_score": 32.0,
+      "volume_snr": 2.219196527089311,
+      "volume_cnr": 1.9433190086824341
+    },
+    {
+      "series_number": 1300,
+      "series_description": "COL:BRAIN ANGIO",
+      "sequence_type": "Color MIP",
+      "sequence_confidence": "high",
+      "file_count": 1,
+      "tr_ms": 24.0,
+      "te_ms": 3.4,
+      "b_value": null,
+      "volume_shape": [
+        1,
+        512,
+        512
+      ],
+      "spacing_mm": [
+        0.4297,
+        0.4297,
+        0.8
+      ],
+      "fov_mm": [
+        0.8,
+        220.0064,
+        220.0064
+      ],
+      "quality_grade": "B",
+      "quality_score": 77.2,
+      "volume_snr": 3.343107180102561,
+      "volume_cnr": 1132.093453369453
+    },
+    {
+      "series_number": 1301,
+      "series_description": "PJN:BRAIN ANGIO",
+      "sequence_type": "Projection MIP",
+      "sequence_confidence": "high",
+      "file_count": 19,
+      "tr_ms": 24.0,
+      "te_ms": 3.4,
+      "b_value": null,
+      "volume_shape": [
+        19,
+        512,
+        512
+      ],
+      "spacing_mm": [
+        0.4297,
+        0.4297,
+        12.198344444444444
+      ],
+      "fov_mm": [
+        231.76854444444444,
+        220.0064,
+        220.0064
+      ],
+      "quality_grade": "A",
+      "quality_score": 90.1,
+      "volume_snr": 65.12658161533169,
+      "volume_cnr": 58.53679130325567
+    },
+    {
+      "series_number": 1350,
+      "series_description": "Processed Images",
+      "sequence_type": "Processed/MIP",
+      "sequence_confidence": "high",
+      "file_count": 13,
+      "tr_ms": 24.0,
+      "te_ms": 3.4,
+      "b_value": null,
+      "volume_shape": [
+        13,
+        910,
+        1137
+      ],
+      "spacing_mm": [
+        0.241772294,
+        0.241772294,
+        12.950132778708094
+      ],
+      "fov_mm": [
+        168.35172612320522,
+        220.01278754,
+        274.895098278
+      ],
+      "quality_grade": "C",
+      "quality_score": 50.2,
+      "volume_snr": 3.9043951806187605,
+      "volume_cnr": 3.0990037536905017
+    },
+    {
+      "series_number": 1351,
+      "series_description": "Processed Images",
+      "sequence_type": "Processed/MIP",
+      "sequence_confidence": "high",
+      "file_count": 13,
+      "tr_ms": 24.0,
+      "te_ms": 3.4,
+      "b_value": null,
+      "volume_shape": [
+        13,
+        910,
+        1137
+      ],
+      "spacing_mm": [
+        0.241772294,
+        0.241772294,
+        22.088434954713417
+      ],
+      "fov_mm": [
+        287.1496544112744,
+        220.01278754,
+        274.895098278
+      ],
+      "quality_grade": "D",
+      "quality_score": 49.7,
+      "volume_snr": 4.3872613798913935,
+      "volume_cnr": 3.4443076196551528
+    },
+    {
+      "series_number": 1700,
+      "series_description": "COL:3D Ax TOF NECK",
+      "sequence_type": "Color MIP",
+      "sequence_confidence": "high",
+      "file_count": 1,
+      "tr_ms": 23.0,
+      "te_ms": 3.4,
+      "b_value": null,
+      "volume_shape": [
+        1,
+        512,
+        512
+      ],
+      "spacing_mm": [
+        0.5078,
+        0.5078,
+        1.0
+      ],
+      "fov_mm": [
+        1.0,
+        259.9936,
+        259.9936
+      ],
+      "quality_grade": "A",
+      "quality_score": 100.0,
+      "volume_snr": 25.831128873768076,
+      "volume_cnr": 20.866355528682146
+    },
+    {
+      "series_number": 1701,
+      "series_description": "PJN:3D Ax TOF NECK",
+      "sequence_type": "Projection MIP",
+      "sequence_confidence": "high",
+      "file_count": 19,
+      "tr_ms": 23.0,
+      "te_ms": 3.4,
+      "b_value": null,
+      "volume_shape": [
+        19,
+        512,
+        512
+      ],
+      "spacing_mm": [
+        0.5078,
+        0.5078,
+        14.41625
+      ],
+      "fov_mm": [
+        273.90875,
+        259.9936,
+        259.9936
+      ],
+      "quality_grade": "B",
+      "quality_score": 74.0,
+      "volume_snr": 6.228042868065464,
+      "volume_cnr": 5.5113810108246515
+    },
+    {
+      "series_number": 1750,
+      "series_description": "Processed Images",
+      "sequence_type": "Processed/MIP",
+      "sequence_confidence": "high",
+      "file_count": 13,
+      "tr_ms": 23.0,
+      "te_ms": 3.4,
+      "b_value": null,
+      "volume_shape": [
+        13,
+        910,
+        1137
+      ],
+      "spacing_mm": [
+        0.285700202,
+        0.285700202,
+        26.791297959800747
+      ],
+      "fov_mm": [
+        348.2868734774097,
+        259.98718382000004,
+        324.841129674
+      ],
+      "quality_grade": "C",
+      "quality_score": 51.9,
+      "volume_snr": 7.407520858808993,
+      "volume_cnr": 5.038745948691822
+    }
+  ]
+}

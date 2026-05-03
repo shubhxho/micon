@@ -1,0 +1,140 @@
+{
+  "series": {
+    "uid": "1.2.826.0.1.3680043.10.54093193761893564667333266599",
+    "number": 1700,
+    "description": "COL:3D Ax TOF NECK",
+    "modality": "MR",
+    "sop_class": "MR Image Storage",
+    "file_count": 1,
+    "source_subdir": ""
+  },
+  "sequence_classification": {
+    "sequence_type": "Color MIP",
+    "confidence": "high",
+    "reasoning": [
+      "Name matches '\\bCOL:'"
+    ],
+    "parameters": {
+      "TR_ms": 23.0,
+      "TE_ms": 3.4,
+      "TI_ms": null,
+      "flip_angle_deg": 15.0,
+      "b_value": null
+    }
+  },
+  "sequence_params": {
+    "tr": 23.0,
+    "te": 3.4,
+    "ti": null,
+    "fa": 15.0,
+    "b_value": null,
+    "slice_thickness": null,
+    "spacing_between_slices": null,
+    "rows": null,
+    "columns": null,
+    "field_strength": null,
+    "pixel_spacing": ""
+  },
+  "volume_stats": {
+    "volume_shape": [
+      1,
+      512,
+      512
+    ],
+    "volume_voxel_count": 262144,
+    "spacing_mm": [
+      0.5078,
+      0.5078,
+      1.0
+    ],
+    "origin_mm": [
+      -125.556,
+      -115.878,
+      -257.485
+    ],
+    "direction_cosines": [
+      0.9989710770579197,
+      -0.01735996166837896,
+      -0.041897719897535886,
+      0.000982864113423859,
+      0.9319079423029397,
+      -0.362693563564113,
+      0.04534116429773838,
+      0.3622792000702954,
+      0.9309661433245315
+    ],
+    "voxel_volume_mm3": 0.25786084000000004,
+    "total_volume_mm3": 67596.67204096001,
+    "total_volume_cc": 67.59667204096002,
+    "fov_mm": [
+      1.0,
+      259.9936,
+      259.9936
+    ],
+    "volume_min": 0.0,
+    "volume_max": 1478.0,
+    "volume_mean": 318.9600524902344,
+    "volume_std": 226.86700439453125,
+    "volume_median": 375.0,
+    "volume_p1": 0.0,
+    "volume_p5": 0.0,
+    "volume_p25": 56.0,
+    "volume_p75": 487.0,
+    "volume_p95": 601.0,
+    "volume_p99": 892.0,
+    "volume_iqr": 431.0,
+    "volume_dynamic_range": 1478.0,
+    "volume_snr_estimate": 25.831128873768076,
+    "volume_snr_naive": 1.4059340710895771,
+    "volume_cnr": 20.866355528682146,
+    "background_noise_std": 17.918500286527017,
+    "otsu_threshold": 251.14453125,
+    "volume_nonzero_pct": 81.80198669433594,
+    "volume_tissue_pct": 65.84434509277344,
+    "volume_entropy": 6.0672647401563635,
+    "volume_skewness": 0.038461172338066965,
+    "volume_kurtosis": -0.35032267701743836,
+    "slice_snr_mean": 1.4059340710895771,
+    "slice_snr_std": 0.0,
+    "slice_snr_min": 1.4059340710895771,
+    "slice_snr_max": 1.4059340710895771,
+    "slice_intensity_uniformity": 1.0,
+    "quality_grade": "A",
+    "quality_score": 100.0
+  },
+  "files": [
+    "IM-8525-0001.dcm"
+  ],
+  "file_paths": [
+    "output/redacted/IM-8525-0001.dcm"
+  ],
+  "conformance_issues": [
+    {
+      "filename": "IM-8525-0001.dcm",
+      "missing_tags": [
+        "PatientID",
+        "PatientName",
+        "PatientBirthDate"
+      ],
+      "missing_count": 3,
+      "completeness_pct": 88.5
+    }
+  ],
+  "conformance_summary": {
+    "total_files": 1,
+    "files_with_issues": 1,
+    "pass_rate": 0.0
+  },
+  "per_file_stats": [
+    {
+      "filename": "IM-8525-0001.dcm",
+      "pixel_shape": null,
+      "pixel_min": null,
+      "pixel_max": null,
+      "pixel_mean": null,
+      "pixel_std": null,
+      "pixel_entropy": null,
+      "nonzero_ratio": null
+    }
+  ]
+}

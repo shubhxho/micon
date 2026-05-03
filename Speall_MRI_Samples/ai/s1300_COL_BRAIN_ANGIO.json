@@ -1,0 +1,31 @@
+{
+  "series_number": 1300,
+  "series_label": "COL:BRAIN ANGIO",
+  "model": "Gemma 4 31B IT",
+  "model_id": "google/gemma-4-31b-it",
+  "provider": "openrouter",
+  "kind": "derivative",
+  "annotation": {
+    "map_type": "MIP",
+    "source_sequence_inferred": "TOF MRA",
+    "expected_signal_behavior": "Flow-related enhancement of intracranial arteries should be bright",
+    "focal_abnormalities": [],
+    "no_focal_abnormality": true,
+    "quality": {
+      "registration_accuracy": "n/a",
+      "artifacts_noted": [
+        "severe aliasing/reconstruction failure in coronal and sagittal planes"
+      ],
+      "diagnostic_adequacy": "limited",
+      "grade": "D"
+    },
+    "ml_labels": {
+      "use_case": "exclude",
+      "training_value": "low"
+    },
+    "notes": "The axial MIP is diagnostic, but the coronal and sagittal reconstructions are failed/corrupted, displaying vertical stripe artifacts."
+  },
+  "raw": null,
+  "time_s": 8.15,
+  "ok": true
+}

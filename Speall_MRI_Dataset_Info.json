@@ -1,0 +1,218 @@
+{
+  "dataset": {
+    "name": "Speall MRI Brain Dataset",
+    "version": "2026.04",
+    "modality": "MR",
+    "body_region": "Brain + Cerebrovascular",
+    "license": "MIT",
+    "geography": "India (institution names redacted)"
+  },
+  "verification": {
+    "source": "T7 Shield DICOM corpus",
+    "source_path": "/Volumes/T7 Shield/redacted",
+    "scanned_on": "2026-04-30",
+    "files_scanned": 355133,
+    "read_errors": 0,
+    "cross_checked_against": ["modal volume micom-data", "modal volume micom-v2"]
+  },
+  "totals": {
+    "studies": 1105,
+    "series": 34574,
+    "dicom_files": 355133,
+    "raw_volume_gb": 66,
+    "processed_volume_gb_estimate": 170,
+    "metadata_columns_per_file": 240,
+    "distinct_study_dates": 450
+  },
+  "acquisition_period": {
+    "start": "2021-12-16",
+    "end": "2024-10-31",
+    "span_years": 2.9
+  },
+  "patient_demographics": {
+    "sex_distribution": {
+      "M": 182906,
+      "F": 171515,
+      "Other": 4,
+      "Unknown": 708
+    },
+    "sex_share": {
+      "M": 0.516,
+      "F": 0.483
+    },
+    "age_sample_years": [43, 70, 36, 16, 22, 37, 64, 72, 58, 54, 42, 53, 43, 87, 15, 66, 0.42, 85, 22, 64]
+  },
+  "scanner_mix_by_files": [
+    { "vendor": "GE",      "model": "SIGNA Pioneer",       "field_T": 3.0, "files": 262192, "share": 0.738 },
+    { "vendor": "Philips", "model": "Achieva",             "field_T": 1.5, "files": 38713,  "share": 0.109 },
+    { "vendor": "GE",      "model": "SIGNA Explorer",      "field_T": 1.5, "files": 20161,  "share": 0.057 },
+    { "vendor": "GE",      "model": "Signa HDxt",          "field_T": 1.5, "files": 9154,   "share": 0.026 },
+    { "vendor": "GE",      "model": "SIGNA Creator",       "field_T": 1.5, "files": 8378,   "share": 0.024 },
+    { "vendor": "Siemens", "model": "MAGNETOM Essenza",    "field_T": 1.5, "files": 5504,   "share": 0.016 },
+    { "vendor": "GE",      "model": "Optima MR360",        "field_T": 1.5, "files": 4804,   "share": 0.014 },
+    { "vendor": "Philips", "model": "Achieva dStream",     "field_T": 1.5, "files": 2588,   "share": 0.007 },
+    { "vendor": "Philips", "model": "Spectra",             "field_T": 1.5, "files": 2010,   "share": 0.006 },
+    { "vendor": "Philips", "model": "Ingenia CX",          "field_T": 3.0, "files": 983,    "share": 0.003 },
+    { "vendor": "Toshiba", "model": "FILMER 6.0",          "field_T": 1.5, "files": 403,    "share": 0.001 },
+    { "vendor": "Toshiba", "model": "MRT200SP3",           "field_T": 1.5, "files": 216,    "share": 0.001 }
+  ],
+  "vendor_aggregate": {
+    "GE":      { "files": 305119, "share": 0.859 },
+    "Philips": { "files": 42284,  "share": 0.119 },
+    "Siemens": { "files": 7514,   "share": 0.021 },
+    "Toshiba": { "files": 216,    "share": 0.001 }
+  },
+  "field_strength_aggregate": {
+    "3.0T": { "files": 265460, "share": 0.797 },
+    "1.5T": { "files": 65198,  "share": 0.196 },
+    "unknown": { "files": 24475, "share": 0.073 }
+  },
+  "rf_coil_top": [
+    { "coil": "Head 32",      "files": 163593 },
+    { "coil": "21HN",         "files": 52954 },
+    { "coil": "(unknown)",    "files": 49466 },
+    { "coil": "NVarrayII",    "files": 30912 },
+    { "coil": "Head 24",      "files": 15265 },
+    { "coil": "21HN+32PA",    "files": 9715 },
+    { "coil": "Head Neck 45", "files": 6076 },
+    { "coil": "Neck Spine 32","files": 5048 },
+    { "coil": "HNS Head",     "files": 3954 },
+    { "coil": "8HRBRAIN",     "files": 3749 }
+  ],
+  "software_top": [
+    { "version": "PX26.1_R03_2128.b",      "vendor": "GE",      "files": 198448 },
+    { "version": "SIGNA_LX1.MR30.1_R01B_2430.c", "vendor": "GE", "files": 66424 },
+    { "version": "5.4.1 / 5.4.1.3",        "vendor": "Philips", "files": 37682 },
+    { "version": "SIGNA_LX1.MR30.1_R01C_2502.a", "vendor": "GE", "files": 18351 },
+    { "version": "SV25.0_R08_1822.b",      "vendor": "GE",      "files": 7678 },
+    { "version": "syngo MR E11",           "vendor": "Siemens", "files": 6820 },
+    { "version": "SV25.0_R08_1822.a",      "vendor": "GE",      "files": 4616 },
+    { "version": "HD23.0_V03_1614.b",      "vendor": "GE",      "files": 4358 },
+    { "version": "5.7.1 / 5.7.1.3",        "vendor": "Philips", "files": 3561 },
+    { "version": "SV25.2_R04_2127.a",      "vendor": "GE",      "files": 2004 }
+  ],
+  "primary_protocol_subset": {
+    "scanner": "GE SIGNA Pioneer 3.0T",
+    "software": "PX26.1_R03_2128.b",
+    "rf_coil": "Head 32-channel",
+    "files": 262192,
+    "share_of_total": 0.738
+  },
+  "study_descriptions_top": [
+    { "description": "BRAIN",                  "files": 37133 },
+    { "description": "BRAIN P+C",              "files": 23723 },
+    { "description": "BRAIN P + C",            "files": 15833 },
+    { "description": "BRAIN CE",               "files": 14879 },
+    { "description": "BRAIN ANGIO",            "files": 13010 },
+    { "description": "BRAIN P+CE",             "files": 11354 },
+    { "description": "BRAIN P",                "files": 7634 },
+    { "description": "BRAIN PLAIN",            "files": 5160 },
+    { "description": "BRAIN P+C DTI+CSF FLOW", "files": 5125 },
+    { "description": "BRAIN CONTRAST",         "files": 5007 },
+    { "description": "BRAIN CE TRACTOGRAM",    "files": 4797 },
+    { "description": "BRAIN EPILEPSY",         "files": 4788 },
+    { "description": "BRAIN +C",               "files": 4663 },
+    { "description": "BRAIN + ANGIO",          "files": 4659 },
+    { "description": "BRAIN +ANGIO",           "files": 4247 }
+  ],
+  "series_descriptions_top": [
+    { "description": "Ax DSC Perfusion",                "series": 47593 },
+    { "description": "FILT_PHA: 3D Ax SWAN",            "series": 21514 },
+    { "description": "3D Ax SWAN",                      "series": 21460 },
+    { "description": "3D Ax T1 SPGR FS",                "series": 11296 },
+    { "description": "3D SAG T1 SPGR FS",               "series": 10756 },
+    { "description": "DEFAULT PS SERIES",               "series": 9917 },
+    { "description": "Ax DWI",                          "series": 9217 },
+    { "description": "Ax T2 FLAIR",                     "series": 6912 },
+    { "description": "Ax T2 PROPELLER",                 "series": 5603 },
+    { "description": "3D Sag T1 BRAVO",                 "series": 4484 },
+    { "description": "3D Ax T2 Cube HyperCube.",        "series": 4460 },
+    { "description": "3D Ax TOF NECK",                  "series": 4236 },
+    { "description": "BRAIN ANGIO",                     "series": 3814 },
+    { "description": "3D Ax T1 FSPGR",                  "series": 3719 },
+    { "description": "ORIG 3D Ax T1 FSPGR",             "series": 3715 },
+    { "description": "ADC (10^-6 mm^2/s)",              "series": 3621 },
+    { "description": "SAG T2",                          "series": 3448 },
+    { "description": "3D SAG T1 FSPGR",                 "series": 3432 },
+    { "description": "ORIG 3D SAG T1 FSPGR",            "series": 3431 },
+    { "description": "Cor 3D FLAIR Cube NH",            "series": 3250 },
+    { "description": "COR T2",                          "series": 3209 },
+    { "description": "AxT1 MEMP",                       "series": 3152 },
+    { "description": "Ax DWI ALL B-1000",               "series": 3126 },
+    { "description": "3D Sag T2 Cube",                  "series": 3068 },
+    { "description": "Cal Head 32",                     "series": 2944 },
+    { "description": "ORIG 3D Sag T2 Cube",             "series": 2720 },
+    { "description": "SAG 3D T1+C",                     "series": 2718 },
+    { "description": "Processed Images",                "series": 2472 },
+    { "description": "eADC[No-Q]",                      "series": 2325 },
+    { "description": "3D Sag MRV",                      "series": 2240 },
+    { "description": "NECK ANGIO",                      "series": 2204 },
+    { "description": "COR T2 FSE",                      "series": 2200 },
+    { "description": "FLAIR AXIAL",                     "series": 1919 },
+    { "description": "Ax DWI TENSOR b-1000 27directions","series": 1904 },
+    { "description": "DWI",                             "series": 1792 },
+    { "description": "Ax 3DTOF SPGR 6-slabs",           "series": 1736 },
+    { "description": "T2W AXIAL",                       "series": 1729 },
+    { "description": "DTI MRI_",                        "series": 1650 },
+    { "description": "Sag 3D FLAIR Cube NH",            "series": 1632 },
+    { "description": "T1W AXIAL",                       "series": 1585 }
+  ],
+  "study_dates_top": [
+    { "date": "2024-10-16", "files": 12435 },
+    { "date": "2024-10-19", "files": 12299 },
+    { "date": "2024-10-13", "files": 11439 },
+    { "date": "2024-10-03", "files": 11345 },
+    { "date": "2024-10-21", "files": 11104 },
+    { "date": "2024-09-02", "files": 10709 },
+    { "date": "2024-09-15", "files": 10540 },
+    { "date": "2024-10-27", "files": 10273 },
+    { "date": "2024-10-23", "files": 10148 },
+    { "date": "2024-10-26", "files": 9723 },
+    { "date": "2024-10-07", "files": 9190 },
+    { "date": "2024-09-14", "files": 8958 },
+    { "date": "2024-08-25", "files": 8787 },
+    { "date": "2024-10-11", "files": 8321 },
+    { "date": "2024-10-14", "files": 7640 },
+    { "date": "2024-10-12", "files": 7281 },
+    { "date": "2024-10-22", "files": 7160 },
+    { "date": "2024-09-06", "files": 6875 },
+    { "date": "2024-10-02", "files": 6835 },
+    { "date": "2024-10-15", "files": 6730 }
+  ],
+  "deliverables_per_series": [
+    { "file": "{name}_detail.json",    "description": "Metadata, quality grades, volume statistics, ML training score" },
+    { "file": "{name}_multiplane.png", "description": "Three-plane montage (axial + coronal + sagittal)" },
+    { "file": "{name}_histogram.png",  "description": "Intensity distribution" },
+    { "file": "{name}_enhanced.png",   "description": "Contrast-enhanced view" },
+    { "file": "{name}.mcap",           "description": "MCAP container of the series + metadata" }
+  ],
+  "deliverables_per_study": [
+    { "file": "cross_series_comparison.png", "description": "Multi-metric quality chart" },
+    { "file": "dicom_study.mcap",            "description": "Full study MCAP record" }
+  ],
+  "deliverables_dataset_level": [
+    { "file": "dicom_metadata.csv",   "description": "Per-file tabular metadata (240+ columns)" },
+    { "file": "dicom_metadata.parquet","description": "Same as CSV in columnar format" },
+    { "file": "dicom_full_dump.json", "description": "Complete DICOM tag dump (~4.2 GB)" },
+    { "file": "series_stats.json",    "description": "Series-level aggregate statistics" },
+    { "file": "report.html",          "description": "Interactive HTML dashboard" }
+  ],
+  "ml_training_score": {
+    "scale": "0-100 composite",
+    "weights": {
+      "cnr": 25,
+      "noise_floor": 20,
+      "bias_field": 15,
+      "sharpness": 15,
+      "histogram_separation": 10,
+      "inter_slice_consistency": 15
+    },
+    "grade_bands": [
+      { "grade": "A", "min": 80, "tier": "premium" },
+      { "grade": "B", "min": 65, "tier": "standard" },
+      { "grade": "C", "min": 50, "tier": "usable" },
+      { "grade": "D", "min": 35, "tier": "limited" },
+      { "grade": "F", "min": 0,  "tier": "exclude" }
+    ]
+  }
+}

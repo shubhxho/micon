@@ -1,0 +1,150 @@
+{
+  "series_number": 13,
+  "series_label": "BRAIN ANGIO",
+  "model": "Gemma 4 31B IT",
+  "model_id": "google/gemma-4-31b-it",
+  "provider": "openrouter",
+  "kind": "primary",
+  "stage_1_annotation": {
+    "annotation": {
+      "sequence_type": "T1",
+      "sequence_confidence": "high",
+      "sequence_evidence": "CSF is dark (hypointense), gray matter is darker than white matter (standard T1 contrast).",
+      "plane": "mixed",
+      "acquisition": "3D",
+      "anatomical_coverage": {
+        "extent": "full",
+        "structures_visualized": [
+          "cerebral cortex",
+          "basal ganglia",
+          "thalamus",
+          "lateral ventricles",
+          "third ventricle",
+          "brainstem",
+          "cerebellum",
+          "corpus callosum",
+          "internal capsule"
+        ],
+        "laterality_assessment": "symmetric"
+      },
+      "pathology": {
+        "found": false,
+        "normal_statement": "Normal brain parenchyma with preserved GM/WM differentiation, no focal signal abnormalities, no mass effect or midline shift, and ventricles are normal in size and configuration for age.",
+        "findings": [],
+        "differential": []
+      },
+      "quality": {
+        "contrast": "sharp",
+        "snr": "adequate",
+        "artifacts": {
+          "present": [],
+          "severity": "none"
+        },
+        "diagnostic_adequacy": "diagnostic",
+        "grade": "A",
+        "grade_rationale": "High signal-to-noise ratio and clear anatomical detail across all three planes.",
+        "ml_training_suitability": "excellent"
+      },
+      "ml_labels": {
+        "classification_tags": [
+          "normal_brain",
+          "T1_weighted"
+        ],
+        "detection_targets": [],
+        "segmentation_regions": [
+          "ventricles",
+          "cortical_gray_matter",
+          "white_matter"
+        ],
+        "training_value": "high",
+        "training_value_rationale": "Clean, high-quality example of a normal T1-weighted brain volume for baseline training."
+      },
+      "notable": [
+        "Despite the label 'BRAIN ANGIO', these specific slices are T1-weighted anatomical images, likely the localizer or a 3D T1 structural sequence."
+      ],
+      "actionable": "none"
+    },
+    "raw": null,
+    "time_s": 67.53,
+    "ok": true
+  },
+  "stage_2_tissue_analysis": {
+    "tissue_analysis": {
+      "tissue_analysis": {
+        "gray_matter": {
+          "cortical_thickness": "preserved",
+          "deep_gray_nuclei": {
+            "caudate": "normal morphology",
+            "putamen": "normal morphology",
+            "thalamus": "normal morphology",
+            "globus_pallidus": "normal morphology"
+          }
+        },
+        "white_matter": {
+          "periventricular": "minimal signal change",
+          "deep_white_matter": "preserved",
+          "fazekas_score": "not assessable",
+          "white_matter_disease_pattern": "none significant"
+        },
+        "csf_spaces": {
+          "ventricles": "normal size and configuration",
+          "sulci": "normal for age",
+          "midline_shift_mm": 0,
+          "hydrocephalus": "none"
+        },
+        "brainstem_cerebellum": {
+          "brainstem": "normal morphology",
+          "cerebellum": "normal morphology",
+          "tonsillar_position": "normal"
+        },
+        "vascular": {
+          "flow_voids": "present in major intracranial arteries",
+          "vessel_caliber": "within normal limits",
+          "aneurysm_suspected": false
+        }
+      },
+      "age_assessment": {
+        "brain_age_estimate": "young-adult",
+        "age_appropriate_changes": true,
+        "premature_aging_signs": []
+      },
+      "clinical_correlation": {
+        "most_likely_clinical_scenario": "screening or routine evaluation",
+        "supporting_evidence": [
+          "Absence of focal lesions",
+          "Normal ventricular system",
+          "Preserved cortical volume"
+        ],
+        "follow_up_imaging": "none"
+      },
+      "dataset_value_assessment": {
+        "teaching_value": "low",
+        "rarity": "common",
+        "pathology_complexity": "none",
+        "suggested_price_tier": "discount"
+      },
+      "health_recommendations": {
+        "urgency": "routine",
+        "summary": "The brain imaging appears normal and healthy.",
+        "key_findings_plain_language": [
+          "No signs of stroke, tumors, or abnormal bleeding",
+          "Brain structure is normal for the estimated age"
+        ],
+        "lifestyle_recommendations": [
+          "Maintain a healthy diet",
+          "Regular physical exercise",
+          "Ensure adequate sleep"
+        ],
+        "when_to_see_doctor": [
+          "If new neurological symptoms develop, such as sudden weakness or speech difficulty"
+        ],
+        "follow_up_recommendation": "none",
+        "brain_health_score": "A",
+        "disclaimer": "AI-generated. Not medical advice."
+      }
+    },
+    "raw": null,
+    "time_s": 25.29,
+    "ok": true
+  }
+}

@@ -1,0 +1,29 @@
+{
+  "series_number": 1351,
+  "series_label": "Processed Images",
+  "model": "Gemma 4 31B IT",
+  "model_id": "google/gemma-4-31b-it",
+  "provider": "openrouter",
+  "kind": "derivative",
+  "annotation": {
+    "map_type": "MIP",
+    "source_sequence_inferred": "MRA",
+    "expected_signal_behavior": "Blood vessels should be bright",
+    "focal_abnormalities": [],
+    "no_focal_abnormality": true,
+    "quality": {
+      "registration_accuracy": "n/a",
+      "artifacts_noted": [],
+      "diagnostic_adequacy": "diagnostic",
+      "grade": "A"
+    },
+    "ml_labels": {
+      "use_case": "training_aid",
+      "training_value": "medium"
+    },
+    "notes": "Maximum Intensity Projection (MIP) images of the intracranial vasculature showing normal morphology."
+  },
+  "raw": null,
+  "time_s": 23.25,
+  "ok": true
+}

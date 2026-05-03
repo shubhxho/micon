@@ -1,0 +1,144 @@
+{
+  "model_used": "Gemma 4 31B IT",
+  "model_id": "google/gemma-4-31b-it",
+  "provider": "openrouter",
+  "study_date": "20260323",
+  "study_description": "BRAIN + ANGIO CISS",
+  "totals": {
+    "series_in_study": 19,
+    "primary_series_processed": 10,
+    "derivative_series_processed": 9,
+    "primary_succeeded_stage1": 10,
+    "primary_succeeded_stage2": 10,
+    "derivative_succeeded": 9
+  },
+  "ai_consensus": {
+    "sequence_types_detected": [
+      "DWI",
+      "FLAIR",
+      "SWI",
+      "T2",
+      "T1",
+      "T2",
+      "T1",
+      "DWI",
+      "TOF",
+      "T2"
+    ],
+    "quality_grade_distribution": {
+      "A": 7,
+      "B": 2,
+      "F": 1
+    },
+    "pathology_series_count": 2,
+    "consensus_brain_health_score": "A",
+    "consensus_price_tier": "discount",
+    "all_detection_targets": [
+      "external_carotid_artery",
+      "internal_carotid_artery",
+      "lateral_ventricles",
+      "mass_lesion",
+      "vertebral_artery"
+    ],
+    "all_classification_tags": [
+      "SWI",
+      "T1_weighted",
+      "T2_weighted",
+      "TOF_MRA",
+      "artifact_severe",
+      "atrophy",
+      "brain_tumor",
+      "dwi",
+      "healthy_control",
+      "neck_vasculature",
+      "non_diagnostic",
+      "normal",
+      "normal_brain",
+      "t2_weighted",
+      "ventriculomegaly"
+    ]
+  },
+  "plain_language_summaries": [
+    {
+      "series": "Ax DWI",
+      "summary": "The provided imaging is of very poor technical quality and cannot be used for medical diagnosis.",
+      "brain_health_score": "F",
+      "urgency": "routine"
+    },
+    {
+      "series": "Ax T2 FLAIR",
+      "summary": "The MRI scan shows a normal appearance of the brain structure.",
+      "brain_health_score": "A",
+      "urgency": "routine"
+    },
+    {
+      "series": "3D Ax SWAN",
+      "summary": "The brain MRI scan shows a normal appearance without any evident abnormalities.",
+      "brain_health_score": "A",
+      "urgency": "routine"
+    },
+    {
+      "series": "Ax T2 PROPELLER",
+      "summary": "The MRI shows significant brain shrinkage and widespread changes in the brain's white matter, consistent with advanced age-related or vascular decline.",
+      "brain_health_score": "D",
+      "urgency": "routine"
+    },
+    {
+      "series": "AxT1 MEMP",
+      "summary": "The brain MRI appears normal with no visible abnormalities.",
+      "brain_health_score": "A",
+      "urgency": "routine"
+    },
+    {
+      "series": "SAG T2",
+      "summary": "The scan shows significant changes in the brain's white matter and signs of brain shrinkage typically associated with long-term vascular health issues.",
+      "brain_health_score": "D",
+      "urgency": "follow-up-needed"
+    },
+    {
+      "series": "BRAIN ANGIO",
+      "summary": "The brain imaging appears normal and healthy.",
+      "brain_health_score": "A",
+      "urgency": "routine"
+    },
+    {
+      "series": "COR DWI",
+      "summary": "The provided images are too blurry and distorted to be interpreted.",
+      "brain_health_score": "F",
+      "urgency": "routine"
+    },
+    {
+      "series": "3D Ax TOF NECK",
+      "summary": "The imaging of the neck arteries shows normal blood flow patterns without obvious blockage.",
+      "brain_health_score": "A",
+      "urgency": "routine"
+    },
+    {
+      "series": "3D Ax T2 Cube HyperCube.",
+      "summary": "The MRI of the brain appears normal.",
+      "brain_health_score": "A",
+      "urgency": "routine"
+    }
+  ],
+  "per_series_files": {
+    "s0005_Ax_DWI.json": "primary",
+    "s0007_Ax_T2_FLAIR.json": "primary",
+    "s0009_3D_Ax_SWAN.json": "primary",
+    "s0010_Ax_T2_PROPELLER.json": "primary",
+    "s0011_AxT1_MEMP.json": "primary",
+    "s0012_SAG_T2.json": "primary",
+    "s0013_BRAIN_ANGIO.json": "primary",
+    "s0015_COR_DWI.json": "primary",
+    "s0017_3D_Ax_TOF_NECK.json": "primary",
+    "s0018_3D_Ax_T2_Cube_HyperCube.json": "primary",
+    "s0550_ADC_10_-6_mm\u00b2_s_Mar_23_2026_15-52-42_IST.json": "derivative",
+    "s0900_FILT_PHA_3D_Ax_SWAN.json": "derivative",
+    "s1300_COL_BRAIN_ANGIO.json": "derivative",
+    "s1301_PJN_BRAIN_ANGIO.json": "derivative",
+    "s1350_Processed_Images.json": "derivative",
+    "s1351_Processed_Images.json": "derivative",
+    "s1700_COL_3D_Ax_TOF_NECK.json": "derivative",
+    "s1701_PJN_3D_Ax_TOF_NECK.json": "derivative",
+    "s1750_Processed_Images.json": "derivative"
+  }
+}

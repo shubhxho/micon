@@ -1,0 +1,32 @@
+{
+  "series_number": 550,
+  "series_label": "ADC (10^-6 mm\u00b2/s):Mar 23 2026 15-52-42 IST",
+  "model": "Gemma 4 31B IT",
+  "model_id": "google/gemma-4-31b-it",
+  "provider": "openrouter",
+  "kind": "derivative",
+  "annotation": {
+    "map_type": "ADC",
+    "source_sequence_inferred": "DWI (Diffusion Weighted Imaging)",
+    "expected_signal_behavior": "Areas of restricted diffusion (e.g., acute infarct, highly cellular tumors) appear dark; vasogenic edema or CSF appear bright.",
+    "focal_abnormalities": [],
+    "no_focal_abnormality": true,
+    "quality": {
+      "registration_accuracy": "fair",
+      "artifacts_noted": [
+        "geometric distortion",
+        "susceptibility artifacts"
+      ],
+      "diagnostic_adequacy": "limited",
+      "grade": "C"
+    },
+    "ml_labels": {
+      "use_case": "reference_only",
+      "training_value": "low"
+    },
+    "notes": "The provided slices are sparse and exhibit significant distortion, making a comprehensive diagnostic evaluation difficult."
+  },
+  "raw": null,
+  "time_s": 14.79,
+  "ok": true
+}

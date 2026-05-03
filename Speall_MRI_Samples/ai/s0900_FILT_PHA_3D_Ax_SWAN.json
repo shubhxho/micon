@@ -1,0 +1,32 @@
+{
+  "series_number": 900,
+  "series_label": "FILT_PHA: 3D Ax SWAN",
+  "model": "Gemma 4 31B IT",
+  "model_id": "google/gemma-4-31b-it",
+  "provider": "openrouter",
+  "kind": "derivative",
+  "annotation": {
+    "map_type": "phase_FILT_PHA",
+    "source_sequence_inferred": "3D SWAN (Susceptibility Weighted Imaging)",
+    "expected_signal_behavior": "Paramagnetic substances (e.g., hemorrhage, iron) and diamagnetic substances (e.g., calcium) show opposing phase shifts (bright vs dark).",
+    "focal_abnormalities": [],
+    "no_focal_abnormality": true,
+    "quality": {
+      "registration_accuracy": "n/a",
+      "artifacts_noted": [
+        "phase wrapping",
+        "susceptibility artifacts at skull base"
+      ],
+      "diagnostic_adequacy": "diagnostic",
+      "grade": "A"
+    },
+    "ml_labels": {
+      "use_case": "training_aid",
+      "training_value": "medium"
+    },
+    "notes": "Filtered phase images from a SWAN sequence demonstrating normal susceptibility distribution without focal hemorrhagic or calcific lesions."
+  },
+  "raw": null,
+  "time_s": 23.19,
+  "ok": true
+}

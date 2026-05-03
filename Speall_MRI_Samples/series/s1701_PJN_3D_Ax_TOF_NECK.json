@@ -1,0 +1,536 @@
+{
+  "series": {
+    "uid": "1.2.826.0.1.3680043.10.71547553079447219042063822105",
+    "number": 1701,
+    "description": "PJN:3D Ax TOF NECK",
+    "modality": "MR",
+    "sop_class": "MR Image Storage",
+    "file_count": 19,
+    "source_subdir": ""
+  },
+  "sequence_classification": {
+    "sequence_type": "Projection MIP",
+    "confidence": "high",
+    "reasoning": [
+      "Name matches '\\bPJN:'"
+    ],
+    "parameters": {
+      "TR_ms": 23.0,
+      "TE_ms": 3.4,
+      "TI_ms": null,
+      "flip_angle_deg": 15.0,
+      "b_value": null
+    }
+  },
+  "sequence_params": {
+    "tr": 23.0,
+    "te": 3.4,
+    "ti": null,
+    "fa": 15.0,
+    "b_value": null,
+    "slice_thickness": null,
+    "spacing_between_slices": null,
+    "rows": null,
+    "columns": null,
+    "field_strength": null,
+    "pixel_spacing": ""
+  },
+  "volume_stats": {
+    "volume_shape": [
+      19,
+      512,
+      512
+    ],
+    "volume_voxel_count": 4980736,
+    "spacing_mm": [
+      0.5078,
+      0.5078,
+      14.41625
+    ],
+    "origin_mm": [
+      -2.69977,
+      -163.576,
+      25.2272
+    ],
+    "direction_cosines": [
+      0.0,
+      0.0,
+      -1.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      -1.0,
+      0.0
+    ],
+    "voxel_volume_mm3": 3.7173863346500005,
+    "total_volume_mm3": 18515319.942899305,
+    "total_volume_cc": 18515.319942899307,
+    "fov_mm": [
+      273.90875,
+      259.9936,
+      259.9936
+    ],
+    "volume_min": -35.0,
+    "volume_max": 1486.0,
+    "volume_mean": 271.7510986328125,
+    "volume_std": 268.2108154296875,
+    "volume_median": 267.0,
+    "volume_p1": -1.0,
+    "volume_p5": -1.0,
+    "volume_p25": 0.0,
+    "volume_p75": 496.0,
+    "volume_p95": 699.0,
+    "volume_p99": 979.0,
+    "volume_iqr": 496.0,
+    "volume_dynamic_range": 1521.0,
+    "volume_snr_estimate": 6.228042868065464,
+    "volume_snr_naive": 1.0131996250197952,
+    "volume_cnr": 5.5113810108246515,
+    "background_noise_std": 82.72329260172677,
+    "otsu_threshold": 270.982421875,
+    "volume_nonzero_pct": 80.46357004266036,
+    "volume_tissue_pct": 49.88096058368683,
+    "volume_entropy": 5.711542726448531,
+    "volume_skewness": 0.5465376854353805,
+    "volume_kurtosis": -0.5719582500248181,
+    "slice_snr_mean": 1.0139213800430298,
+    "slice_snr_std": 0.03193650767207146,
+    "slice_snr_min": 0.9315568804740906,
+    "slice_snr_max": 1.0433082580566406,
+    "slice_intensity_uniformity": 0.9593593291938305,
+    "quality_grade": "B",
+    "quality_score": 74.0
+  },
+  "files": [
+    "IM-8526-0001.dcm",
+    "IM-8526-0002.dcm",
+    "IM-8526-0003.dcm",
+    "IM-8526-0004.dcm",
+    "IM-8526-0005.dcm",
+    "IM-8526-0006.dcm",
+    "IM-8526-0007.dcm",
+    "IM-8526-0008.dcm",
+    "IM-8526-0009.dcm",
+    "IM-8526-0010.dcm",
+    "IM-8526-0011.dcm",
+    "IM-8526-0012.dcm",
+    "IM-8526-0013.dcm",
+    "IM-8526-0014.dcm",
+    "IM-8526-0015.dcm",
+    "IM-8526-0016.dcm",
+    "IM-8526-0017.dcm",
+    "IM-8526-0018.dcm",
+    "IM-8526-0019.dcm"
+  ],
+  "file_paths": [
+    "output/redacted/IM-8526-0001.dcm",
+    "output/redacted/IM-8526-0002.dcm",
+    "output/redacted/IM-8526-0003.dcm",
+    "output/redacted/IM-8526-0004.dcm",
+    "output/redacted/IM-8526-0005.dcm",
+    "output/redacted/IM-8526-0006.dcm",
+    "output/redacted/IM-8526-0007.dcm",
+    "output/redacted/IM-8526-0008.dcm",
+    "output/redacted/IM-8526-0009.dcm",
+    "output/redacted/IM-8526-0010.dcm",
+    "output/redacted/IM-8526-0011.dcm",
+    "output/redacted/IM-8526-0012.dcm",
+    "output/redacted/IM-8526-0013.dcm",
+    "output/redacted/IM-8526-0014.dcm",
+    "output/redacted/IM-8526-0015.dcm",
+    "output/redacted/IM-8526-0016.dcm",
+    "output/redacted/IM-8526-0017.dcm",
+    "output/redacted/IM-8526-0018.dcm",
+    "output/redacted/IM-8526-0019.dcm"
+  ],
+  "conformance_issues": [
+    {
+      "filename": "IM-8526-0001.dcm",
+      "missing_tags": [
+        "PatientID",
+        "PatientName",
+        "PatientBirthDate"
+      ],
+      "missing_count": 3,
+      "completeness_pct": 88.5
+    },
+    {
+      "filename": "IM-8526-0002.dcm",
+      "missing_tags": [
+        "PatientID",
+        "PatientName",
+        "PatientBirthDate"
+      ],
+      "missing_count": 3,
+      "completeness_pct": 88.5
+    },
+    {
+      "filename": "IM-8526-0003.dcm",
+      "missing_tags": [
+        "PatientID",
+        "PatientName",
+        "PatientBirthDate"
+      ],
+      "missing_count": 3,
+      "completeness_pct": 88.5
+    },
+    {
+      "filename": "IM-8526-0004.dcm",
+      "missing_tags": [
+        "PatientID",
+        "PatientName",
+        "PatientBirthDate"
+      ],
+      "missing_count": 3,
+      "completeness_pct": 88.5
+    },
+    {
+      "filename": "IM-8526-0005.dcm",
+      "missing_tags": [
+        "PatientID",
+        "PatientName",
+        "PatientBirthDate"
+      ],
+      "missing_count": 3,
+      "completeness_pct": 88.5
+    },
+    {
+      "filename": "IM-8526-0006.dcm",
+      "missing_tags": [
+        "PatientID",
+        "PatientName",
+        "PatientBirthDate"
+      ],
+      "missing_count": 3,
+      "completeness_pct": 88.5
+    },
+    {
+      "filename": "IM-8526-0007.dcm",
+      "missing_tags": [
+        "PatientID",
+        "PatientName",
+        "PatientBirthDate"
+      ],
+      "missing_count": 3,
+      "completeness_pct": 88.5
+    },
+    {
+      "filename": "IM-8526-0008.dcm",
+      "missing_tags": [
+        "PatientID",
+        "PatientName",
+        "PatientBirthDate"
+      ],
+      "missing_count": 3,
+      "completeness_pct": 88.5
+    },
+    {
+      "filename": "IM-8526-0009.dcm",
+      "missing_tags": [
+        "PatientID",
+        "PatientName",
+        "PatientBirthDate"
+      ],
+      "missing_count": 3,
+      "completeness_pct": 88.5
+    },
+    {
+      "filename": "IM-8526-0010.dcm",
+      "missing_tags": [
+        "PatientID",
+        "PatientName",
+        "PatientBirthDate"
+      ],
+      "missing_count": 3,
+      "completeness_pct": 88.5
+    },
+    {
+      "filename": "IM-8526-0011.dcm",
+      "missing_tags": [
+        "PatientID",
+        "PatientName",
+        "PatientBirthDate"
+      ],
+      "missing_count": 3,
+      "completeness_pct": 88.5
+    },
+    {
+      "filename": "IM-8526-0012.dcm",
+      "missing_tags": [
+        "PatientID",
+        "PatientName",
+        "PatientBirthDate"
+      ],
+      "missing_count": 3,
+      "completeness_pct": 88.5
+    },
+    {
+      "filename": "IM-8526-0013.dcm",
+      "missing_tags": [
+        "PatientID",
+        "PatientName",
+        "PatientBirthDate"
+      ],
+      "missing_count": 3,
+      "completeness_pct": 88.5
+    },
+    {
+      "filename": "IM-8526-0014.dcm",
+      "missing_tags": [
+        "PatientID",
+        "PatientName",
+        "PatientBirthDate"
+      ],
+      "missing_count": 3,
+      "completeness_pct": 88.5
+    },
+    {
+      "filename": "IM-8526-0015.dcm",
+      "missing_tags": [
+        "PatientID",
+        "PatientName",
+        "PatientBirthDate"
+      ],
+      "missing_count": 3,
+      "completeness_pct": 88.5
+    },
+    {
+      "filename": "IM-8526-0016.dcm",
+      "missing_tags": [
+        "PatientID",
+        "PatientName",
+        "PatientBirthDate"
+      ],
+      "missing_count": 3,
+      "completeness_pct": 88.5
+    },
+    {
+      "filename": "IM-8526-0017.dcm",
+      "missing_tags": [
+        "PatientID",
+        "PatientName",
+        "PatientBirthDate"
+      ],
+      "missing_count": 3,
+      "completeness_pct": 88.5
+    },
+    {
+      "filename": "IM-8526-0018.dcm",
+      "missing_tags": [
+        "PatientID",
+        "PatientName",
+        "PatientBirthDate"
+      ],
+      "missing_count": 3,
+      "completeness_pct": 88.5
+    },
+    {
+      "filename": "IM-8526-0019.dcm",
+      "missing_tags": [
+        "PatientID",
+        "PatientName",
+        "PatientBirthDate"
+      ],
+      "missing_count": 3,
+      "completeness_pct": 88.5
+    }
+  ],
+  "conformance_summary": {
+    "total_files": 19,
+    "files_with_issues": 19,
+    "pass_rate": 0.0
+  },
+  "per_file_stats": [
+    {
+      "filename": "IM-8526-0001.dcm",
+      "pixel_shape": null,
+      "pixel_min": null,
+      "pixel_max": null,
+      "pixel_mean": null,
+      "pixel_std": null,
+      "pixel_entropy": null,
+      "nonzero_ratio": null
+    },
+    {
+      "filename": "IM-8526-0002.dcm",
+      "pixel_shape": null,
+      "pixel_min": null,
+      "pixel_max": null,
+      "pixel_mean": null,
+      "pixel_std": null,
+      "pixel_entropy": null,
+      "nonzero_ratio": null
+    },
+    {
+      "filename": "IM-8526-0003.dcm",
+      "pixel_shape": null,
+      "pixel_min": null,
+      "pixel_max": null,
+      "pixel_mean": null,
+      "pixel_std": null,
+      "pixel_entropy": null,
+      "nonzero_ratio": null
+    },
+    {
+      "filename": "IM-8526-0004.dcm",
+      "pixel_shape": null,
+      "pixel_min": null,
+      "pixel_max": null,
+      "pixel_mean": null,
+      "pixel_std": null,
+      "pixel_entropy": null,
+      "nonzero_ratio": null
+    },
+    {
+      "filename": "IM-8526-0005.dcm",
+      "pixel_shape": null,
+      "pixel_min": null,
+      "pixel_max": null,
+      "pixel_mean": null,
+      "pixel_std": null,
+      "pixel_entropy": null,
+      "nonzero_ratio": null
+    },
+    {
+      "filename": "IM-8526-0006.dcm",
+      "pixel_shape": null,
+      "pixel_min": null,
+      "pixel_max": null,
+      "pixel_mean": null,
+      "pixel_std": null,
+      "pixel_entropy": null,
+      "nonzero_ratio": null
+    },
+    {
+      "filename": "IM-8526-0007.dcm",
+      "pixel_shape": null,
+      "pixel_min": null,
+      "pixel_max": null,
+      "pixel_mean": null,
+      "pixel_std": null,
+      "pixel_entropy": null,
+      "nonzero_ratio": null
+    },
+    {
+      "filename": "IM-8526-0008.dcm",
+      "pixel_shape": null,
+      "pixel_min": null,
+      "pixel_max": null,
+      "pixel_mean": null,
+      "pixel_std": null,
+      "pixel_entropy": null,
+      "nonzero_ratio": null
+    },
+    {
+      "filename": "IM-8526-0009.dcm",
+      "pixel_shape": null,
+      "pixel_min": null,
+      "pixel_max": null,
+      "pixel_mean": null,
+      "pixel_std": null,
+      "pixel_entropy": null,
+      "nonzero_ratio": null
+    },
+    {
+      "filename": "IM-8526-0010.dcm",
+      "pixel_shape": null,
+      "pixel_min": null,
+      "pixel_max": null,
+      "pixel_mean": null,
+      "pixel_std": null,
+      "pixel_entropy": null,
+      "nonzero_ratio": null
+    },
+    {
+      "filename": "IM-8526-0011.dcm",
+      "pixel_shape": null,
+      "pixel_min": null,
+      "pixel_max": null,
+      "pixel_mean": null,
+      "pixel_std": null,
+      "pixel_entropy": null,
+      "nonzero_ratio": null
+    },
+    {
+      "filename": "IM-8526-0012.dcm",
+      "pixel_shape": null,
+      "pixel_min": null,
+      "pixel_max": null,
+      "pixel_mean": null,
+      "pixel_std": null,
+      "pixel_entropy": null,
+      "nonzero_ratio": null
+    },
+    {
+      "filename": "IM-8526-0013.dcm",
+      "pixel_shape": null,
+      "pixel_min": null,
+      "pixel_max": null,
+      "pixel_mean": null,
+      "pixel_std": null,
+      "pixel_entropy": null,
+      "nonzero_ratio": null
+    },
+    {
+      "filename": "IM-8526-0014.dcm",
+      "pixel_shape": null,
+      "pixel_min": null,
+      "pixel_max": null,
+      "pixel_mean": null,
+      "pixel_std": null,
+      "pixel_entropy": null,
+      "nonzero_ratio": null
+    },
+    {
+      "filename": "IM-8526-0015.dcm",
+      "pixel_shape": null,
+      "pixel_min": null,
+      "pixel_max": null,
+      "pixel_mean": null,
+      "pixel_std": null,
+      "pixel_entropy": null,
+      "nonzero_ratio": null
+    },
+    {
+      "filename": "IM-8526-0016.dcm",
+      "pixel_shape": null,
+      "pixel_min": null,
+      "pixel_max": null,
+      "pixel_mean": null,
+      "pixel_std": null,
+      "pixel_entropy": null,
+      "nonzero_ratio": null
+    },
+    {
+      "filename": "IM-8526-0017.dcm",
+      "pixel_shape": null,
+      "pixel_min": null,
+      "pixel_max": null,
+      "pixel_mean": null,
+      "pixel_std": null,
+      "pixel_entropy": null,
+      "nonzero_ratio": null
+    },
+    {
+      "filename": "IM-8526-0018.dcm",
+      "pixel_shape": null,
+      "pixel_min": null,
+      "pixel_max": null,
+      "pixel_mean": null,
+      "pixel_std": null,
+      "pixel_entropy": null,
+      "nonzero_ratio": null
+    },
+    {
+      "filename": "IM-8526-0019.dcm",
+      "pixel_shape": null,
+      "pixel_min": null,
+      "pixel_max": null,
+      "pixel_mean": null,
+      "pixel_std": null,
+      "pixel_entropy": null,
+      "nonzero_ratio": null
+    }
+  ]
+}

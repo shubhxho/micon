@@ -1,0 +1,417 @@
+{
+  "series": {
+    "uid": "1.2.826.0.1.3680043.10.16649288130265454024097427730",
+    "number": 1351,
+    "description": "Processed Images",
+    "modality": "MR",
+    "sop_class": "MR Image Storage",
+    "file_count": 13,
+    "source_subdir": ""
+  },
+  "sequence_classification": {
+    "sequence_type": "Processed/MIP",
+    "confidence": "high",
+    "reasoning": [
+      "Name matches '\\bPROCESSED\\s*IMAGE'"
+    ],
+    "parameters": {
+      "TR_ms": 24.0,
+      "TE_ms": 3.4,
+      "TI_ms": null,
+      "flip_angle_deg": 15.0,
+      "b_value": null
+    }
+  },
+  "sequence_params": {
+    "tr": 24.0,
+    "te": 3.4,
+    "ti": null,
+    "fa": 15.0,
+    "b_value": null,
+    "slice_thickness": null,
+    "spacing_between_slices": null,
+    "rows": null,
+    "columns": null,
+    "field_strength": null,
+    "pixel_spacing": ""
+  },
+  "volume_stats": {
+    "volume_shape": [
+      13,
+      910,
+      1137
+    ],
+    "volume_voxel_count": 13450710,
+    "spacing_mm": [
+      0.241772294,
+      0.241772294,
+      22.08843495471341
+    ],
+    "origin_mm": [
+      -90.56066132,
+      62.29427719,
+      96.12658691
+    ],
+    "direction_cosines": [
+      0.5115342067340224,
+      0.08125796687865221,
+      0.85541212182184,
+      -0.8377773618438966,
+      -0.17406457175591453,
+      0.5175235423063487,
+      0.19094985551938878,
+      -0.9813759053890504,
+      -0.020963897513263077
+    ],
+    "voxel_volume_mm3": 1.291153890095502,
+    "total_volume_mm3": 17366936.54104647,
+    "total_volume_cc": 17366.93654104647,
+    "fov_mm": [
+      287.14965441127435,
+      220.01278754,
+      274.895098278
+    ],
+    "volume_min": 0.0,
+    "volume_max": 4095.0,
+    "volume_mean": 77.85688018798828,
+    "volume_std": 183.0202178955078,
+    "volume_median": 0.0,
+    "volume_p1": 0.0,
+    "volume_p5": 0.0,
+    "volume_p25": 0.0,
+    "volume_p75": 0.0,
+    "volume_p95": 405.0,
+    "volume_p99": 820.0,
+    "volume_iqr": 0.0,
+    "volume_dynamic_range": 4095.0,
+    "volume_snr_estimate": 4.3872613798913935,
+    "volume_snr_naive": 0.4254004320278914,
+    "volume_cnr": 3.4443076196551528,
+    "background_noise_std": 95.87705404371881,
+    "otsu_threshold": 199.951171875,
+    "volume_nonzero_pct": 18.966567564091413,
+    "volume_tissue_pct": 18.384046852588654,
+    "volume_entropy": 1.5443289500428208,
+    "volume_skewness": 3.7341141969181435,
+    "volume_kurtosis": 37.28565389690232,
+    "slice_snr_mean": 0.42993801832199097,
+    "slice_snr_std": 0.0221626628190279,
+    "slice_snr_min": 0.36943110823631287,
+    "slice_snr_max": 0.4477672278881073,
+    "slice_intensity_uniformity": 0.9305533766746521,
+    "quality_grade": "D",
+    "quality_score": 49.7
+  },
+  "files": [
+    "IM-8524-0001.dcm",
+    "IM-8524-0002.dcm",
+    "IM-8524-0003.dcm",
+    "IM-8524-0004.dcm",
+    "IM-8524-0005.dcm",
+    "IM-8524-0006.dcm",
+    "IM-8524-0007.dcm",
+    "IM-8524-0008.dcm",
+    "IM-8524-0009.dcm",
+    "IM-8524-0010.dcm",
+    "IM-8524-0011.dcm",
+    "IM-8524-0012.dcm",
+    "IM-8524-0013.dcm"
+  ],
+  "file_paths": [
+    "output/redacted/IM-8524-0001.dcm",
+    "output/redacted/IM-8524-0002.dcm",
+    "output/redacted/IM-8524-0003.dcm",
+    "output/redacted/IM-8524-0004.dcm",
+    "output/redacted/IM-8524-0005.dcm",
+    "output/redacted/IM-8524-0006.dcm",
+    "output/redacted/IM-8524-0007.dcm",
+    "output/redacted/IM-8524-0008.dcm",
+    "output/redacted/IM-8524-0009.dcm",
+    "output/redacted/IM-8524-0010.dcm",
+    "output/redacted/IM-8524-0011.dcm",
+    "output/redacted/IM-8524-0012.dcm",
+    "output/redacted/IM-8524-0013.dcm"
+  ],
+  "conformance_issues": [
+    {
+      "filename": "IM-8524-0001.dcm",
+      "missing_tags": [
+        "PatientID",
+        "PatientName",
+        "PatientBirthDate",
+        "SpacingBetweenSlices"
+      ],
+      "missing_count": 4,
+      "completeness_pct": 84.6
+    },
+    {
+      "filename": "IM-8524-0002.dcm",
+      "missing_tags": [
+        "PatientID",
+        "PatientName",
+        "PatientBirthDate",
+        "SpacingBetweenSlices"
+      ],
+      "missing_count": 4,
+      "completeness_pct": 84.6
+    },
+    {
+      "filename": "IM-8524-0003.dcm",
+      "missing_tags": [
+        "PatientID",
+        "PatientName",
+        "PatientBirthDate",
+        "SpacingBetweenSlices"
+      ],
+      "missing_count": 4,
+      "completeness_pct": 84.6
+    },
+    {
+      "filename": "IM-8524-0004.dcm",
+      "missing_tags": [
+        "PatientID",
+        "PatientName",
+        "PatientBirthDate",
+        "SpacingBetweenSlices"
+      ],
+      "missing_count": 4,
+      "completeness_pct": 84.6
+    },
+    {
+      "filename": "IM-8524-0005.dcm",
+      "missing_tags": [
+        "PatientID",
+        "PatientName",
+        "PatientBirthDate",
+        "SpacingBetweenSlices"
+      ],
+      "missing_count": 4,
+      "completeness_pct": 84.6
+    },
+    {
+      "filename": "IM-8524-0006.dcm",
+      "missing_tags": [
+        "PatientID",
+        "PatientName",
+        "PatientBirthDate",
+        "SpacingBetweenSlices"
+      ],
+      "missing_count": 4,
+      "completeness_pct": 84.6
+    },
+    {
+      "filename": "IM-8524-0007.dcm",
+      "missing_tags": [
+        "PatientID",
+        "PatientName",
+        "PatientBirthDate",
+        "SpacingBetweenSlices"
+      ],
+      "missing_count": 4,
+      "completeness_pct": 84.6
+    },
+    {
+      "filename": "IM-8524-0008.dcm",
+      "missing_tags": [
+        "PatientID",
+        "PatientName",
+        "PatientBirthDate",
+        "SpacingBetweenSlices"
+      ],
+      "missing_count": 4,
+      "completeness_pct": 84.6
+    },
+    {
+      "filename": "IM-8524-0009.dcm",
+      "missing_tags": [
+        "PatientID",
+        "PatientName",
+        "PatientBirthDate",
+        "SpacingBetweenSlices"
+      ],
+      "missing_count": 4,
+      "completeness_pct": 84.6
+    },
+    {
+      "filename": "IM-8524-0010.dcm",
+      "missing_tags": [
+        "PatientID",
+        "PatientName",
+        "PatientBirthDate",
+        "SpacingBetweenSlices"
+      ],
+      "missing_count": 4,
+      "completeness_pct": 84.6
+    },
+    {
+      "filename": "IM-8524-0011.dcm",
+      "missing_tags": [
+        "PatientID",
+        "PatientName",
+        "PatientBirthDate",
+        "SpacingBetweenSlices"
+      ],
+      "missing_count": 4,
+      "completeness_pct": 84.6
+    },
+    {
+      "filename": "IM-8524-0012.dcm",
+      "missing_tags": [
+        "PatientID",
+        "PatientName",
+        "PatientBirthDate",
+        "SpacingBetweenSlices"
+      ],
+      "missing_count": 4,
+      "completeness_pct": 84.6
+    },
+    {
+      "filename": "IM-8524-0013.dcm",
+      "missing_tags": [
+        "PatientID",
+        "PatientName",
+        "PatientBirthDate",
+        "SpacingBetweenSlices"
+      ],
+      "missing_count": 4,
+      "completeness_pct": 84.6
+    }
+  ],
+  "conformance_summary": {
+    "total_files": 13,
+    "files_with_issues": 13,
+    "pass_rate": 0.0
+  },
+  "per_file_stats": [
+    {
+      "filename": "IM-8524-0001.dcm",
+      "pixel_shape": null,
+      "pixel_min": null,
+      "pixel_max": null,
+      "pixel_mean": null,
+      "pixel_std": null,
+      "pixel_entropy": null,
+      "nonzero_ratio": null
+    },
+    {
+      "filename": "IM-8524-0002.dcm",
+      "pixel_shape": null,
+      "pixel_min": null,
+      "pixel_max": null,
+      "pixel_mean": null,
+      "pixel_std": null,
+      "pixel_entropy": null,
+      "nonzero_ratio": null
+    },
+    {
+      "filename": "IM-8524-0003.dcm",
+      "pixel_shape": null,
+      "pixel_min": null,
+      "pixel_max": null,
+      "pixel_mean": null,
+      "pixel_std": null,
+      "pixel_entropy": null,
+      "nonzero_ratio": null
+    },
+    {
+      "filename": "IM-8524-0004.dcm",
+      "pixel_shape": null,
+      "pixel_min": null,
+      "pixel_max": null,
+      "pixel_mean": null,
+      "pixel_std": null,
+      "pixel_entropy": null,
+      "nonzero_ratio": null
+    },
+    {
+      "filename": "IM-8524-0005.dcm",
+      "pixel_shape": null,
+      "pixel_min": null,
+      "pixel_max": null,
+      "pixel_mean": null,
+      "pixel_std": null,
+      "pixel_entropy": null,
+      "nonzero_ratio": null
+    },
+    {
+      "filename": "IM-8524-0006.dcm",
+      "pixel_shape": null,
+      "pixel_min": null,
+      "pixel_max": null,
+      "pixel_mean": null,
+      "pixel_std": null,
+      "pixel_entropy": null,
+      "nonzero_ratio": null
+    },
+    {
+      "filename": "IM-8524-0007.dcm",
+      "pixel_shape": null,
+      "pixel_min": null,
+      "pixel_max": null,
+      "pixel_mean": null,
+      "pixel_std": null,
+      "pixel_entropy": null,
+      "nonzero_ratio": null
+    },
+    {
+      "filename": "IM-8524-0008.dcm",
+      "pixel_shape": null,
+      "pixel_min": null,
+      "pixel_max": null,
+      "pixel_mean": null,
+      "pixel_std": null,
+      "pixel_entropy": null,
+      "nonzero_ratio": null
+    },
+    {
+      "filename": "IM-8524-0009.dcm",
+      "pixel_shape": null,
+      "pixel_min": null,
+      "pixel_max": null,
+      "pixel_mean": null,
+      "pixel_std": null,
+      "pixel_entropy": null,
+      "nonzero_ratio": null
+    },
+    {
+      "filename": "IM-8524-0010.dcm",
+      "pixel_shape": null,
+      "pixel_min": null,
+      "pixel_max": null,
+      "pixel_mean": null,
+      "pixel_std": null,
+      "pixel_entropy": null,
+      "nonzero_ratio": null
+    },
+    {
+      "filename": "IM-8524-0011.dcm",
+      "pixel_shape": null,
+      "pixel_min": null,
+      "pixel_max": null,
+      "pixel_mean": null,
+      "pixel_std": null,
+      "pixel_entropy": null,
+      "nonzero_ratio": null
+    },
+    {
+      "filename": "IM-8524-0012.dcm",
+      "pixel_shape": null,
+      "pixel_min": null,
+      "pixel_max": null,
+      "pixel_mean": null,
+      "pixel_std": null,
+      "pixel_entropy": null,
+      "nonzero_ratio": null
+    },
+    {
+      "filename": "IM-8524-0013.dcm",
+      "pixel_shape": null,
+      "pixel_min": null,
+      "pixel_max": null,
+      "pixel_mean": null,
+      "pixel_std": null,
+      "pixel_entropy": null,
+      "nonzero_ratio": null
+    }
+  ]
+}

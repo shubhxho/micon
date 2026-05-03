@@ -1,0 +1,159 @@
+{
+  "study_date": "20260323",
+  "study_description": "BRAIN + ANGIO CISS",
+  "total_series": 19,
+  "series": [
+    {
+      "series_number": 5,
+      "series_description": "Ax DWI",
+      "sequence_type": "DWI",
+      "file_count": 50,
+      "detail_json": "series/s0005_Ax_DWI.json",
+      "source_dir": "output/s0005_Ax_DWI"
+    },
+    {
+      "series_number": 7,
+      "series_description": "Ax T2 FLAIR",
+      "sequence_type": "FLAIR",
+      "file_count": 25,
+      "detail_json": "series/s0007_Ax_T2_FLAIR.json",
+      "source_dir": "output/s0007_Ax_T2_FLAIR"
+    },
+    {
+      "series_number": 9,
+      "series_description": "3D Ax SWAN",
+      "sequence_type": "SWI (SWAN)",
+      "file_count": 116,
+      "detail_json": "series/s0009_3D_Ax_SWAN.json",
+      "source_dir": "output/s0009_3D_Ax_SWAN"
+    },
+    {
+      "series_number": 10,
+      "series_description": "Ax T2 PROPELLER",
+      "sequence_type": "T2-weighted",
+      "file_count": 25,
+      "detail_json": "series/s0010_Ax_T2_PROPELLER.json",
+      "source_dir": "output/s0010_Ax_T2_PROPELLER"
+    },
+    {
+      "series_number": 11,
+      "series_description": "AxT1 MEMP",
+      "sequence_type": "T1-weighted",
+      "file_count": 25,
+      "detail_json": "series/s0011_AxT1_MEMP.json",
+      "source_dir": "output/s0011_AxT1_MEMP"
+    },
+    {
+      "series_number": 12,
+      "series_description": "SAG T2",
+      "sequence_type": "T2-weighted",
+      "file_count": 30,
+      "detail_json": "series/s0012_SAG_T2.json",
+      "source_dir": "output/s0012__SAG_T2"
+    },
+    {
+      "series_number": 13,
+      "series_description": "BRAIN ANGIO",
+      "sequence_type": "T1-weighted",
+      "file_count": 128,
+      "detail_json": "series/s0013_BRAIN_ANGIO.json",
+      "source_dir": "output/s0013_BRAIN_ANGIO"
+    },
+    {
+      "series_number": 15,
+      "series_description": "COR DWI",
+      "sequence_type": "DWI",
+      "file_count": 74,
+      "detail_json": "series/s0015_COR_DWI.json",
+      "source_dir": "output/s0015_COR_DWI"
+    },
+    {
+      "series_number": 17,
+      "series_description": "3D Ax TOF NECK",
+      "sequence_type": "TOF MRA",
+      "file_count": 200,
+      "detail_json": "series/s0017_3D_Ax_TOF_NECK.json",
+      "source_dir": "output/s0017_3D_Ax_TOF_NECK"
+    },
+    {
+      "series_number": 18,
+      "series_description": "3D Ax T2 Cube HyperCube.",
+      "sequence_type": "CUBE (3D FSE)",
+      "file_count": 104,
+      "detail_json": "series/s0018_3D_Ax_T2_Cube_HyperCube.json",
+      "source_dir": "output/s0018_3D_Ax_T2_Cube_HyperCube."
+    },
+    {
+      "series_number": 550,
+      "series_description": "ADC (10^-6 mm\u00b2/s):Mar 23 2026 15-52-42 IST",
+      "sequence_type": "ADC Map",
+      "file_count": 25,
+      "detail_json": "series/s0550_ADC_10_-6_mm\u00b2_s_Mar_23_2026_15-52-42_IST.json",
+      "source_dir": "output/s0550_ADC_(10^-6_mm\u00b2-s):Mar_23_2026_15-52-42_IST"
+    },
+    {
+      "series_number": 900,
+      "series_description": "FILT_PHA: 3D Ax SWAN",
+      "sequence_type": "SWI (SWAN)",
+      "file_count": 116,
+      "detail_json": "series/s0900_FILT_PHA_3D_Ax_SWAN.json",
+      "source_dir": "output/s0900_FILT_PHA:_3D_Ax_SWAN"
+    },
+    {
+      "series_number": 1300,
+      "series_description": "COL:BRAIN ANGIO",
+      "sequence_type": "Color MIP",
+      "file_count": 1,
+      "detail_json": "series/s1300_COL_BRAIN_ANGIO.json",
+      "source_dir": "output/s1300_COL:BRAIN_ANGIO"
+    },
+    {
+      "series_number": 1301,
+      "series_description": "PJN:BRAIN ANGIO",
+      "sequence_type": "Projection MIP",
+      "file_count": 19,
+      "detail_json": "series/s1301_PJN_BRAIN_ANGIO.json",
+      "source_dir": "output/s1301_PJN:BRAIN_ANGIO"
+    },
+    {
+      "series_number": 1350,
+      "series_description": "Processed Images",
+      "sequence_type": "Processed/MIP",
+      "file_count": 13,
+      "detail_json": "series/s1350_Processed_Images.json",
+      "source_dir": "output/s1350_Processed_Images"
+    },
+    {
+      "series_number": 1351,
+      "series_description": "Processed Images",
+      "sequence_type": "Processed/MIP",
+      "file_count": 13,
+      "detail_json": "series/s1351_Processed_Images.json",
+      "source_dir": "output/s1351_Processed_Images"
+    },
+    {
+      "series_number": 1700,
+      "series_description": "COL:3D Ax TOF NECK",
+      "sequence_type": "Color MIP",
+      "file_count": 1,
+      "detail_json": "series/s1700_COL_3D_Ax_TOF_NECK.json",
+      "source_dir": "output/s1700_COL:3D_Ax_TOF_NECK"
+    },
+    {
+      "series_number": 1701,
+      "series_description": "PJN:3D Ax TOF NECK",
+      "sequence_type": "Projection MIP",
+      "file_count": 19,
+      "detail_json": "series/s1701_PJN_3D_Ax_TOF_NECK.json",
+      "source_dir": "output/s1701_PJN:3D_Ax_TOF_NECK"
+    },
+    {
+      "series_number": 1750,
+      "series_description": "Processed Images",
+      "sequence_type": "Processed/MIP",
+      "file_count": 13,
+      "detail_json": "series/s1750_Processed_Images.json",
+      "source_dir": "output/s1750_Processed_Images"
+    }
+  ]
+}

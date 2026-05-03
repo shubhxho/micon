@@ -1,0 +1,33 @@
+{
+  "series_number": 1700,
+  "series_label": "COL:3D Ax TOF NECK",
+  "model": "Gemma 4 31B IT",
+  "model_id": "google/gemma-4-31b-it",
+  "provider": "openrouter",
+  "kind": "derivative",
+  "annotation": {
+    "map_type": "other",
+    "source_sequence_inferred": "3D Time-of-Flight (TOF) MRA Neck",
+    "expected_signal_behavior": "Flowing blood in arteries should be bright; static tissues dark.",
+    "focal_abnormalities": [],
+    "no_focal_abnormality": false,
+    "quality": {
+      "registration_accuracy": "n/a",
+      "artifacts_noted": [
+        "severe reconstruction failure",
+        "aliasing",
+        "vertical streaking"
+      ],
+      "diagnostic_adequacy": "non-diagnostic",
+      "grade": "F"
+    },
+    "ml_labels": {
+      "use_case": "exclude",
+      "training_value": "low"
+    },
+    "notes": "The coronal and sagittal reformats exhibit severe reconstruction artifacts and are non-diagnostic."
+  },
+  "raw": null,
+  "time_s": 38.26,
+  "ok": true
+}
