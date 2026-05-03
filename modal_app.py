@@ -64,10 +64,15 @@ _PIP_DEPS = [
     "openai>=1.50",
 ]
 
+# uv_pip_install resolves and installs in parallel (vs serial pip), which
+# typically rebuilds the dep layer ~3-5x faster on cache misses. Layer order
+# is stable→volatile so apt_install stays cached when deps shift, and the
+# local source directory is injected at startup (default copy=False) so
+# editing src/ never invalidates the image.
 _base_image = (
     modal.Image.debian_slim(python_version="3.12")
     .apt_install("fonts-dejavu-core")
-    .pip_install(*_PIP_DEPS)
+    .uv_pip_install(*_PIP_DEPS)
 )
 
 cpu_image = _base_image.add_local_dir("src", remote_path="/root/src")
