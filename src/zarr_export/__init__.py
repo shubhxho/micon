@@ -17,4 +17,11 @@ Quick start::
 
 from __future__ import annotations
 
-__all__ = ["nifti_to_omezarr", "study_to_omezarr", "build_pyramid", "series_volume_to_omezarr"]
+__all__ = [
+    "nifti_to_omezarr",
+    "study_to_omezarr",
+    "build_pyramid",
+    "series_volume_to_omezarr",
+    "open_zarr_with_tensorstore",
+    "read_volume",
+]
