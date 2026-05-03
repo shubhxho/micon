@@ -8,6 +8,7 @@ requires-python = ">=3.12"
 dependencies = [
     "pydicom>=3.0",
     "SimpleITK>=2.4",
+    "dicom2nifti>=2.4",
     "nibabel>=5.3",
     "polars>=1.17",
     "numpy>=2.1",
@@ -26,7 +27,13 @@ dependencies = [
     "pytesseract>=0.3.13",
     "cryptography>=47.0.0",
     "webdataset>=1.0.2",
+    "scikit-learn>=1.5",
 ]
+
+[project.optional-dependencies]
+torch = ["torch>=2.4"]
+monai = ["monai>=1.4", "torch>=2.4", "nibabel>=5.3"]
+dl = ["torch>=2.4", "monai>=1.4", "nibabel>=5.3"]
 
 [project.scripts]
 speall = "src.cli:app"
@@ -47,4 +54,5 @@ dev = [
     "pytest-cov>=6.0",
     "hypothesis>=6.115",
     "pre-commit>=4.0",
+    "pyarrow>=24.0.0",
 ]
