@@ -1,13 +1,16 @@
-"""Resume pipeline — runs ONLY the stages that failed/were skipped.
+"""Resume pipeline -- runs only the stages that haven't already finished.
 
-Extraction already completed for all 1,050 studies. This script:
-  1. Finds all existing montages (recursive search)
-  2. Runs advanced quality + per-slice PNGs on each
-  3. Runs Gemma 4 annotation via OpenRouter on each
-  4. Generates analytics
-  5. Uploads to HF
+Reads detail.json + montages already on the `micom-v2` volume from the
+extraction pass and brings the dataset to a shippable state in four stages:
 
-Skips anything already done. Reads from micom-v2 volume.
+  Stage 2  advanced_quality + per-slice PNGs   (per-series, parallel)
+  Stage 3  Gemma 4 annotation via OpenRouter   (per-series, parallel)
+  Stage 4  pack each study's slice PNGs into one tar shard  (per-study)
+  Stage 5  upload to Hugging Face              (one orchestrator pass)
+
+Each stage is idempotent. Skip flags let you re-run only the tail:
+  --skip-quality --skip-annotation         resume from packing onwards
+  --skip-quality --skip-annotation --skip-pack   upload only
 
 Usage:
   modal run --detach resume_pipeline.py
@@ -17,10 +20,21 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import time
 from pathlib import Path, PurePosixPath
 
 import modal
+
+
+# Single source of truth for sanitising series labels into filenames.
+# Used by both annotate_one (writer) and the orchestrator (existing-set check)
+# so they can never drift.
+_SAFE_NAME_RE = re.compile(r'[^\w\-]')
+
+
+def _safe_name(label: str) -> str:
+    return _SAFE_NAME_RE.sub("_", label)
 
 VOLUME_NAME = "micom-v2"
 MOUNT_POINT = PurePosixPath("/vol")
@@ -84,7 +98,11 @@ def quality_one_series(detail_path_str: str) -> dict:
 
         series_files = detail.get("file_paths", [])
         if not series_files or len(series_files) < 3:
-            out["error"] = f"too few files ({len(series_files)})"
+            # Localizers, color MIPs, projections, processed maps all routinely
+            # have 1-2 files. Not an error -- mark as skipped so the failure
+            # breakdown reflects only real problems.
+            out["skipped"] = True
+            out["skip_reason"] = f"too_few_files ({len(series_files)})"
             return out
 
         reader = sitk.ImageSeriesReader()
@@ -118,48 +136,164 @@ def quality_one_series(detail_path_str: str) -> dict:
         return out
 
 
+# ── Worker: pack one study's slice PNGs into a single tar shard ─────────────
+#
+# HF cannot ingest 1M+ tiny PNGs in a single repo at any reasonable speed --
+# the per-file recovery / hash pass takes 80+ hours at ~5 files/sec because
+# overhead dominates. Packing each study's slices into one tar drops the file
+# count from 1M to ~1,053 (one per study), which HF handles cleanly. Tarball
+# is uncompressed (PNG is already compressed) so the wall time per worker is
+# effectively just disk I/O.
+#
+# Naming convention: {study_id}.slices.tar at the root of the study directory.
+# Buyers can stream the tarballs with webdataset / tarfile without unpacking.
+
+@app.function(
+    image=image,
+    volumes={str(MOUNT_POINT): volume},
+    timeout=1800, memory=2048, cpu=2.0,
+    retries=modal.Retries(max_retries=2, initial_delay=5.0, backoff_coefficient=2.0),
+)
+@modal.concurrent(max_inputs=4)
+def pack_one_study_slices(study_dir_str: str) -> dict:
+    """Walk one study directory, tar every slice PNG into a single shard.
+
+    Returns {ok, study, tar_path, n_slices, bytes, skipped, error}. Skipped =
+    tarball already exists and is non-empty (idempotent).
+    """
+    import tarfile
+
+    study_dir = Path(study_dir_str)
+    out = {
+        "ok": False, "skipped": False, "study": study_dir.name,
+        "tar_path": None, "n_slices": 0, "bytes": 0, "error": None,
+    }
+
+    tar_path = study_dir / f"{study_dir.name}.slices.tar"
+
+    # Layout from src/export/slice_export.py:
+    #   <study>/slices/<series>/axial_NNNN.png
+    #   <study>/slices/<series>/coronal_NNNN.png
+    #   <study>/slices/<series>/sagittal_NNNN.png
+    #   <study>/slices/<series>/<window>/axial_NNNN.png  (e.g. brain/, bone/)
+    # rglob("slices/**/*.png") catches all of them in one sweep.
+    slices_root = study_dir / "slices"
+    if not slices_root.exists():
+        out["skipped"] = True
+        out["error"] = "no_slices_dir"
+        return out
+
+    slice_pngs = list(slices_root.rglob("*.png"))
+    if not slice_pngs:
+        out["skipped"] = True
+        out["error"] = "empty_slices_dir"
+        return out
+
+    # Idempotent: skip iff shard exists, opens cleanly, and entry count
+    # matches the current source directory exactly. Strict `==` (not `>=`)
+    # so a later slice_export pass that adds windows (e.g. bone) forces a
+    # re-pack instead of leaving buyers with a stale tar.
+    if tar_path.exists() and tar_path.stat().st_size > 0:
+        try:
+            with tarfile.open(tar_path, "r") as tf:
+                n = sum(1 for _ in tf)
+            if n == len(slice_pngs):
+                out["skipped"] = True
+                out["n_slices"] = n
+                out["bytes"] = tar_path.stat().st_size
+                out["tar_path"] = str(tar_path)
+                return out
+            # Mismatch: stale or partial -- re-pack
+            tar_path.unlink(missing_ok=True)
+        except Exception:
+            tar_path.unlink(missing_ok=True)
+
+    try:
+        # Stream into tar -- uncompressed (PNG is already compressed).
+        with tarfile.open(tar_path, "w") as tf:
+            for png in slice_pngs:
+                # arcname is study-relative: slices/<series>/.../*.png
+                arcname = str(png.relative_to(study_dir))
+                tf.add(str(png), arcname=arcname, recursive=False)
+
+        out["ok"] = True
+        out["tar_path"] = str(tar_path)
+        out["n_slices"] = len(slice_pngs)
+        out["bytes"] = tar_path.stat().st_size
+        return out
+
+    except Exception as e:
+        out["error"] = f"{type(e).__name__}: {e}"
+        if tar_path.exists():
+            tar_path.unlink(missing_ok=True)
+        return out
+
+
 # ── Worker: annotate one series via OpenRouter ───────────────────────────────
 
 @app.function(
     image=image,
     volumes={str(MOUNT_POINT): volume},
     secrets=[modal.Secret.from_name("openrouter")],
-    timeout=300, memory=2048, cpu=1.0,
+    # 900s ceiling -- the slowest OpenRouter response we've seen is ~150s,
+    # but bursts during peak hours stack. Workers should never hit this.
+    timeout=900, memory=2048, cpu=1.0,
+    retries=modal.Retries(max_retries=2, initial_delay=4.0, backoff_coefficient=2.0),
 )
-@modal.concurrent(max_inputs=10)
+# Higher fan-out -- each worker is mostly waiting on HTTP, so 32 in-flight
+# requests per container is comfortable.
+@modal.concurrent(max_inputs=32)
 def annotate_one(montage_path: str, series_label: str, quality_ctx: str, ann_dir: str) -> dict:
-    """Annotate ONE series via Gemma 4 on OpenRouter."""
+    """Annotate ONE series via Gemma 4 on OpenRouter.
+
+    Annotation and tissue passes are fired in parallel within the worker so
+    the wall time per series is roughly one OpenRouter call instead of two.
+    """
     import sys; sys.path.insert(0, "/root")
-    import re
+    from concurrent.futures import ThreadPoolExecutor
 
-    from src.cloud_analysis import annotate_series_multi, tissue_analysis_with_model, _client, _detect_provider
+    from src.cloud_analysis import (
+        annotate_series_multi, tissue_analysis_with_model,
+        _client, _detect_provider,
+    )
 
-    result = annotate_series_multi(montage_path, series_label, quality_ctx, models=["gemma4"])
+    def _do_annotation():
+        return annotate_series_multi(montage_path, series_label, quality_ctx, models=["gemma4"])
 
-    # Tissue analysis pass
-    if result.get("consensus", {}).get("sequence_type"):
+    def _do_tissue():
         try:
             provider = _detect_provider()
             client = _client()
-            prior = json.dumps({
-                "sequence": result["consensus"].get("sequence_type", "?"),
-                "pathology_found": result["consensus"].get("pathology", {}).get("found", False),
-            }, default=str)
+            # Use a stub prior -- we race the two calls, so we don't have
+            # the real annotation yet. The tissue prompt only uses prior as
+            # light context anyway.
+            prior = json.dumps({"sequence_hint": "see montage"})
             tissue = tissue_analysis_with_model(
                 client, montage_path, series_label,
                 prior_annotation=prior, quality_ctx=quality_ctx,
                 model_key="gemma4", provider=provider,
             )
-            if tissue.get("tissue_analysis"):
-                result["tissue_analysis"] = tissue["tissue_analysis"]
+            return tissue.get("tissue_analysis") if tissue else None
         except Exception:
-            pass
+            return None
 
-    # Save
-    safe_name = re.sub(r'[^\w\-]', '_', series_label)
+    with ThreadPoolExecutor(max_workers=2) as inner:
+        f_annot = inner.submit(_do_annotation)
+        f_tissue = inner.submit(_do_tissue)
+        result = f_annot.result()
+        tissue = f_tissue.result()
+
+    if tissue:
+        result["tissue_analysis"] = tissue
+
+    # Save. No per-worker volume.commit() -- the orchestrator commits once
+    # after the whole .starmap() completes (Stage 3). With max_inputs=32,
+    # per-worker commits would fire thousands of RPCs and saturate the
+    # volume metadata service with no benefit.
     Path(ann_dir).mkdir(parents=True, exist_ok=True)
-    (Path(ann_dir) / f"{safe_name}.json").write_text(json.dumps(result, indent=2, default=str))
-    volume.commit()
+    (Path(ann_dir) / f"{_safe_name(series_label)}.json").write_text(
+        json.dumps(result, indent=2, default=str)
+    )
 
     return {
         "series": series_label,
@@ -177,17 +311,19 @@ def annotate_one(montage_path: str, series_label: str, quality_ctx: str, ann_dir
     secrets=[modal.Secret.from_name("huggingface"), modal.Secret.from_name("openrouter")],
     timeout=86400, memory=16384, cpu=8.0,
 )
-def resume(hf_repo: str = "", skip_quality: bool = False, skip_annotation: bool = False) -> dict:
-    """Resume pipeline from where it failed — skip extraction, do quality + annotation + upload."""
+def resume(
+    hf_repo: str = "",
+    skip_quality: bool = False,
+    skip_annotation: bool = False,
+    skip_pack: bool = False,
+) -> dict:
+    """Resume pipeline -- quality + annotation + slice-pack + HF upload."""
     import sys; sys.path.insert(0, "/root")
-    import numpy as np
-    import shutil
-    import tempfile
 
     volume.reload()
     t0 = time.time()
 
-    output_dir = Path(str(MOUNT_POINT / "output" / "akai_mri"))
+    output_dir = Path(MOUNT_POINT / "output" / "akai_mri")
     if not output_dir.exists():
         return {"error": f"Output not found: {output_dir}"}
 
@@ -248,10 +384,13 @@ def resume(hf_repo: str = "", skip_quality: bool = False, skip_annotation: bool 
                 err_types = Counter(r["error"].split(":")[0] for r in errored if r.get("error"))
                 print(f"  Failure breakdown: {dict(err_types.most_common(10))}")
 
-            # Single commit after the whole map completes — workers don't commit.
+            # Single commit after the whole map completes -- workers don't commit.
+            # Reload so the orchestrator's mount sees the worker writes
+            # before the next stage scans the directory.
             volume.commit()
+            volume.reload()
         else:
-            print(f"  Nothing to do — all series already processed")
+            print(f"  Nothing to do -- all series already processed")
 
     # ══════════════════════════════════════════════════════════════════════
     # STAGE 3: Gemma 4 annotation (only series without annotations)
@@ -275,8 +414,9 @@ def resume(hf_repo: str = "", skip_quality: bool = False, skip_annotation: bool 
                     if f.name != "study_annotations.json":
                         existing_anns.add(f.stem)
 
-                # Build annotation args from ALL montages (recursive)
+                # Build annotation args from ALL montages (recursive).
                 ann_args = []
+                derivative_skips = 0
                 for montage in all_montages:
                     series_dir = montage.parent
                     series_name = series_dir.name
@@ -285,15 +425,19 @@ def resume(hf_repo: str = "", skip_quality: bool = False, skip_annotation: bool 
                     parts = series_name.split("_", 1)
                     snum = parts[0].replace("s", "") if parts else "?"
                     sdesc = parts[1] if len(parts) > 1 else ""
-                    label = f"Series {snum} — {sdesc}"
+                    # Em-dash, NOT "--", because the safe-name -> filename
+                    # mapping is part of the idempotency check against the
+                    # ~3,400 annotation files already on disk. Existing files
+                    # are `Series_NNNN___<desc>.json` (em-dash + spaces ->
+                    # three underscores). Changing the dash here would orphan
+                    # them and trigger a full re-annotation pass.
+                    label = f"Series {snum} \u2014 {sdesc}"
 
                     if _is_derivative(label):
+                        derivative_skips += 1
                         continue
 
-                    # Skip if already annotated
-                    import re
-                    safe_name = re.sub(r'[^\w\-]', '_', label)
-                    if safe_name in existing_anns:
+                    if _safe_name(label) in existing_anns:
                         continue
 
                     # Get quality context
@@ -309,72 +453,157 @@ def resume(hf_repo: str = "", skip_quality: bool = False, skip_annotation: bool 
                     quality_ctx = _build_quality_context(qa) if qa else ""
                     ann_args.append((str(montage), label, quality_ctx, ann_dir))
 
-                print(f"  {len(ann_args)} series to annotate ({len(existing_anns)} already done)")
+                print(f"  {len(ann_args)} series to annotate "
+                      f"({len(existing_anns)} already done, "
+                      f"{derivative_skips} derivatives skipped)")
 
                 if ann_args:
-                    print(f"  Running 10 concurrent OpenRouter calls...")
-                    ann_results = list(annotate_one.starmap(ann_args))
+                    t_a = time.time()
+                    print(f"  Running 32 concurrent OpenRouter calls per worker...")
+                    # Iterate the map -- per-input failures don't kill the run.
+                    # return_exceptions=True surfaces the failed items as
+                    # exception objects we count instead of crashing the whole
+                    # stage on the first hung worker.
+                    ann_results = []
+                    failed = 0
+                    for r in annotate_one.starmap(ann_args, return_exceptions=True):
+                        if isinstance(r, BaseException):
+                            failed += 1
+                        else:
+                            ann_results.append(r)
 
                     pathology_count = sum(1 for r in ann_results if r.get("pathology"))
                     tissue_count = sum(1 for r in ann_results if r.get("has_tissue"))
-                    print(f"  Annotated: {len(ann_results)}, pathology: {pathology_count}, tissue: {tissue_count}")
+                    elapsed = (time.time() - t_a) / 60
+                    print(f"  Annotated: {len(ann_results)} in {elapsed:.1f} min "
+                          f"(failed {failed}, pathology {pathology_count}, tissue {tissue_count})")
 
                     (Path(ann_dir) / "study_annotations.json").write_text(
-                        json.dumps({"series_annotated": len(ann_results) + len(existing_anns), "results": ann_results}, indent=2, default=str)
+                        json.dumps({
+                            "series_annotated": len(ann_results) + len(existing_anns),
+                            "annotation_failures": failed,
+                            "results": ann_results,
+                        }, indent=2, default=str)
                     )
                     volume.commit()
+                    volume.reload()
 
             else:
                 print(f"  OPENROUTER_API_KEY not set")
         except Exception as e:
-            print(f"  Annotation failed: {e}")
+            print(f"  Annotation stage error: {e}")
 
     # ══════════════════════════════════════════════════════════════════════
-    # STAGE 5: Upload to HF
+    # STAGE 4: Pack per-study slice PNGs into tar shards
     # ══════════════════════════════════════════════════════════════════════
+    # Run via .map() across all studies. Each worker writes one
+    # `<study_id>.slices.tar` at the study root containing every slice PNG
+    # in that study. Idempotent: workers skip studies that already have a
+    # valid tar. Drops upload file count from ~1M to ~1,053.
+    pack_summary = {}
+    if not skip_pack:
+        print(f"\n{'='*60}")
+        print(f"STAGE 4: Pack per-study slices into tar shards")
+        print(f"{'='*60}")
+
+        # Studies are direct children of output_dir.
+        study_dirs = [str(p) for p in output_dir.iterdir() if p.is_dir() and not p.name.startswith(".") and p.name != "_internal"]
+        print(f"  {len(study_dirs)} studies to pack")
+
+        if study_dirs:
+            t_p = time.time()
+            packed, skipped, failed = 0, 0, 0
+            total_slices, total_bytes = 0, 0
+            errors = []
+            for r in pack_one_study_slices.map(study_dirs, return_exceptions=True):
+                if isinstance(r, BaseException):
+                    failed += 1
+                    continue
+                if r.get("ok"):
+                    packed += 1
+                elif r.get("skipped"):
+                    skipped += 1
+                else:
+                    failed += 1
+                    if r.get("error"):
+                        errors.append(r["error"])
+                total_slices += r.get("n_slices", 0)
+                total_bytes += r.get("bytes", 0)
+
+            elapsed = (time.time() - t_p) / 60
+            print(f"  Packed in {elapsed:.1f} min: {packed} new, {skipped} already done, {failed} failed")
+            print(f"  Total: {total_slices:,} slices in {total_bytes/1024**3:.1f} GB across study tars")
+            if errors:
+                from collections import Counter
+                err_types = Counter(e.split(":")[0] for e in errors)
+                print(f"  Failure breakdown: {dict(err_types.most_common(10))}")
+
+            pack_summary = {
+                "studies_packed": packed,
+                "studies_skipped": skipped,
+                "studies_failed": failed,
+                "total_slices": total_slices,
+                "total_bytes": total_bytes,
+            }
+            volume.commit()
+            volume.reload()
+
+    # ══════════════════════════════════════════════════════════════════════
+    # STAGE 5: Upload to HF -- direct from the volume mount
+    # ══════════════════════════════════════════════════════════════════════
+    # Tar shards from Stage 4 ARE shipped (the *.slices.tar files at the
+    # study root). The raw `slices/` directories are NOT -- they're now
+    # redundant with the tars and would re-introduce the 1M-file problem.
     hf_url = None
     if hf_repo:
         print(f"\n{'='*60}")
-        print(f"STAGE 5: Upload to HF")
+        print(f"STAGE 5: Upload to HF (direct from volume)")
         print(f"{'='*60}")
         try:
             from huggingface_hub import HfApi, create_repo
             token = os.environ.get("HF_TOKEN", "")
-            if token:
+            if not token:
+                print("  HF_TOKEN not set -- skipping upload")
+            else:
                 api = HfApi(token=token)
-                create_repo(hf_repo, repo_type="dataset", private=False, exist_ok=True, token=token)
+                create_repo(hf_repo, repo_type="dataset", private=False,
+                            exist_ok=True, token=token)
 
-                staging = Path(tempfile.mkdtemp())
-                SKIP_EXT = {".html", ".htm", ".tar", ".dcm"}
-                n_staged = 0
-                for f in output_dir.rglob("*"):
-                    if not f.is_file() or f.name.startswith("."):
-                        continue
-                    if f.suffix.lower() in SKIP_EXT:
-                        continue
-                    if f.stat().st_size > 500 * 1024 * 1024:
-                        continue
-                    if "_internal" in str(f):
-                        continue
-                    rel = f.relative_to(output_dir)
-                    dest = staging / "akai_mri" / rel
-                    dest.parent.mkdir(parents=True, exist_ok=True)
-                    shutil.copy2(f, dest)
-                    n_staged += 1
+                # Patterns we never want to ship.
+                #
+                # We skip raw `slices/` directories (those 1M PNGs are now
+                # packed into per-study `*.slices.tar` shards by Stage 4).
+                # We DO NOT add a generic "*.tar" exclusion -- the slice tar
+                # shards are exactly what we want to ship.
+                ignore = [
+                    "*.dcm", "*.dicom",
+                    "*.html", "*.htm",
+                    "*.tar.gz", "*.zip",
+                    ".*", ".*/**",
+                    "_internal/**", "**/_internal/**",
+                    ".hf_cache/**", "**/.hf_cache/**",
+                    # Raw per-slice PNGs -- replaced by *.slices.tar shards
+                    "slices/**", "**/slices/**",
+                    "*_slices/**", "**/*_slices/**",
+                ]
 
-                if n_staged:
-                    staged_gb = sum(f.stat().st_size for f in Path(staging).rglob("*") if f.is_file()) / 1024**3
-                    print(f"  {n_staged} files ({staged_gb:.1f} GB)")
-                    os.environ["HF_HOME"] = str(staging / ".hf_cache")
+                t_u = time.time()
+                top_level = sorted(p.name for p in output_dir.iterdir())
+                print(f"  Source: {output_dir}")
+                print(f"  Top-level entries: {len(top_level)}")
+                print(f"  Ignore patterns: {len(ignore)}")
+                print(f"  Starting upload_large_folder...", flush=True)
 
-                    if n_staged > 1000 or staged_gb > 5:
-                        api.upload_large_folder(folder_path=str(staging), repo_id=hf_repo, repo_type="dataset")
-                    else:
-                        api.upload_folder(folder_path=str(staging), repo_id=hf_repo, repo_type="dataset", token=token,
-                                          commit_message=f"Resume: {n_staged} files")
-                    hf_url = f"https://huggingface.co/datasets/{hf_repo}"
-                    print(f"  → {hf_url}")
-                shutil.rmtree(staging, ignore_errors=True)
+                api.upload_large_folder(
+                    folder_path=str(output_dir),
+                    repo_id=hf_repo,
+                    repo_type="dataset",
+                    ignore_patterns=ignore,
+                )
+
+                hf_url = f"https://huggingface.co/datasets/{hf_repo}"
+                print(f"  Upload finished in {(time.time() - t_u) / 60:.1f} min")
+                print(f"  -> {hf_url}")
         except Exception as e:
             print(f"  HF upload failed: {e}")
 
@@ -390,6 +619,7 @@ def resume(hf_repo: str = "", skip_quality: bool = False, skip_annotation: bool 
     return {
         "montages": len(all_montages),
         "annotated": len(ann_results),
+        "pack": pack_summary,
         "time_min": round(elapsed / 60, 1),
         "hf_url": hf_url,
     }
@@ -397,16 +627,22 @@ def resume(hf_repo: str = "", skip_quality: bool = False, skip_annotation: bool 
 
 @app.local_entrypoint()
 def main(
-    repo: str = "shubhxho/akai-mri",
+    repo: str = "shubhxho/speall-mri",
     skip_quality: bool = False,
     skip_annotation: bool = False,
+    skip_pack: bool = False,
 ):
-    """Resume from where batch_pipeline failed — quality + annotation + HF upload."""
-    call = resume.spawn(hf_repo=repo, skip_quality=skip_quality, skip_annotation=skip_annotation)
-    print(f"Spawned — runs on Modal even if you disconnect.")
+    """Resume from where batch_pipeline failed -- quality + annotation + pack + HF upload."""
+    call = resume.spawn(
+        hf_repo=repo,
+        skip_quality=skip_quality,
+        skip_annotation=skip_annotation,
+        skip_pack=skip_pack,
+    )
+    print(f"Spawned -- runs on Modal even if you disconnect.")
     print(f"Check: https://modal.com/apps/shubhxho/main")
     try:
         result = call.get(timeout=86400)
         print(json.dumps(result, indent=2))
     except KeyboardInterrupt:
-        print("Disconnected — resume continues on Modal.")
+        print("Disconnected -- resume continues on Modal.")

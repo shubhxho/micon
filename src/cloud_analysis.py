@@ -203,11 +203,17 @@ def _call_model(
     messages: list[dict],
     max_tokens: int = 4096,
     retries: int = 3,
+    request_timeout: float = 180.0,
 ) -> str:
-    """Call a model with retry + backoff."""
+    """Call a model with per-request timeout + bounded retry/backoff.
+
+    The per-call timeout matters: without it a hung HTTP socket ties up the
+    container until Modal's task-level timeout fires, which is much longer.
+    180s is plenty of headroom for a Gemma 4 vision response.
+    """
     for attempt in range(retries):
         try:
-            resp = client.chat.completions.create(
+            resp = client.with_options(timeout=request_timeout).chat.completions.create(
                 model=model_id, max_tokens=max_tokens, messages=messages,
             )
             return resp.choices[0].message.content
@@ -216,6 +222,11 @@ def _call_model(
                 time.sleep(4 * (attempt + 1))
             else:
                 return f"[rate limited after {retries} attempts]"
+        except openai.APITimeoutError:
+            if attempt < retries - 1:
+                time.sleep(2 * (attempt + 1))
+            else:
+                return f"[timeout after {retries} attempts]"
         except Exception as e:
             return f"[error: {e}]"
     return ""
