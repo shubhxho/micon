@@ -11,7 +11,6 @@ Cyclopts. Cyclopts raises SystemExit on --help (exit 0) and on errors.
 from __future__ import annotations
 
 import io
-import sys
 
 import pytest
 from rich.console import Console
