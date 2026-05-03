@@ -1,6 +1,7 @@
 """Local fixture playground for Modal pipeline workers.
 
 Usage:  python dev_run.py [--study PATH] [--skip-quality] [--skip-pack]
+        python dev_run.py --annotate --montage PATH --label "Series 5 -- Ax DWI"
 Default study: mcap-files/3D_Ax_SWAN/  (contains raw DICOMs; populate detail.json first).
 """
 
@@ -8,6 +9,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import sys
 import tarfile
 import time
@@ -16,7 +18,8 @@ from pathlib import Path
 
 # ── Guard: no modal ──────────────────────────────────────────────────────────
 
-def _check_imports() -> None:
+def _check_quality_imports() -> None:
+    """Validate dependencies required for quality + slice-export mode."""
     missing = []
     for mod in ("numpy", "SimpleITK", "rich"):
         try:
@@ -39,6 +42,38 @@ def _check_imports() -> None:
         except ImportError as exc:
             print(f"ERROR: cannot import {src_mod}.{attr}: {exc}", file=sys.stderr)
             sys.exit(1)
+
+
+def _check_annotate_imports() -> None:
+    """Validate dependencies required for --annotate mode."""
+    missing = []
+    for mod in ("openai", "dotenv", "rich"):
+        try:
+            __import__(mod)
+        except ImportError:
+            missing.append(mod)
+    if missing:
+        print(f"ERROR: missing dependencies: {', '.join(missing)}", file=sys.stderr)
+        print("Install with: pip install openai python-dotenv rich", file=sys.stderr)
+        sys.exit(1)
+
+    for src_mod, attr in [
+        ("src.cloud_analysis", "annotate_series_multi"),
+        ("src.cloud_analysis", "tissue_analysis_with_model"),
+    ]:
+        try:
+            mod = __import__(src_mod, fromlist=[attr])
+            if not hasattr(mod, attr):
+                raise ImportError(f"missing {attr}")
+        except ImportError as exc:
+            print(f"ERROR: cannot import {src_mod}.{attr}: {exc}", file=sys.stderr)
+            sys.exit(1)
+
+
+# ── Backwards-compat alias used by the pipeline flow entry ───────────────────
+
+def _check_imports() -> None:
+    _check_quality_imports()
 
 
 # ── Worker: quality + slice export ──────────────────────────────────────────
@@ -216,6 +251,95 @@ def _print_summary(
     )
 
 
+# ── Annotation playground ────────────────────────────────────────────────────
+
+def dev_annotate(montage_path: str, series_label: str) -> None:
+    """Annotate a single series montage locally using the same code the Modal worker uses.
+
+    Calls annotate_series_multi (multi-model annotation) and
+    tissue_analysis_with_model (deep tissue pass) in parallel, then
+    pretty-prints the merged result with rich.
+
+    Requires OPENROUTER_API_KEY in env or .env file.
+    """
+    _check_annotate_imports()
+
+    # Load .env only when the key is not already in the environment.
+    if not os.environ.get("OPENROUTER_API_KEY"):
+        try:
+            from dotenv import load_dotenv
+            load_dotenv()
+        except ImportError:
+            pass
+
+    if not os.environ.get("OPENROUTER_API_KEY"):
+        print(
+            "ERROR: OPENROUTER_API_KEY not set. "
+            "Add it to .env or export it in your shell.",
+            file=sys.stderr,
+        )
+        sys.exit(1)
+
+    montage = Path(montage_path)
+    if not montage.exists():
+        print(f"ERROR: montage not found: {montage}", file=sys.stderr)
+        sys.exit(1)
+
+    from concurrent.futures import ThreadPoolExecutor
+    from rich.console import Console
+    from rich.panel import Panel
+    from rich.syntax import Syntax
+
+    from src.cloud_analysis import (
+        annotate_series_multi,
+        tissue_analysis_with_model,
+        _client,
+        _detect_provider,
+    )
+
+    console = Console()
+    console.print(
+        Panel(
+            f"[bold]montage:[/bold] {montage}\n[bold]label:[/bold]   {series_label}",
+            title="[bold cyan]micom dev-annotate[/bold cyan]",
+            border_style="cyan",
+        )
+    )
+
+    t0 = time.monotonic()
+    prior_stub = json.dumps({"sequence_hint": "see montage"})
+
+    def _do_annotation():
+        return annotate_series_multi(montage_path, series_label, models=["gemma4"])
+
+    def _do_tissue():
+        try:
+            provider = _detect_provider()
+            client = _client()
+            result = tissue_analysis_with_model(
+                client, montage_path, series_label,
+                prior_annotation=prior_stub,
+                model_key="gemma4",
+                provider=provider,
+            )
+            return result.get("tissue_analysis") if result else None
+        except Exception:
+            return None
+
+    with ThreadPoolExecutor(max_workers=2) as pool:
+        f_annot = pool.submit(_do_annotation)
+        f_tissue = pool.submit(_do_tissue)
+        annotation_result = f_annot.result()
+        tissue = f_tissue.result()
+
+    if tissue:
+        annotation_result["tissue_analysis"] = tissue
+
+    elapsed = time.monotonic() - t0
+    console.print(f"\n[dim]Completed in {elapsed:.1f}s[/dim]\n")
+    console.print(Syntax(json.dumps(annotation_result, indent=2, default=str), "json"))
+
+
 # ── CLI ───────────────────────────────────────────────────────────────────────
 
 def main() -> None:
@@ -235,9 +359,30 @@ def main() -> None:
         "--skip-pack", action="store_true",
         help="Skip tarball packing stage",
     )
+    # ── Annotate mode ──────────────────────────────────────────────────────
+    parser.add_argument(
+        "--annotate", action="store_true",
+        help="Run a single annotation locally (requires --montage and --label)",
+    )
+    parser.add_argument(
+        "--montage",
+        default=None,
+        help="Path to a *_multiplane.png montage (required with --annotate)",
+    )
+    parser.add_argument(
+        "--label",
+        default=None,
+        help='Series label string, e.g. "Series 5 -- Ax DWI" (required with --annotate)',
+    )
     args = parser.parse_args()
 
-    _check_imports()
+    if args.annotate:
+        if not args.montage or not args.label:
+            parser.error("--annotate requires both --montage and --label")
+        dev_annotate(args.montage, args.label)
+        return
+
+    _check_quality_imports()
 
     study_dir = Path(args.study).resolve()
     if not study_dir.exists():
