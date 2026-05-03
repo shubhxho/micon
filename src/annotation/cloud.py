@@ -267,7 +267,10 @@ def _cache_provider(model_id: str) -> str:
     """
     if model_id.startswith("anthropic/"):
         return "anthropic"
-    if model_id.startswith("google/"):
+    # Only Gemini models (google/gemini*) get cache markers.
+    # Gemma models (google/gemma*) are open-weight and hosted on varied
+    # providers that may reject cache_control — treat them as no-op.
+    if model_id.startswith("google/gemini"):
         return "google"
     if model_id.startswith("openai/") or "/" not in model_id:
         return "openai"

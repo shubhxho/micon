@@ -34,8 +34,15 @@ def test_cache_provider_anthropic():
 
 
 def test_cache_provider_google():
+    # Only google/gemini* gets cache markers, not google/gemma*
     assert _cache_provider("google/gemini-2.5-flash") == "google"
-    assert _cache_provider("google/gemma-4-12b-it") == "google"
+    assert _cache_provider("google/gemini-2.5-flash-lite") == "google"
+
+
+def test_cache_provider_gemma_is_other():
+    # Gemma is open-weight, hosted on varied providers → no-op
+    assert _cache_provider("google/gemma-4-12b-it") == "other"
+    assert _cache_provider("google/gemma-3-27b-it") == "other"
 
 
 def test_cache_provider_openai_prefixed():
@@ -112,18 +119,20 @@ def test_kimi_no_cache_control():
 
 
 def test_gemma_no_cache_control():
-    """Gemma model_id → no cache_control anywhere in content."""
+    """Gemma model_id → no cache_control anywhere in content.
+
+    Gemma is open-weight, hosted on varied providers that may reject
+    cache_control markers. _cache_provider narrows Google matching to
+    google/gemini* only, leaving google/gemma* as "other" (no-op).
+    """
     parts = _build_cached_user_content(
         static_text="STATIC",
         dynamic_text="Series: T2",
         image_b64=None,
         model_id="google/gemma-4-12b-it",
     )
-    # Gemma is google/ prefix → gets cache_control (it's a Google model)
-    # Actually check: gemma gets "google" family → should have cache_control
-    static_parts = [p for p in parts if p.get("type") == "text" and "STATIC" in p.get("text", "")]
-    assert static_parts
-    assert "cache_control" in static_parts[0]
+    for part in parts:
+        assert "cache_control" not in part, f"Unexpected cache_control in Gemma part: {part}"
 
 
 def test_qwen_no_cache_control():
@@ -250,13 +259,17 @@ def test_annotate_with_model_kimi_no_cache_control(tmp_path, mock_client):
         assert "cache_control" not in part, f"Unexpected cache_control in Kimi content: {part}"
 
 
-def test_annotate_with_model_gemma_no_cache_control_for_gemma_prefix(tmp_path, mock_client):
-    """Gemma uses google/ prefix so it DOES get cache_control (Google family)."""
+def test_annotate_with_model_gemma_no_cache_control(tmp_path, mock_client):
+    """Gemma model_id → no cache_control in annotate_with_model.
+
+    google/gemma* is classified as "other" (not Google family) because
+    Gemma is open-weight and hosted on providers that may reject cache markers.
+    """
     fake_png = tmp_path / "montage.png"
     fake_png.write_bytes(b"\x89PNG\r\n")
 
     with mock.patch("src.annotation.cloud._encode_image", return_value="fakebase64"):
-        result = annotate_with_model(
+        annotate_with_model(
             client=mock_client,
             model_key="gemma4",
             montage_path=str(fake_png),
@@ -271,9 +284,8 @@ def test_annotate_with_model_gemma_no_cache_control_for_gemma_prefix(tmp_path, m
     user_msg = next(m for m in messages if m["role"] == "user")
     content_parts = user_msg["content"]
 
-    # Gemma is google/ prefix → should have cache_control
-    cached_parts = [p for p in content_parts if isinstance(p, dict) and "cache_control" in p]
-    assert cached_parts, "Gemma (google/ prefix) should get cache_control via Google family"
+    for part in content_parts:
+        assert "cache_control" not in part, f"Unexpected cache_control in Gemma content: {part}"
 
 
 def test_dynamic_suffix_contains_series_label_in_annotate(tmp_path, mock_client):
