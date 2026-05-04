@@ -10,6 +10,7 @@ from pathlib import Path
 import numpy as np
 import pydicom
 import SimpleITK as sitk
+from pydicom.errors import InvalidDicomError
 
 # Suppress ITK "Non uniform sampling" warnings globally at import time.
 # These fire on DWI, angiography, multi-echo — normal for these sequences.
@@ -81,7 +82,8 @@ def _sort_dicom_by_position(
                 z = float(pos[2]) if pos is not None and len(pos) >= 3 else float("inf")
                 inst = int(getattr(ds, "InstanceNumber", 0) or 0)
                 keyed.append((z, inst, Path(fp).name, fp))
-            except Exception:
+            except (InvalidDicomError, OSError, AttributeError, ValueError, TypeError) as e:
+                log.debug("Header read failed during sort for {}: {}", fp, e)
                 keyed.append((float("inf"), 0, Path(fp).name, fp))
 
     keyed.sort()
@@ -664,8 +666,8 @@ def _write_series_mcap(
 
         return mcap_path
 
-    except Exception as e:
-        log.debug("Per-series MCAP write failed for {}: {}", safe_name, e)
+    except Exception:
+        log.exception("Per-series MCAP write failed for {}", safe_name)
         return None
 
 
@@ -708,7 +710,7 @@ def _extract_seq_params(file_records: list[dict] | None, file_paths: list[str]) 
                 "pixel_spacing": str(getattr(ds, "PixelSpacing", "")),
                 "b_value": safe_getfloat(ds, "DiffusionBValue"),
             }
-        except Exception as e:
+        except (InvalidDicomError, OSError, AttributeError, ValueError, TypeError) as e:
             log.debug("Failed to read seq params from {}: {}", fp, e)
     return {}
 
@@ -716,8 +718,8 @@ def _extract_seq_params(file_records: list[dict] | None, file_paths: list[str]) 
 def _safe_export_nifti(file_paths: list[str], out_path: str) -> None:
     try:
         export_nifti(file_paths, out_path)
-    except Exception as e:
-        log.debug("NIfTI export failed for {}: {}", out_path, e)
+    except Exception:
+        log.exception("NIfTI export failed for {}", out_path)
 
 
 def _safe_write_zarr(
@@ -756,5 +758,5 @@ def _safe_write_zarr(
             series_uid=uid,
             sequence_type=seq_type,
         )
-    except Exception as exc:
-        log.debug("OME-Zarr write failed for {}: {}", safe_name, exc)
+    except Exception:
+        log.exception("OME-Zarr write failed for {}", safe_name)
