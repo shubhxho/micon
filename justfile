@@ -26,6 +26,13 @@ upload repo="shubhxho/speall-mri":
 manifest root out="manifests/":
     python -m src.manifest.builder --root "{{root}}" --out "{{out}}"
 
+# Export manifest.parquet -> SQLite for Datasette browsing.
+# datasette is NOT a project dep -- install separately: `pipx install datasette`.
+sqlite output_dir="manifests/" db_path="manifest.db":
+    uv run speall sqlite-export --output-dir "{{output_dir}}" --db-path "{{db_path}}"
+    @echo ""
+    @echo "Now run: uv run datasette serve {{db_path}} --metadata metadata.json"
+
 # Regenerate the Speall MRI prospectus PDF
 pdf:
     python generate_pdf.py

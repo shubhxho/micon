@@ -120,6 +120,46 @@ def manifest(
     print(f"Wrote {counts['study_rows']} study rows  -> {Path(out) / 'study_manifest.parquet'}")
 
 
+@app.command(name="sqlite-export")
+def sqlite_export(
+    output_dir: Annotated[
+        str,
+        Parameter(
+            name="--output-dir",
+            help="Directory containing manifest.parquet (and optionally study_manifest.parquet).",
+        ),
+    ],
+    db_path: Annotated[
+        str,
+        Parameter(name="--db-path", help="Destination SQLite database file."),
+    ] = "manifest.db",
+    no_views: Annotated[
+        bool,
+        Parameter(name="--no-views", help="Skip creating the series_overview view."),
+    ] = False,
+) -> None:
+    """Export manifest.parquet -> SQLite for Datasette browsing."""
+    from src.manifest.sqlite_export import manifest_to_sqlite, write_datasette_metadata
+
+    out_dir = Path(output_dir)
+    db = Path(db_path)
+
+    parquets: list[Path] = []
+    for name in ("manifest.parquet", "study_manifest.parquet"):
+        candidate = out_dir / name
+        if candidate.exists():
+            parquets.append(candidate)
+    if not parquets:
+        print(f"No manifest parquet files found in {out_dir}", file=sys.stderr)
+        sys.exit(1)
+
+    db_out = manifest_to_sqlite(parquets, db, with_views=not no_views)
+    meta_out = write_datasette_metadata(db_out)
+    print(f"Wrote SQLite database -> {db_out}")
+    print(f"Wrote Datasette metadata -> {meta_out}")
+    print(f"Now run: uv run datasette serve {db_out} --metadata {meta_out}")
+
+
 @app.command
 def pdf() -> None:
     """Regenerate the Speall MRI dataset prospectus PDF."""
