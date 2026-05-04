@@ -46,7 +46,7 @@ def build_checksum_manifest(
         rel = str(path.relative_to(root))
         if any(fnmatch.fnmatch(rel, pat) for pat in exclude_patterns):
             continue
-        files[rel] = _sha256(path)
+        files[rel] = sha256_file(path)
     return {
         "version": 1,
         "generated_at": datetime.now(UTC).isoformat(),
@@ -79,7 +79,7 @@ def verify_checksum_manifest(manifest_path: Path, root: Path) -> tuple[int, int,
         if not path.exists():
             bad.append(f"{rel} <missing>")
             continue
-        actual = _sha256(path)
+        actual = sha256_file(path)
         if actual == expected:
             n_ok += 1
         else:
@@ -92,12 +92,17 @@ def verify_checksum_manifest(manifest_path: Path, root: Path) -> tuple[int, int,
 # ---------------------------------------------------------------------------
 
 
-def _sha256(path: Path) -> str:
+def sha256_file(path: Path) -> str:
+    """Return the SHA-256 hex digest of *path* read in 1 MB chunks."""
     h = hashlib.sha256()
     with path.open("rb") as fh:
         while chunk := fh.read(_CHUNK):
             h.update(chunk)
     return h.hexdigest()
+
+
+# Backwards-compatible private alias (kept for any internal callers).
+_sha256 = sha256_file
 
 
 # ---------------------------------------------------------------------------

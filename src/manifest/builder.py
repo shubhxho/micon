@@ -15,6 +15,7 @@ from __future__ import annotations
 import argparse
 import os
 import sys
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
@@ -23,8 +24,13 @@ if TYPE_CHECKING:
 
 import polars as pl
 
+from src.integrity.checksums import sha256_file
 from src.io.msgspec_io import read_json
 from src.manifest.confidence_summary import study_confidence_rollup
+
+# Parallelize SHA-256 hashing once we have at least this many rows.
+_PARALLEL_HASH_THRESHOLD = 1000
+_HASH_WORKERS = 8
 
 # ---------------------------------------------------------------------------
 # Plane inference
@@ -100,6 +106,16 @@ def _parse_detail(path: Path, root: Path) -> dict[str, Any] | None:
     spacing_mm = vs.get("spacing_mm")
     fov_mm_val = vs.get("fov_mm")
 
+    # sha256 is a manifest-level integrity hash for the series' detail.json.
+    # The manifest carries one row per series (not per DICOM file), so we hash
+    # the detail.json that *describes* the series. If a previous pipeline stage
+    # already wrote a top-level "sha256" field in detail.json, reuse it (cache
+    # hit); otherwise leave it None and let build_series_manifest compute it
+    # in a parallel pass.
+    cached_sha256 = data.get("sha256")
+    if not (isinstance(cached_sha256, str) and len(cached_sha256) == 64):
+        cached_sha256 = None
+
     return {
         "study_id": study_id,
         "series_uid": uid,
@@ -130,7 +146,9 @@ def _parse_detail(path: Path, root: Path) -> dict[str, Any] | None:
         "detail_path": detail_path,
         "montage_path": data.get("montage_path"),
         "has_tar_shard": has_tar_shard,
+        "sha256": cached_sha256,
         "_tar_shard_path": tar_shard_path,
+        "_abs_detail_path": str(path),
     }
 
 
@@ -168,6 +186,9 @@ _SERIES_SCHEMA: dict[str, PolarsDataType] = {
     "detail_path": pl.Utf8,
     "montage_path": pl.Utf8,
     "has_tar_shard": pl.Boolean,
+    # SHA-256 hex digest (lower-case) of the per-series detail.json file.
+    # Fixed 64 chars when present; nullable for backwards compatibility.
+    "sha256": pl.Utf8,
 }
 
 
@@ -177,23 +198,48 @@ _SERIES_SCHEMA: dict[str, PolarsDataType] = {
 
 
 def build_series_manifest(root: Path) -> pl.DataFrame:
-    """Crawl root for detail JSON files; return one row per series."""
+    """Crawl root for detail JSON files; return one row per series.
+
+    For each row, attaches a ``sha256`` hex digest of the underlying
+    detail.json file. If a previous stage embedded a ``sha256`` field in the
+    JSON it is reused (cache hit); otherwise it is computed here.  Hashing is
+    parallelised with a thread-pool when the row count exceeds
+    ``_PARALLEL_HASH_THRESHOLD`` (file I/O is the bottleneck).
+    """
     root = Path(root)
-    rows: list[dict[str, Any]] = []
+    parsed: list[dict[str, Any]] = []
 
     for json_path in sorted(root.rglob("*.json")):
         record = _parse_detail(json_path, root)
         if record is None:
             continue
+        parsed.append(record)
+
+    # Resolve sha256 column: cache hits stay as-is, misses get hashed.
+    # Hashing is bound by file I/O, so a thread-pool gives a real speed-up.
+    needs_hash: list[int] = [
+        i for i, rec in enumerate(parsed) if rec.get("sha256") is None
+    ]
+    if needs_hash:
+        paths = [Path(parsed[i]["_abs_detail_path"]) for i in needs_hash]
+        if len(parsed) >= _PARALLEL_HASH_THRESHOLD:
+            with ThreadPoolExecutor(max_workers=_HASH_WORKERS) as pool:
+                digests = list(pool.map(sha256_file, paths))
+        else:
+            digests = [sha256_file(p) for p in paths]
+        for idx, digest in zip(needs_hash, digests, strict=True):
+            parsed[idx]["sha256"] = digest
+
+    rows: list[dict[str, Any]] = []
+    for record in parsed:
         record.pop("_tar_shard_path", None)
+        record.pop("_abs_detail_path", None)
         rows.append({col: record.get(col) for col in _SERIES_SCHEMA})
 
     if not rows:
-        df = pl.DataFrame(schema=_SERIES_SCHEMA)
-        return df
+        return pl.DataFrame(schema=_SERIES_SCHEMA)
 
-    df = pl.DataFrame(rows, schema=_SERIES_SCHEMA)
-    return df
+    return pl.DataFrame(rows, schema=_SERIES_SCHEMA)
 
 
 def build_study_manifest(series_df: pl.DataFrame, root: Path) -> pl.DataFrame:
