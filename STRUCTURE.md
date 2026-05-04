@@ -15,7 +15,7 @@ needs them there. They are thin wrappers around logic that lives inside
 | `upload_to_hf.py` | Modal app: focused HF upload with auto-manifest generation |
 | `dev_run.py` | Local playground (no Modal). Runs quality + pack + annotation against a single study on the host machine |
 | `generate_pdf.py` | Build the buyer-facing prospectus PDF |
-| `modal_app.py` | The original full pipeline (extraction + everything). Kept for reference |
+| `modal_app.py` | Modal app: upload + extract + redact pipeline. Backend for `main.py` cloud mode (`uv run main.py`) and standalone `modal run modal_app.py::{run,upload,extract,redact,download,list_studies,cleanup}` commands |
 | `batch_pipeline.py` | Batch extraction driver |
 
 ## src/ package layout

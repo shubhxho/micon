@@ -1,5 +1,12 @@
 """Modal cloud deployment — DICOM Extractor v5 on auto-scaled CPU containers.
 
+This is the cloud backend for `main.py` (the default `uv run main.py` flow
+imports `_ensure_uploaded`, `_parallel_download`, `run_extraction_pipeline`,
+`run_redaction_pipeline`, and `app` from here) and is also a standalone
+Modal entrypoint via `modal run modal_app.py::<cmd>`. It is NOT duplicate
+code — the post-extraction stages (quality / annotation / pack / HF upload)
+live in `resume_pipeline.py`; this file owns upload + extract + redact.
+
 Runs the COMPLETE pipeline on Modal with:
   - Auto-scaled CPU containers (4 series per container)
   - Modal Volume for persistent input + output storage
