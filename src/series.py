@@ -26,7 +26,7 @@ from .exports import (
 )
 from .extraction import classify_sequence, shm_read, volume_stats
 from .helpers import safe_getfloat, safe_squeeze, to_json
-from .io.msgspec_io import write_detail
+from .io.msgspec_io import dumps_bytes, write_detail
 from .quality import analyze_volume_quality
 
 log = get_logger(__name__)
@@ -588,31 +588,41 @@ def _write_series_mcap(
                             and k not in ("histogram_counts", "histogram_edges")
                         },
                     }
+                    # Hot path: orjson/msgspec via dumps_bytes; fall back to
+                    # stdlib json with default=str when pydicom emits UID/
+                    # PersonName/datetime objects the fast encoders cannot
+                    # serialize natively (matches pipeline/mcap_convert.py).
+                    try:
+                        msg_bytes = dumps_bytes(msg)
+                    except (TypeError, ValueError):
+                        msg_bytes = json.dumps(msg, default=str).encode()
                     now = time_ns()
                     writer.add_message(
                         channel_id=ch_id,
                         log_time=now,
                         publish_time=now,
-                        data=json.dumps(msg, default=str).encode(),
+                        data=msg_bytes,
                         sequence=seq,
                     )
 
                 # Summary message with volume stats
+                summary_payload = {
+                    "series_uid": uid,
+                    "series_description": desc,
+                    "file_count": len(file_records),
+                    "volume_stats": info.get("volume_stats", {}),
+                    "quality_analysis": info.get("quality_analysis", {}),
+                }
+                try:
+                    summary_bytes = dumps_bytes(summary_payload)
+                except (TypeError, ValueError):
+                    summary_bytes = json.dumps(summary_payload, default=str).encode()
                 now = time_ns()
                 writer.add_message(
                     channel_id=sum_ch_id,
                     log_time=now,
                     publish_time=now,
-                    data=json.dumps(
-                        {
-                            "series_uid": uid,
-                            "series_description": desc,
-                            "file_count": len(file_records),
-                            "volume_stats": info.get("volume_stats", {}),
-                            "quality_analysis": info.get("quality_analysis", {}),
-                        },
-                        default=str,
-                    ).encode(),
+                    data=summary_bytes,
                     sequence=0,
                 )
 
