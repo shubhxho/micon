@@ -27,6 +27,7 @@ from .exports import (
 from .extraction import classify_sequence, shm_read, volume_stats
 from .helpers import safe_getfloat, safe_squeeze, to_json
 from .io.msgspec_io import dumps_bytes, write_detail
+from .schemas.jsonld import with_jsonld
 from .quality import analyze_volume_quality
 
 log = get_logger(__name__)
@@ -463,7 +464,9 @@ def _write_series_detail(
         ]
 
     p = series_out / f"{safe_name}_detail.json"
-    write_detail(p, to_json(detail), indent=2)
+    # with_jsonld prepends $schema / @context / @type so the file is
+    # self-describing for downstream consumers (HF, BIDS, schema validators).
+    write_detail(p, with_jsonld(to_json(detail)), indent=2)
 
 
 def _write_series_mcap(
