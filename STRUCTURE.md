@@ -100,8 +100,7 @@ tests/
 
 - `ruff.toml` -- lint + format config (target py312, line-length 100)
 - `pyrightconfig.json` -- gradual type checking
-- `.pre-commit-config.yaml` -- hooks for ruff + pyright + standard hygiene
-- `.github/workflows/ci.yaml` -- lint + typecheck + test on push/PR
+- `.pre-commit-config.yaml` -- canonical CI: ruff + ruff-format + pyright on pre-commit, pytest on pre-push. There is no remote CI; all enforcement happens at the dev's git boundary. Run `just check` to execute the full suite manually.
 - `pyproject.toml` -- project metadata + `[dependency-groups] dev` + `[tool.pytest.ini_options]`
 - `justfile` / `Makefile` -- canonical workflow recipes (just dev / just resume / just upload / etc.)
 
