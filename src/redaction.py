@@ -22,6 +22,7 @@ from datetime import datetime, timedelta
 from pathlib import Path
 
 import pydicom
+from pydicom.errors import InvalidDicomError
 
 from src._logging import get_logger
 
@@ -247,7 +248,8 @@ def redact_single_file(
 
     try:
         ds = pydicom.dcmread(fpath, force=True)
-    except Exception as e:
+    except (OSError, InvalidDicomError) as e:
+        log.warning("DICOM read failed for %s: %s", fpath, e)
         result.error = f"Read failed: {e}"
         return result
 
@@ -257,20 +259,22 @@ def redact_single_file(
             try:
                 delattr(ds, kw)
                 result.tags_removed += 1
-            except Exception:
-                pass
+            except (AttributeError, KeyError, TypeError):
+                log.debug("delattr failed for tag %s on %s", kw, fpath, exc_info=True)
 
     for kw in PHI_TAGS_BLANK:
         if hasattr(ds, kw):
             try:
                 setattr(ds, kw, "")
                 result.tags_blanked += 1
-            except Exception:
+            except (AttributeError, ValueError, TypeError):
+                # Some VRs reject empty string — fall back to removing the tag.
+                log.debug("blank failed for tag %s on %s; deleting", kw, fpath, exc_info=True)
                 try:
                     delattr(ds, kw)
                     result.tags_removed += 1
-                except Exception:
-                    pass
+                except (AttributeError, KeyError, TypeError):
+                    log.debug("delattr fallback failed for %s on %s", kw, fpath, exc_info=True)
 
     for kw in PHI_TAGS_HASH:
         val = getattr(ds, kw, None)
@@ -278,8 +282,8 @@ def redact_single_file(
             try:
                 setattr(ds, kw, _hash_uid(str(val), salt))
                 result.tags_hashed += 1
-            except Exception:
-                pass
+            except (AttributeError, ValueError, TypeError):
+                log.debug("hash setattr failed for %s on %s", kw, fpath, exc_info=True)
     # Also hash file_meta UIDs
     if hasattr(ds, "file_meta"):
         for kw in ("MediaStorageSOPInstanceUID",):
@@ -288,8 +292,10 @@ def redact_single_file(
                 try:
                     setattr(ds.file_meta, kw, _hash_uid(str(val), salt))
                     result.tags_hashed += 1
-                except Exception:
-                    pass
+                except (AttributeError, ValueError, TypeError):
+                    log.debug(
+                        "file_meta hash setattr failed for %s on %s", kw, fpath, exc_info=True
+                    )
 
     for kw in PHI_TAGS_DATE:
         val = getattr(ds, kw, None)
@@ -299,15 +305,16 @@ def redact_single_file(
                 try:
                     setattr(ds, kw, shifted)
                     result.tags_date_shifted += 1
-                except Exception:
-                    pass
+                except (AttributeError, ValueError, TypeError):
+                    log.debug("date shift failed for %s on %s", kw, fpath, exc_info=True)
 
     # Write redacted file
     out_path = Path(out_dir) / Path(fpath).name
     try:
         ds.save_as(str(out_path), enforce_file_format=True)
         result.output_path = str(out_path)
-    except Exception as e:
+    except OSError as e:
+        log.warning("DICOM write failed for %s: %s", out_path, e)
         result.error = f"Write failed: {e}"
         return result
 

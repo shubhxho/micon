@@ -66,8 +66,8 @@ def _build_dataset_card(
                 n_rows = sum(1 for _ in f) - 1  # minus header
                 f.seek(0)
                 n_cols = len(f.readline().split(","))
-        except Exception:
-            pass
+        except OSError:
+            logger.exception("Failed to read CSV row/column count from %s", csv_path)
 
     if n_rows > 100_000:
         size_cat = "100K<n<1M"
@@ -201,8 +201,8 @@ def upload_to_huggingface(
             from huggingface_hub import HfFolder
 
             token = HfFolder.get_token() or ""
-        except Exception:
-            pass
+        except (ImportError, AttributeError, OSError):
+            logger.exception("Could not retrieve cached HF token via HfFolder")
     if not token:
         token_path = Path.home() / ".cache" / "huggingface" / "token"
         if token_path.exists():
@@ -261,8 +261,11 @@ def upload_to_huggingface(
             parquet_path.parent.mkdir(parents=True, exist_ok=True)
             df.write_parquet(parquet_path)
             logger.info(f"Generated parquet: {len(df)} rows × {len(df.columns)} cols")
-        except Exception as e:
-            logger.warning(f"Parquet generation failed: {e}")
+        except Exception:
+            # Broad catch: polars/pyarrow can raise many import, schema, or
+            # I/O errors here and we never want parquet generation to abort
+            # the upload pipeline. logger.exception preserves the traceback.
+            logger.exception("Parquet generation failed for %s", csv_path)
 
     # ── Collect files with clean HF structure ──────────────────────────
     #
