@@ -466,7 +466,7 @@ def _write_series_detail(
     p = series_out / f"{safe_name}_detail.json"
     # with_jsonld prepends $schema / @context / @type so the file is
     # self-describing for downstream consumers (HF, BIDS, schema validators).
-    write_detail(p, with_jsonld(to_json(detail)), indent=2)
+    write_detail(p, with_jsonld(to_json(detail)), indent=2)  # type: ignore[arg-type]
 
 
 def _write_series_mcap(
