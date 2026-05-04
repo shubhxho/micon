@@ -16,6 +16,8 @@ import sys
 from datetime import UTC, datetime
 from typing import Any
 
+from ..io.msgspec_io import dumps_bytes
+
 
 def _now_iso() -> str:
     return datetime.now(UTC).isoformat()
@@ -35,7 +37,14 @@ def log(stage: str, event: str, **fields: Any) -> None:
         "event": event,
         **fields,
     }
-    print(json.dumps(record, default=str), file=sys.stdout, flush=True)
+    # Hot path: orjson/msgspec via dumps_bytes; fall back to stdlib json with
+    # default=str for objects neither encoder can serialize natively (custom
+    # exceptions, Path, UID wrappers, etc.).
+    try:
+        payload = dumps_bytes(record).decode("utf-8")
+    except (TypeError, ValueError):
+        payload = json.dumps(record, default=str)
+    print(payload, file=sys.stdout, flush=True)
 
 
 def log_error(stage: str, event: str, exc: BaseException, **fields: Any) -> None:

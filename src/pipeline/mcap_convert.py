@@ -29,6 +29,7 @@ from rich.panel import Panel
 from rich.progress import BarColumn, Progress, SpinnerColumn, TextColumn, TimeElapsedColumn
 
 from ..helpers import to_json
+from ..io.msgspec_io import dumps_bytes
 from .discover import discover_files
 
 console = Console()
@@ -122,7 +123,13 @@ def _encode_mcap_message(r: dict, uid: str, snum: str, desc: str) -> bytes:
             if not k.startswith("_") and k not in ("histogram_counts", "histogram_edges")
         },
     }
-    return json.dumps(msg, default=str).encode()
+    # Hot path: orjson/msgspec via dumps_bytes; fall back to stdlib json with
+    # default=str when pydicom emits UID/PersonName/datetime objects that the
+    # fast encoders cannot serialize natively.
+    try:
+        return dumps_bytes(msg)
+    except (TypeError, ValueError):
+        return json.dumps(msg, default=str).encode()
 
 
 def run_mcap_convert(
@@ -306,7 +313,7 @@ def run_mcap_convert(
                     channel_id=summary_ch_id,
                     log_time=now,
                     publish_time=now,
-                    data=json.dumps(
+                    data=dumps_bytes(
                         {
                             "series_uid": uid,
                             "series_number": snum,
@@ -314,7 +321,7 @@ def run_mcap_convert(
                             "modality": r0.get("_modality", ""),
                             "file_count": len(recs),
                         }
-                    ).encode(),
+                    ),
                     sequence=0,
                 )
                 msg_count += 1
