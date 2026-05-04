@@ -18,5 +18,12 @@
     "upload_to_hf.py",
     "generate_pdf.py",
     "resume_pipeline.py"
+  ],
+  "executionEnvironments": [
+    {
+      "root": "src/zarr_export",
+      "extraPaths": ["."],
+      "reportAttributeAccessIssue": "none"
+    }
   ]
 }
