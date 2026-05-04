@@ -94,9 +94,6 @@ def quality_one_series(detail_path_str: str, output_dir_str: str) -> dict:
     is the dataset root so we can compute a deterministic study_id and rewrite
     file_paths to study-relative form (no /vol/... leaks in published JSON).
     """
-    import sys
-
-    sys.path.insert(0, "/root")
     import numpy as np
     import SimpleITK as sitk
 
@@ -310,9 +307,6 @@ class Annotator:
 
     @modal.enter()
     def setup(self):
-        import sys
-
-        sys.path.insert(0, "/root")
         from src.annotation.cloud import _client, _detect_provider
 
         self.provider = _detect_provider()
@@ -399,9 +393,6 @@ def resume(
     force: bool = False,
 ) -> dict:
     """Resume pipeline -- quality + annotation + slice-pack + HF upload."""
-    import sys
-
-    sys.path.insert(0, "/root")
     from src.pipeline.log import log, log_error
     from src.pipeline.sentinels import is_done, mark_finished, mark_started, summarize
 

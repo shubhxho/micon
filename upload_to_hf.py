@@ -110,10 +110,6 @@ def upload(
     Returns:
         Dict with keys: hf_url, manifest (counts or None), time_min.
     """
-    import sys
-
-    sys.path.insert(0, "/root")
-
     import os
 
     from huggingface_hub import HfApi, create_repo

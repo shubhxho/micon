@@ -95,9 +95,6 @@ volume = modal.Volume.from_name(VOLUME_NAME, create_if_missing=True, version=2)
 @modal.concurrent(max_inputs=4)
 def process_study(study_dir: str, output_base: str) -> dict:
     """Process ONE study: extract + quality + per-slice PNGs. Runs on its own container."""
-    import sys
-
-    sys.path.insert(0, "/root")
     import numpy as np
 
     study_path = Path(study_dir)
@@ -211,9 +208,6 @@ def annotate_series_worker(
     montage_path: str, series_label: str, quality_ctx: str, ann_dir: str
 ) -> dict:
     """Annotate ONE series via Gemma 4 on OpenRouter. 10 concurrent calls."""
-    import sys
-
-    sys.path.insert(0, "/root")
     import re
 
     # No volume.reload() — v2 volumes auto-mount latest data
@@ -296,9 +290,6 @@ def process_batch(
 
     No redaction. Raw data. Gemma 4 only via OpenRouter.
     """
-    import sys
-
-    sys.path.insert(0, "/root")
     import shutil
 
     volume.reload()
