@@ -40,8 +40,10 @@ def _load_fonts(sizes: dict[str, int]) -> dict[str, ImageFont.FreeTypeFont]:
             return {name: ImageFont.truetype(path, sz) for name, sz in sizes.items()}
         except OSError:
             continue
+    # Fallback to PIL's bundled bitmap font; cast to FreeTypeFont so callers can
+    # treat the return type uniformly (PIL accepts either at draw time).
     default = ImageFont.load_default()
-    return dict.fromkeys(sizes, default)
+    return dict.fromkeys(sizes, default)  # type: ignore[arg-type]
 
 
 # ── PIL montage (lock-free — fully parallel) ─────────────────────────────────
@@ -52,7 +54,7 @@ def _slice_to_pil(slc: np.ndarray, cell_w: int, cell_h: int) -> Image.Image:
     while slc.ndim > 2:
         slc = slc[0]
     img = Image.fromarray((np.clip(slc, 0, 1) * 255).astype(np.uint8), mode="L")
-    return img.resize((cell_w, cell_h), Image.LANCZOS)
+    return img.resize((cell_w, cell_h), Image.Resampling.LANCZOS)
 
 
 def _extract_plane_slices(
@@ -99,8 +101,8 @@ def export_multiplane_montage(
     vol_stats: dict | None = None,
 ) -> str:
     """Export multiplane montage using PIL — no matplotlib lock, fully parallel."""
-    out_dir = Path(out_dir)
-    out_dir.mkdir(parents=True, exist_ok=True)
+    out_path = Path(out_dir)
+    out_path.mkdir(parents=True, exist_ok=True)
     vol = safe_squeeze(vol)
 
     from .metal import gpu_available, gpu_normalize
@@ -204,7 +206,7 @@ def export_multiplane_montage(
             anchor="mt",
         )
 
-    p = str(out_dir / f"{series_name}_multiplane.png")
+    p = str(out_path / f"{series_name}_multiplane.png")
     canvas.save(p)
     if compress_images:
         _png_to_webp(p)
@@ -215,7 +217,7 @@ def export_multiplane_montage(
 
 
 def _draw_bar_chart(
-    draw: ImageDraw.Draw,
+    draw: ImageDraw.ImageDraw,
     counts: np.ndarray,
     edges: np.ndarray,
     x0: int,
@@ -343,7 +345,7 @@ def export_histogram(
         draw.text((total_w - 40, 10), grade, fill=gc, font=font_title, anchor="mt")
 
     # Stats line under header
-    if vol_stats:
+    if vol_stats and pcts is not None:
         stats_line = (
             f"Mean: {vol_stats.get('volume_mean', 0):.1f}  |  "
             f"Std: {vol_stats.get('volume_std', 0):.1f}  |  "
@@ -405,8 +407,8 @@ def export_histogram(
 
 
 def export_cross_series_comparison(series_data: dict[str, dict], out_dir: str) -> str | None:
-    out_dir = Path(out_dir)
-    out_dir.mkdir(parents=True, exist_ok=True)
+    out_path = Path(out_dir)
+    out_path.mkdir(parents=True, exist_ok=True)
     names, snrs, entropies, tissue_pcts, dyn_ranges = [], [], [], [], []
 
     for name, info in sorted(series_data.items()):
@@ -441,7 +443,7 @@ def export_cross_series_comparison(series_data: dict[str, dict], out_dir: str) -
 
         fig.suptitle("Cross-Series Comparison", fontsize=14, fontweight="bold")
         fig.tight_layout()
-        p = str(out_dir / "cross_series_comparison.png")
+        p = str(out_path / "cross_series_comparison.png")
         fig.savefig(p, dpi=120, bbox_inches="tight")
         if compress_images:
             _png_to_webp(p)
@@ -578,14 +580,14 @@ def export_enhanced_views(
                     [base, np.clip(base.astype(np.int16) + mask_u8, 0, 255).astype(np.uint8), base],
                     axis=-1,
                 )
-                pil_img = Image.fromarray(rgb, mode="RGB").resize((cell_w, cell_h), Image.LANCZOS)
+                pil_img = Image.fromarray(rgb, mode="RGB").resize((cell_w, cell_h), Image.Resampling.LANCZOS)
             else:
                 proj = projections[col_idx]
                 while proj.ndim > 2:
                     proj = proj[0]
                 pil_img = (
                     Image.fromarray(_norm_to_uint8(proj), mode="L")
-                    .resize((cell_w, cell_h), Image.LANCZOS)
+                    .resize((cell_w, cell_h), Image.Resampling.LANCZOS)
                     .convert("RGB")
                 )
 

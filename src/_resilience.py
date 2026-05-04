@@ -29,7 +29,7 @@ __all__ = ["retry", "retry_network"]
 F = TypeVar("F", bound=Callable[..., Any])
 
 
-_DEFAULT_NETWORK_EXC: tuple[type[BaseException], ...] = (
+_DEFAULT_NETWORK_EXC: tuple[type[Exception], ...] = (
     ConnectionError,
     TimeoutError,
     OSError,
@@ -38,7 +38,7 @@ _DEFAULT_NETWORK_EXC: tuple[type[BaseException], ...] = (
 
 def retry(
     *,
-    on: type[BaseException] | tuple[type[BaseException], ...] = Exception,
+    on: type[Exception] | tuple[type[Exception], ...] = Exception,
     attempts: int = 3,
     wait_initial: float = 0.5,
     wait_max: float = 30.0,

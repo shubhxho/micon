@@ -12,6 +12,7 @@ from __future__ import annotations
 import gzip
 import json
 import struct
+from collections.abc import Iterator
 from pathlib import Path
 from typing import Any
 from unittest.mock import MagicMock, patch
@@ -77,7 +78,7 @@ def bids_root(tmp_path: Path) -> Path:
 
 
 @pytest.fixture(autouse=True)
-def clear_model_cache() -> None:  # type: ignore[return]
+def clear_model_cache() -> Iterator[None]:
     """Clear the in-process model cache before each test."""
     clear_cache()
     yield

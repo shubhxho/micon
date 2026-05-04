@@ -47,7 +47,7 @@ def compute_cnr(vol: np.ndarray) -> dict:
         mu1 = (sum_total - sum0) / w1
         between = w0 * w1 * (mu0 - mu1) ** 2
 
-    between = np.nan_to_num(between, 0)
+    between = np.nan_to_num(between, nan=0.0)
     threshold = float(centers[np.argmax(between)])
 
     tissue = nonzero[nonzero > threshold]

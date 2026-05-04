@@ -20,7 +20,7 @@ from src.annotation.cloud import _call_model
 # ---------------------------------------------------------------------------
 
 
-def _make_response(content: str, reasoning: str | None = None) -> MagicMock:
+def _make_response(content: str | None, reasoning: str | None = None) -> MagicMock:
     """Build a minimal mock openai ChatCompletion response."""
     msg = MagicMock()
     msg.content = content
@@ -47,7 +47,7 @@ def _bad_request_exc() -> openai.BadRequestError:
     )
 
 
-def _make_client(side_effect) -> MagicMock:
+def _make_client(side_effect) -> tuple[MagicMock, MagicMock]:
     """Build a mock openai.OpenAI client whose create() raises/returns side_effect."""
     create_mock = MagicMock(side_effect=side_effect)
     completions = MagicMock()

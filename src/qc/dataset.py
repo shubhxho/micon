@@ -33,6 +33,7 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
+from matplotlib.figure import Figure
 
 # ---------------------------------------------------------------------------
 # Inline CSS (no external deps)
@@ -154,7 +155,7 @@ _HTML_TEMPLATE = """<!DOCTYPE html>
 # ---------------------------------------------------------------------------
 
 
-def _fig_to_b64(fig: plt.Figure) -> str:
+def _fig_to_b64(fig: Figure) -> str:
     buf = io.BytesIO()
     fig.savefig(buf, format="png", dpi=110, bbox_inches="tight", facecolor=fig.get_facecolor())
     plt.close(fig)
@@ -228,7 +229,8 @@ def _sex_pie_chart(sex_dist: dict[str, int]) -> str:
     colors = ["#4299e1", "#fc8181", "#a0aec0", "#e2e8f0"]
 
     fig, ax = plt.subplots(figsize=(4.5, 4), facecolor="#fff")
-    _wedges, _, autotexts = ax.pie(
+    # autopct=... → 3-tuple return, but matplotlib stubs only declare the 2-tuple variant
+    _wedges, _, autotexts = ax.pie(  # pyright: ignore[reportAssignmentType]
         values,
         labels=labels,
         autopct="%1.1f%%",

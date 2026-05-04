@@ -305,7 +305,7 @@ def _encode_png(path: Path, max_px: int = 800) -> str:
             w, h = img.size
             if w > max_px:
                 ratio = max_px / w
-                img = img.resize((max_px, int(h * ratio)), Image.LANCZOS)
+                img = img.resize((max_px, int(h * ratio)), Image.Resampling.LANCZOS)
             buf = io.BytesIO()
             img.save(buf, format="PNG", optimize=True)
             return base64.b64encode(buf.getvalue()).decode()

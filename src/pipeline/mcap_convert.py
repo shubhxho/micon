@@ -49,7 +49,7 @@ def _extract_for_mcap(fpath: str) -> dict:
     f = Path(fpath)
     ds = pydicom.dcmread(fpath, force=True)
 
-    record = {"_filename": f.name, "_filepath": fpath}
+    record: dict[str, object] = {"_filename": f.name, "_filepath": fpath}
 
     # All tags
     for elem in ds:
@@ -145,8 +145,8 @@ def run_mcap_convert(
 
     Memory: only holds records (metadata-sized dicts) — no pixel arrays retained.
     """
-    import zstandard
-    from mcap.writer import CompressionType, Writer
+    import zstandard  # pyright: ignore[reportMissingImports]  # optional dep
+    from mcap.writer import CompressionType, Writer  # pyright: ignore[reportMissingImports]  # optional dep
 
     t0 = time.time()
     n_workers = workers or min(multiprocessing.cpu_count(), 8)

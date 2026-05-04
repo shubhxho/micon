@@ -161,7 +161,7 @@ def annotate_study_multi(
     # run a thread pool over OpenRouter calls. Worker count is bounded by
     # MICOM_ANNOTATION_PARALLELISM so we stay within OpenRouter's per-key
     # concurrency budget.
-    annot_jobs: list[tuple[str, str, dict]] = []
+    annot_jobs: list[tuple[str, str, str]] = []
     for r in series_results:
         montage_path = (
             r.get("montage_path") if isinstance(r, dict) else getattr(r, "montage_path", None)
@@ -175,7 +175,7 @@ def annotate_study_multi(
         qa = info.get("quality_analysis")
         annot_jobs.append((montage_path, label, _build_quality_context(qa)))
 
-    def _annotate_one(job: tuple[str, str, dict]) -> tuple[str, dict]:
+    def _annotate_one(job: tuple[str, str, str]) -> tuple[str, dict]:
         montage_path, label, quality_ctx = job
         t0 = time.time()
         try:

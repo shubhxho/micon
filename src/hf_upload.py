@@ -35,7 +35,7 @@ def _build_dataset_card(
     study_grade: dict | None = None,
 ) -> str:
     """Generate a HF dataset card (README.md) from pipeline output."""
-    n_series = len(series_info) if series_info else "?"
+    n_series: int | str = len(series_info) if series_info else "?"
     n_image = sum(1 for s in (series_info or []) if s.get("has_pixels"))
     grade = study_grade.get("grade", "?") if study_grade else "?"
     score = study_grade.get("score", "?") if study_grade else "?"
@@ -107,7 +107,7 @@ De-identified medical imaging study processed by [micom](https://github.com/shub
 | Study | {study_name} |
 | DICOM Files | {n_rows:,} |
 | Metadata Columns | {n_cols} |
-| Series | {n_image} image + {(n_series or 0) - n_image} presentation state |
+| Series | {n_image} image + {(n_series if isinstance(n_series, int) else 0) - n_image} presentation state |
 | Quality Grade | {grade} ({score}/100) |
 | HIPAA Score | {hipaa_score}/100 ({hipaa_phi} PHI findings post-redaction) |
 | Scanner | {modality} {field}T |

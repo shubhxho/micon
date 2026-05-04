@@ -10,11 +10,15 @@ Covers:
 from __future__ import annotations
 
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import polars as pl
 import pytest
 
 from src.manifest.pandera_schemas import validate_manifest
+
+if TYPE_CHECKING:
+    from polars._typing import PolarsDataType
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -66,7 +70,7 @@ def _minimal_manifest_row() -> dict:
     }
 
 
-_MANIFEST_SCHEMA: dict[str, pl.DataType] = {
+_MANIFEST_SCHEMA: dict[str, "PolarsDataType"] = {
     "study_id": pl.Utf8,
     "series_uid": pl.Utf8,
     "series_number": pl.Int64,

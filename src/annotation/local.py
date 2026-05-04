@@ -1,3 +1,4 @@
+# pyright: reportMissingImports=false, reportOptionalMemberAccess=false
 """AI analysis via local MLX models — runs entirely on Apple Silicon GPU.
 
 Architecture:

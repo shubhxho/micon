@@ -356,14 +356,17 @@ def process_one_series(
                     str(series_folder),
                     vs,
                 )
-                if do_enhanced:
-                    enhanced_fut = export_pool.submit(
+                enhanced_fut = (
+                    export_pool.submit(
                         export_enhanced_views,
                         vol,
                         safe_name,
                         str(series_folder),
                         vs,
                     )
+                    if do_enhanced
+                    else None
+                )
                 detail_fut = export_pool.submit(
                     _write_series_detail,
                     series_folder,
@@ -383,7 +386,7 @@ def process_one_series(
                 # Wait for images first so we can embed them in MCAP
                 result.montage_path = montage_fut.result()
                 result.histogram_path = hist_fut.result()
-                result.enhanced_path = enhanced_fut.result() if do_enhanced else None
+                result.enhanced_path = enhanced_fut.result() if enhanced_fut is not None else None
                 detail_fut.result()
 
                 # Write MCAP with embedded images
@@ -489,8 +492,8 @@ def _write_series_mcap(
     try:
         from time import time_ns
 
-        import zstandard
-        from mcap.writer import CompressionType, Writer
+        import zstandard  # pyright: ignore[reportMissingImports]  # optional dep
+        from mcap.writer import CompressionType, Writer  # pyright: ignore[reportMissingImports]  # optional dep
 
         mcap_path = series_out / f"{safe_name}.mcap"
 

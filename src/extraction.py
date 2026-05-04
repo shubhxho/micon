@@ -521,7 +521,7 @@ def _otsu_threshold(vol: np.ndarray) -> float:
         mu1 = sum1 / w1
         between = w0 * w1 * (mu0 - mu1) ** 2
 
-    between = np.nan_to_num(between, 0.0)
+    between = np.nan_to_num(between, nan=0.0)
     best_idx = int(np.argmax(between))
     return float(centers[best_idx])
 
@@ -554,6 +554,8 @@ def volume_stats(vol: np.ndarray, sitk_img: sitk.Image | None = None) -> dict:
         # ── Metal GPU path — single lock for stats + percentiles ──
         gs, pcts = gpu_stats_and_percentiles(vol, [1, 5, 15, 25, 50, 75, 95, 99])
         tissue_pct = gpu_tissue_pct(vol, otsu_thresh)
+        # Tissue mask needed below for SNR/CNR; GPU path doesn't compute it.
+        tissue_mask: np.ndarray = vol > otsu_thresh
 
         if ndim >= 3 and vol.shape[0] > 1:
             slice_means, slice_stds = gpu_slice_stats(vol)
@@ -596,9 +598,6 @@ def volume_stats(vol: np.ndarray, sitk_img: sitk.Image | None = None) -> dict:
 
     # SNR: signal (tissue mean) / background noise — much more meaningful
     # than naive mean/std which is dominated by tissue contrast.
-    # Compute tissue mask once (GPU path didn't compute it yet).
-    if gpu_available() and vol.size >= 16_384:
-        tissue_mask = vol > otsu_thresh
     tissue_mean = float(vol[tissue_mask].mean()) if tissue_mask.any() else vol_mean
     tissue_std = (
         float(vol[tissue_mask].std()) if tissue_mask.any() and tissue_mask.sum() > 100 else vol_std

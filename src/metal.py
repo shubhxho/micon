@@ -1,9 +1,15 @@
+# pyright: reportPossiblyUnboundVariable=false, reportOptionalMemberAccess=false, reportAttributeAccessIssue=false
 """Apple Metal GPU acceleration via MLX.
 
 All MLX ops go through _mlx_lock because MLX's Metal command buffers
 are NOT thread-safe — concurrent submissions crash the GPU.
 The lock serializes GPU work but each op is still faster than numpy
 on large arrays because Metal's shader throughput is much higher.
+
+Pyright suppressions: every public function guards on ``MLX_AVAILABLE``
+before touching ``mx``, but pyright cannot follow the module-level
+flag through call sites — so we silence the resulting "possibly unbound"
+and Optional-access noise file-wide rather than scattering ignores.
 """
 
 from __future__ import annotations

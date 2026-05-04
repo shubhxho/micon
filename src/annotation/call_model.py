@@ -20,6 +20,7 @@ from __future__ import annotations
 import base64
 import os
 from pathlib import Path
+from typing import Any, Literal, cast, overload
 
 import openai
 
@@ -262,6 +263,37 @@ def _openrouter_extras(
 # ── Bounded-retry request wrapper ──────────────────────────────────────────
 
 
+@overload
+def _call_model(
+    client: openai.OpenAI,
+    model_id: str,
+    messages: list[dict],
+    max_tokens: int = ...,
+    retries: int = ...,
+    request_timeout: float = ...,
+    fallbacks: list[str] | None = ...,
+    json_schema: dict | None = ...,
+    temperature: float = ...,
+    capture_reasoning: Literal[False] = ...,
+) -> str: ...
+
+
+@overload
+def _call_model(
+    client: openai.OpenAI,
+    model_id: str,
+    messages: list[dict],
+    max_tokens: int = ...,
+    retries: int = ...,
+    request_timeout: float = ...,
+    fallbacks: list[str] | None = ...,
+    json_schema: dict | None = ...,
+    temperature: float = ...,
+    *,
+    capture_reasoning: Literal[True],
+) -> tuple[str, str | None]: ...
+
+
 def _call_model(
     client: openai.OpenAI,
     model_id: str,
@@ -303,7 +335,7 @@ def _call_model(
         resp = client.with_options(timeout=request_timeout).chat.completions.create(
             model=model_id,
             max_tokens=max_tokens,
-            messages=messages,
+            messages=cast("list[Any]", messages),
             temperature=temperature,
             extra_body=eb or None,
         )
