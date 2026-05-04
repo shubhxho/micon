@@ -26,6 +26,15 @@ logger = get_logger(__name__)
 
 ZarrPath = Path | str  # local Path or fsspec URL
 
+# Zarr v3 sharding: bundle this many chunks per shard on the Z (slowest) axis.
+# A shard packs many small chunks into one file, which on cloud object stores
+# (S3/GCS) reduces per-chunk LIST/GET overhead by ~Nx and on POSIX cuts inode
+# pressure by the same factor.  Y and X are kept at one chunk per shard so the
+# axial-slice fetch path (one read = one chunk) is preserved at the shard
+# level.  Tunable via the ``shard_chunks_target`` parameter of
+# :func:`nifti_to_omezarr`.
+_SHARD_CHUNKS_TARGET: int = 8
+
 
 # ---------------------------------------------------------------------------
 # Public API
@@ -37,6 +46,7 @@ def nifti_to_omezarr(
     zarr_path: ZarrPath,
     scales: int = 4,
     chunk_size: tuple[int, int, int] = (16, 256, 256),
+    shard_chunks_target: int = _SHARD_CHUNKS_TARGET,
 ) -> dict[str, Any]:
     """Convert a NIfTI file to an OME-Zarr 0.5 multiscale group.
 
@@ -52,6 +62,10 @@ def nifti_to_omezarr(
                     ``scales=4`` yields arrays at 1x, 1/2x, 1/4x, 1/8x.
         chunk_size: Chunk shape in **ZYX** order.  Chunks are clipped per
                     level so they never exceed the array shape.
+        shard_chunks_target: Number of chunks bundled per Zarr v3 shard on
+                    the Z axis.  Default (8) compacts ~8x fewer files at
+                    rest, slashing per-chunk fetch overhead on S3/GCS.
+                    Set to 1 to disable sharding.
 
     Returns:
         Dict with keys:
@@ -111,9 +125,18 @@ def nifti_to_omezarr(
 
     # ------------------------------------------------------------------
     # Write pyramid -- pass per-level storage_options to clip chunk size
-    # so chunks never exceed the array shape at any level.
+    # so chunks never exceed the array shape at any level, and bundle
+    # multiple chunks per Zarr v3 shard on the Z axis so cloud reads need
+    # ~Nx fewer LIST/GET round-trips.
     # ------------------------------------------------------------------
-    per_level_storage = [{"chunks": _chunk_for_shape(chunk_size, arr.shape)} for arr in pyramid]
+    per_level_storage: list[dict[str, Any]] = []
+    for arr in pyramid:
+        chunk = _chunk_for_shape(chunk_size, arr.shape)
+        opts: dict[str, Any] = {"chunks": chunk}
+        shard = _shard_for_chunk(arr.shape, chunk, shard_chunks_target)
+        if shard != chunk:
+            opts["shards"] = shard
+        per_level_storage.append(opts)
 
     write_multiscale(
         pyramid,
@@ -231,6 +254,27 @@ def _chunk_for_shape(
 ) -> tuple[int, int, int]:
     """Clip chunk_size so it never exceeds the array shape on any axis."""
     return tuple(min(c, s) for c, s in zip(chunk_size, shape, strict=False))  # type: ignore[return-value]
+
+
+def _shard_for_chunk(
+    arr_shape: tuple[int, ...],
+    chunk: tuple[int, int, int],
+    chunks_per_shard: int,
+) -> tuple[int, int, int]:
+    """Return a Zarr v3 shard shape that bundles chunks on the Z axis.
+
+    Zarr v3 requires the shard shape to be an integer multiple of the chunk
+    shape on every axis.  We grow only Z and clamp to the largest integer
+    multiple of ``chunk[0]`` that does not exceed ``arr_shape[0]``.  Returns
+    ``chunk`` unchanged when only one chunk fits along Z (no sharding gain).
+    """
+    z_chunk = chunk[0]
+    if z_chunk <= 0 or chunks_per_shard <= 1:
+        return chunk
+    max_chunks_in_axis = max(1, arr_shape[0] // z_chunk)
+    chunks_in_shard = min(chunks_per_shard, max_chunks_in_axis)
+    shard_z = z_chunk * chunks_in_shard
+    return (shard_z, chunk[1], chunk[2])
 
 
 def _compute_stats(grp: Any) -> tuple[int, int]:

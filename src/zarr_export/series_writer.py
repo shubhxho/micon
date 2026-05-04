@@ -68,6 +68,28 @@ def _clip_chunk(
     return tuple(min(c, s) for c, s in zip(chunk, shape, strict=False))  # type: ignore[return-value]
 
 
+def _shard_for_chunk(
+    arr_shape: tuple[int, ...],
+    chunk: tuple[int, int, int],
+    chunks_per_shard: int,
+) -> tuple[int, int, int]:
+    """Return a Zarr v3 shard shape that bundles ``chunks_per_shard`` chunks on Z.
+
+    Zarr v3 requires the shard shape to be an integer multiple of the chunk
+    shape on every axis.  We grow only the Z axis (chunk[1]==Y, chunk[2]==X
+    are kept at full plane in this writer), and clamp Z to the largest
+    integer multiple of ``chunk[0]`` that does not exceed the array length.
+    Falls back to ``chunk`` itself when only one chunk fits along Z.
+    """
+    z_chunk = chunk[0]
+    if z_chunk <= 0 or chunks_per_shard <= 1:
+        return chunk
+    max_chunks_in_axis = max(1, arr_shape[0] // z_chunk)
+    chunks_in_shard = min(chunks_per_shard, max_chunks_in_axis)
+    shard_z = z_chunk * chunks_in_shard
+    return (shard_z, chunk[1], chunk[2])
+
+
 def _collect_stats(grp: Any) -> tuple[int, int]:
     """Return (total_chunks, total_bytes) across all arrays in grp."""
     total_chunks = 0
@@ -146,14 +168,10 @@ def series_volume_to_omezarr(
 
     base_chunk = _compute_chunk_shape(vol_f32.shape)
 
-    def _shard_for(arr_shape: tuple[int, ...], chunk: tuple[int, int, int]) -> tuple[int, int, int]:
-        z = min(arr_shape[0], chunk[0] * _SHARD_CHUNKS_TARGET)
-        return (max(z, chunk[0]), chunk[1], chunk[2])
-
     per_level_storage = []
     for arr in pyramid:
         chunk = _clip_chunk(base_chunk, arr.shape)
-        shard = _shard_for(arr.shape, chunk)
+        shard = _shard_for_chunk(arr.shape, chunk, _SHARD_CHUNKS_TARGET)
         opts: dict[str, Any] = {"chunks": chunk}
         if shard != chunk:
             opts["shards"] = shard
