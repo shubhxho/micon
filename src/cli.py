@@ -161,6 +161,31 @@ def sqlite_export(
 
 
 @app.command
+def datapackage(
+    bundle_dir: Annotated[
+        str, Parameter(name="--bundle-dir", help="Directory containing the bundle artifacts.")
+    ],
+    name: Annotated[
+        str, Parameter(name="--name", help="Frictionless package name (slug).")
+    ] = "speall-mri-bundle",
+    pkg_version: Annotated[
+        str,
+        Parameter(name="--pkg-version", help="Semantic version of the package."),
+    ] = "1.0.0",
+) -> None:
+    """Emit a Frictionless `datapackage.json` envelope inside BUNDLE_DIR."""
+    from src.integrity.datapackage import build_datapackage, write_datapackage
+
+    root = Path(bundle_dir)
+    if not root.is_dir():
+        print(f"Error: bundle_dir does not exist: {root}", file=sys.stderr)
+        sys.exit(1)
+    pkg = build_datapackage(root, name=name, version=pkg_version)
+    out = write_datapackage(root, pkg)
+    print(f"Wrote {out} ({len(pkg['resources'])} resources)")
+
+
+@app.command
 def pdf() -> None:
     """Regenerate the Speall MRI dataset prospectus PDF."""
     # generate_pdf.py lives at the repo root; add it to sys.path if needed.

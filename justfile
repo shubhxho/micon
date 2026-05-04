@@ -37,6 +37,10 @@ sqlite output_dir="manifests/" db_path="manifest.db":
 pdf:
     python generate_pdf.py
 
+# Emit a Frictionless `datapackage.json` envelope inside BUNDLE_DIR
+datapackage bundle_dir name="speall-mri-bundle" pkg_version="1.0.0":
+    uv run python -m src.cli datapackage --bundle-dir "{{bundle_dir}}" --name "{{name}}" --pkg-version "{{pkg_version}}"
+
 # List current Modal volume state
 status:
     modal volume ls micom-v2 output
