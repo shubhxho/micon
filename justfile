@@ -37,3 +37,10 @@ status:
 # Run the CLI planner against a local output directory
 plan root:
     python -m src.pipeline.cli_planner --root "{{root}}"
+
+# Run the full local CI suite (ruff lint + format check + pyright + pytest)
+check:
+    uv run ruff check .
+    uv run ruff format --check .
+    uv run pyright
+    uv run pytest tests/ -q

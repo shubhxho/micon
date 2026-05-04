@@ -8,7 +8,7 @@ OUT     ?= manifests/
 MONTAGE ?=
 LABEL   ?=
 
-.PHONY: default dev dev-annotate resume resume-pack-only upload manifest pdf status plan help
+.PHONY: default dev dev-annotate resume resume-pack-only upload manifest pdf status plan check help
 
 # Default target: print help
 default: help
@@ -26,6 +26,7 @@ help:
 	@echo "  make pdf                             Regenerate the prospectus PDF"
 	@echo "  make status                          List Modal volume state"
 	@echo "  make plan             ROOT=...       Run CLI planner against a local output dir"
+	@echo "  make check                           Run full local CI (ruff + pyright + pytest)"
 
 # Run dev_run.py locally on a single study directory
 dev:
@@ -62,3 +63,10 @@ status:
 # Run the CLI planner against a local output directory
 plan:
 	python -m src.pipeline.cli_planner --root "$(ROOT)"
+
+# Run the full local CI suite (ruff lint + format check + pyright + pytest)
+check:
+	uv run ruff check .
+	uv run ruff format --check .
+	uv run pyright
+	uv run pytest tests/ -q
