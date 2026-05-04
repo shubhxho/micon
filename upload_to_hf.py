@@ -50,6 +50,10 @@ image = (
     .apt_install("fonts-dejavu-core")
     .pip_install(*_PIP_DEPS)
     .add_local_dir("src", remote_path="/root/src")
+    # Bundle Croissant 1.0 metadata so the in-container validation gate
+    # can find it. Without this, gate_croissant() inside upload() would
+    # fail with FileNotFoundError on the Modal worker.
+    .add_local_file("croissant.json", remote_path="/root/croissant.json")
 )
 
 app = modal.App("speall-upload", image=image)
@@ -95,6 +99,7 @@ def upload(
     hf_repo: str = "shubhxho/speall-mri",
     generate_manifest: bool = True,
     super_squash: bool = False,
+    skip_croissant_check: bool = False,
 ) -> dict:
     """Generate manifest + optionally squash history + upload to HF.
 
@@ -106,6 +111,10 @@ def upload(
         super_squash: If True, collapse prior HF commit history into a single
             commit before the upload. Useful after many incremental upload runs
             that accreted hundreds of commits.
+        skip_croissant_check: ESCAPE HATCH — bypass Croissant 1.0 metadata
+            validation. Default OFF. Only set when shipping an emergency
+            hot-fix while a non-blocking schema field is being patched in
+            a follow-up commit. Production uploads should always validate.
 
     Returns:
         Dict with keys: hf_url, manifest (counts or None), time_min.
@@ -113,6 +122,20 @@ def upload(
     import os
 
     from huggingface_hub import HfApi, create_repo
+
+    from src.hf_upload import CroissantValidationError, gate_croissant
+
+    # ── Croissant 1.0 gate (in-container) ────────────────────────────────────
+    # Validates the croissant.json bundled into the Modal image. This runs
+    # even when invoked directly via ``modal run upload_to_hf.py::upload``,
+    # bypassing the local main() entrypoint.
+    if not skip_croissant_check:
+        try:
+            gate_croissant(Path("/root/croissant.json"))
+        except CroissantValidationError as exc:
+            return {"error": f"Croissant validation failed: {exc}"}
+    else:
+        print("WARNING: --skip-croissant-check set; bypassing metadata gate.")
 
     volume.reload()
     t0 = time.time()
@@ -200,6 +223,7 @@ def main(
     repo: str = "shubhxho/speall-mri",
     skip_manifest: bool = False,
     squash: bool = False,
+    skip_croissant_check: bool = False,
 ) -> None:
     """Upload current volume state to Hugging Face.
 
@@ -207,12 +231,34 @@ def main(
       modal run upload_to_hf.py
       modal run upload_to_hf.py --skip-manifest
       modal run upload_to_hf.py --squash
+      modal run upload_to_hf.py --skip-croissant-check  # emergency only
       modal run --detach upload_to_hf.py::upload --hf-repo shubhxho/speall-mri
+
+    The Croissant 1.0 metadata gate runs both locally (here, before spawn)
+    and in-container (inside upload()). Set --skip-croissant-check ONLY for
+    emergency hot-fixes while a non-blocking schema field is being patched.
     """
+    # ── Local pre-flight gate (fail-fast before paying for Modal compute) ──
+    if not skip_croissant_check:
+        from src.hf_upload import CroissantValidationError, gate_croissant
+
+        try:
+            gate_croissant()
+        except CroissantValidationError as exc:
+            print(f"ABORT: {exc}")
+            print(
+                "Refusing to spawn Modal upload. "
+                "Fix croissant.json or pass --skip-croissant-check (not recommended)."
+            )
+            return
+    else:
+        print("WARNING: --skip-croissant-check set; bypassing local metadata gate.")
+
     call = upload.spawn(
         hf_repo=repo,
         generate_manifest=not skip_manifest,
         super_squash=squash,
+        skip_croissant_check=skip_croissant_check,
     )
     print("Spawned -- runs on Modal even if you disconnect.")
     print("Check: https://modal.com/apps/shubhxho/main")

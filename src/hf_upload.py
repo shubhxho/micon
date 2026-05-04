@@ -22,8 +22,46 @@ from pathlib import Path
 
 from src._logging import get_logger
 from src._resilience import retry
+from src.integrity.validate_croissant import validate_croissant_file
 
 logger = get_logger(__name__)
+
+# Repo-root croissant.json (the canonical metadata file shipped with releases).
+_REPO_ROOT = Path(__file__).parent.parent
+_DEFAULT_CROISSANT_PATH = _REPO_ROOT / "croissant.json"
+
+
+class CroissantValidationError(RuntimeError):
+    """Raised when Croissant 1.0 metadata fails structural validation.
+
+    Callers can catch this specifically to distinguish a metadata-gate
+    failure from a transport / auth / disk error.
+    """
+
+
+def gate_croissant(path: Path | None = None) -> None:
+    """Validate Croissant 1.0 metadata at *path* (default: repo-root croissant.json).
+
+    Raises CroissantValidationError if validation fails. Logs each schema
+    violation with ``logger.error`` so the failure is visible even when the
+    caller catches the exception.
+    """
+    target = Path(path) if path is not None else _DEFAULT_CROISSANT_PATH
+    if not target.exists():
+        raise CroissantValidationError(
+            f"Croissant metadata file not found: {target} "
+            "(expected repo-root croissant.json or explicit path)"
+        )
+    errors = validate_croissant_file(target)
+    if errors:
+        logger.error("Croissant 1.0 validation FAILED for %s:", target)
+        for err in errors:
+            logger.error("  - %s", err)
+        raise CroissantValidationError(
+            f"Croissant 1.0 validation failed for {target} with "
+            f"{len(errors)} violation(s): " + "; ".join(errors)
+        )
+    logger.info("Croissant 1.0 validation: PASS (%s)", target)
 
 
 def _build_dataset_card(
@@ -187,12 +225,30 @@ def upload_to_huggingface(
     study_grade: dict | None = None,
     private: bool = False,
     token: str | None = None,
+    croissant_path: Path | None = None,
+    skip_croissant_check: bool = False,
 ) -> str:
     """Upload analysis artifacts to Hugging Face — reports, montages, MCAP, metadata.
 
     Skips raw DICOMs and NIfTI volumes (use direct download for those).
     Uses upload_folder for batched commits. Retries up to 3x with backoff.
+
+    Gates the upload on Croissant 1.0 metadata validation
+    (repo-root ``croissant.json`` by default). If the metadata fails
+    structural validation, raises ``CroissantValidationError`` and the
+    upload is aborted. Override the metadata file location with
+    ``croissant_path`` if needed. Set ``skip_croissant_check=True`` ONLY
+    for emergency hot-fix uploads while a non-blocking schema field is
+    being patched in a follow-up commit.
     """
+    # ── Croissant 1.0 metadata gate (refuse to upload bad metadata) ──
+    if not skip_croissant_check:
+        gate_croissant(croissant_path)
+    else:
+        logger.warning(
+            "skip_croissant_check=True; bypassing Croissant 1.0 metadata gate."
+        )
+
     from huggingface_hub import HfApi, create_repo
 
     token = token or os.environ.get("HF_TOKEN", "")
