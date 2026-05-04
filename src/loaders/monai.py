@@ -131,7 +131,7 @@ def _read_parquet_rows(path: Path) -> list[dict[str, Any]]:
         pass
 
     try:
-        import pandas as pd
+        import pandas as pd  # pyright: ignore[reportMissingImports]  # optional dep
 
         df = pd.read_parquet(str(path))
         return df.to_dict(orient="records")

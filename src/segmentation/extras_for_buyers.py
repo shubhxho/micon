@@ -89,8 +89,8 @@ def _read_nifti_mask(path: Path) -> tuple[Any, Any] | None:
         logger.warning("nibabel not available; cannot read NIfTI masks")
         return None
     try:
-        img = nib.load(str(path))
-        return img.get_fdata().astype("uint8"), img.affine
+        img = nib.load(str(path))  # pyright: ignore[reportOptionalMemberAccess]
+        return img.get_fdata().astype("uint8"), img.affine  # pyright: ignore[reportAttributeAccessIssue]
     except Exception as exc:
         logger.warning("Could not load mask {}: {}", path, exc)
         return None
@@ -275,10 +275,10 @@ def compute_cohort_summary(augmented_df: pl.DataFrame) -> dict[str, Any]:
         "n_with_lesion_mask": int(augmented_df["has_lesion_mask"].sum())
         if "has_lesion_mask" in augmented_df.columns
         else 0,
-        "mean_brain_volume_cm3": float(augmented_df["brain_volume_cm3"].mean() or 0.0)
+        "mean_brain_volume_cm3": float(augmented_df["brain_volume_cm3"].mean() or 0.0)  # type: ignore[arg-type]
         if "brain_volume_cm3" in augmented_df.columns
         else 0.0,
-        "mean_lesion_load_cm3": float(augmented_df["lesion_load_cm3"].mean() or 0.0)
+        "mean_lesion_load_cm3": float(augmented_df["lesion_load_cm3"].mean() or 0.0)  # type: ignore[arg-type]
         if "lesion_load_cm3" in augmented_df.columns
         else 0.0,
     }

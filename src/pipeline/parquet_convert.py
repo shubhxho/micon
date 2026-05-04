@@ -169,11 +169,11 @@ def _extract_nifti(fpath: str, record: dict) -> None:
 
         img = nib.load(fpath)
         record["file_type"] = "nifti"
-        record["nifti_shape"] = str(list(img.shape))
-        record["nifti_ndim"] = len(img.shape)
-        record["nifti_dtype"] = str(img.get_data_dtype())
-        record["nifti_voxel_size"] = str(list(img.header.get_zooms()))
-        affine = img.affine
+        record["nifti_shape"] = str(list(img.shape))  # pyright: ignore[reportAttributeAccessIssue]
+        record["nifti_ndim"] = len(img.shape)  # pyright: ignore[reportAttributeAccessIssue]
+        record["nifti_dtype"] = str(img.get_data_dtype())  # pyright: ignore[reportAttributeAccessIssue]
+        record["nifti_voxel_size"] = str(list(img.header.get_zooms()))  # pyright: ignore[reportAttributeAccessIssue]
+        affine = img.affine  # pyright: ignore[reportAttributeAccessIssue]
         if affine is not None:
             record["nifti_orientation"] = str(nib.aff2axcodes(affine))
     except Exception as e:

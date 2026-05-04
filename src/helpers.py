@@ -3,25 +3,25 @@
 from __future__ import annotations
 
 import numpy as np
-import pydicom
+from pydicom import multival, sequence, uid, valuerep
 
 
 def safe_value(elem) -> str | int | float | list | None:
     if elem is None:
         return None
     val = elem.value
-    if isinstance(val, pydicom.sequence.Sequence):
+    if isinstance(val, sequence.Sequence):
         return f"[Sequence: {len(val)} items]"
-    if isinstance(val, pydicom.valuerep.PersonName):
+    if isinstance(val, valuerep.PersonName):
         return str(val)
-    if isinstance(val, pydicom.uid.UID):
+    if isinstance(val, uid.UID):
         return str(val)
     if isinstance(val, bytes):
         return val.hex() if len(val) <= 64 else f"[bytes: {len(val)}]"
-    if isinstance(val, pydicom.multival.MultiValue):
+    if isinstance(val, multival.MultiValue):
         return [
             float(v)
-            if isinstance(v, (pydicom.valuerep.DSfloat, pydicom.valuerep.DSdecimal))
+            if isinstance(v, (valuerep.DSfloat, valuerep.DSdecimal))
             else str(v)
             for v in val
         ]

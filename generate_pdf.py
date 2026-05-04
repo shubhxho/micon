@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# pyright: reportArgumentType=false, reportIncompatibleMethodOverride=false
 """Speall MRI prospectus -- minimal edition.
 
 Pulls totals from Speall_MRI_Dataset_Info.json and the example study

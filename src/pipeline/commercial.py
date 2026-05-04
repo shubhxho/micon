@@ -87,7 +87,7 @@ def run_commercial_pipeline(
     else:
         deface_dir.mkdir(parents=True, exist_ok=True)
         try:
-            from ..deid.deface import deface_study
+            from ..deid.deface import deface_study  # pyright: ignore[reportMissingImports]  # optional submodule
 
             deface_result = deface_study(file_paths, str(deface_dir), n_workers)
             console.print(

@@ -121,8 +121,8 @@ def _load_nifti(nifti_path: Path) -> tuple[Any, Any]:
     """Load a NIfTI file; returns (data_array, affine) or raises."""
     if not _NIBABEL:
         raise RuntimeError("nibabel is required for NIfTI loading. pip install nibabel")
-    img = nib.load(str(nifti_path))
-    return img.get_fdata(), img.affine
+    img = nib.load(str(nifti_path))  # pyright: ignore[reportOptionalMemberAccess]
+    return img.get_fdata(), img.affine  # pyright: ignore[reportAttributeAccessIssue]
 
 
 def _run_model_inference(
@@ -145,8 +145,8 @@ def _save_mask_nifti(
     if not _NIBABEL or not _NUMPY:
         raise RuntimeError("nibabel + numpy are required for NIfTI output.")
     out_path.parent.mkdir(parents=True, exist_ok=True)
-    mask_img = nib.Nifti1Image(mask.astype("uint8"), affine)
-    nib.save(mask_img, str(out_path))
+    mask_img = nib.Nifti1Image(mask.astype("uint8"), affine)  # pyright: ignore[reportOptionalMemberAccess]
+    nib.save(mask_img, str(out_path))  # pyright: ignore[reportOptionalMemberAccess]
 
 
 def _compute_label_volumes(mask: Any, voxel_vol_mm3: float) -> dict[str, float]:

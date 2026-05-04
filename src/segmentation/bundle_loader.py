@@ -127,7 +127,7 @@ def run_inference(bundle_path: Path, input_volume: np.ndarray) -> np.ndarray:
         model.eval()
 
         with torch.no_grad():
-            t = torch.from_numpy(input_volume.astype("float32"))
+            t = torch.from_numpy(input_volume.astype("float32"))  # pyright: ignore[reportPrivateImportUsage]
             t = t.unsqueeze(0).unsqueeze(0)  # (1, 1, D, H, W)
             out = model(t)
             mask = out.squeeze().argmax(dim=0).numpy().astype("uint8")

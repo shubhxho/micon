@@ -623,7 +623,7 @@ def resume(
                         # stage on the first hung worker.
                         ann_results = []
                         failed = 0
-                        annotator = Annotator()
+                        annotator = Annotator()  # pyright: ignore[reportCallIssue]  # Modal PartialFunction
                         for r in annotator.annotate.starmap(ann_args, return_exceptions=True):
                             if isinstance(r, BaseException):
                                 failed += 1

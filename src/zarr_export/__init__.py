@@ -17,11 +17,6 @@ Quick start::
 
 from __future__ import annotations
 
-__all__ = [
-    "build_pyramid",
-    "nifti_to_omezarr",
-    "open_zarr_with_tensorstore",
-    "read_volume",
-    "series_volume_to_omezarr",
-    "study_to_omezarr",
-]
+# NOTE: Symbols are intentionally not re-exported here -- callers import them
+# directly from submodules (zarr_export.converter, .series_writer, etc.) so
+# importing this package does not trigger the heavy `zarr` / `ome_zarr` deps.

@@ -81,11 +81,11 @@ def nifti_to_omezarr(
     # Load volume -- nibabel returns XYZ; we need ZYX for OME-Zarr
     # ------------------------------------------------------------------
     img = nib.load(str(nifti_path))
-    data_xyz = img.get_fdata(dtype="float32")  # (X, Y, Z)
+    data_xyz = img.get_fdata(dtype="float32")  # pyright: ignore[reportAttributeAccessIssue]  # (X, Y, Z)
     data_zyx = data_xyz.transpose(2, 1, 0).copy()  # (Z, Y, X)
 
     # Voxel sizes: nibabel get_zooms() -> (sx, sy, sz) in mm
-    zooms_xyz = img.header.get_zooms()[:3]
+    zooms_xyz = img.header.get_zooms()[:3]  # pyright: ignore[reportAttributeAccessIssue]
     zooms_zyx = (float(zooms_xyz[2]), float(zooms_xyz[1]), float(zooms_xyz[0]))
 
     # ------------------------------------------------------------------

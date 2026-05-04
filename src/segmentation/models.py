@@ -219,7 +219,7 @@ def _build_hf_inference_fn(name: str, local_dir: str) -> Callable[..., Any]:
         logger.debug("Running HF model {!r} on shape {}", name, volume.shape)
         meta.get("n_labels", 2)
         with torch.no_grad():
-            t = torch.from_numpy(volume.astype("float32")).unsqueeze(0).unsqueeze(0)
+            t = torch.from_numpy(volume.astype("float32")).unsqueeze(0).unsqueeze(0)  # pyright: ignore[reportPrivateImportUsage]
             # Normalise to [0, 1]
             t = (t - t.min()) / (t.max() - t.min() + 1e-8)
             # Placeholder: threshold at 0.3 (real model would be loaded from local_dir)
