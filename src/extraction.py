@@ -11,8 +11,11 @@ import numpy as np
 import pydicom
 import SimpleITK as sitk
 
+from ._logging import get_logger
 from .constants import REQUIRED_MR_TAGS, TRANSFER_SYNTAX_NAMES
 from .helpers import entropy, safe_getfloat, safe_value, skewness_kurtosis
+
+logger = get_logger(__name__)
 
 # ── Shared memory helpers (zero-copy pixel transfer between processes) ────────
 

@@ -20,7 +20,10 @@ import os
 import time
 from pathlib import Path
 
+from src._logging import get_logger
 from src._resilience import retry
+
+logger = get_logger(__name__)
 
 
 def _build_dataset_card(
@@ -257,9 +260,9 @@ def upload_to_huggingface(
             df = pl.read_csv(csv_path, infer_schema_length=10000)
             parquet_path.parent.mkdir(parents=True, exist_ok=True)
             df.write_parquet(parquet_path)
-            print(f"  Generated parquet: {len(df)} rows × {len(df.columns)} cols")
+            logger.info(f"Generated parquet: {len(df)} rows × {len(df.columns)} cols")
         except Exception as e:
-            print(f"  Parquet generation failed: {e}")
+            logger.warning(f"Parquet generation failed: {e}")
 
     # ── Collect files with clean HF structure ──────────────────────────
     #
@@ -378,7 +381,7 @@ def upload_to_huggingface(
     if not uploads:
         raise ValueError(f"No files found in {out_dir}")
 
-    print(f"Uploading {len(uploads)} files to hf.co/{repo_id}...")
+    logger.info(f"Uploading {len(uploads)} files to hf.co/{repo_id}...")
     t0 = time.time()
 
     # Stage files into clean temp dir, then single upload_folder call
@@ -411,7 +414,7 @@ def upload_to_huggingface(
 
     elapsed = time.time() - t0
     url = f"https://huggingface.co/datasets/{repo_id}"
-    print(
+    logger.info(
         f"Uploaded {len(uploads)} files ({total_bytes / 1024**2:.1f} MB) to {url} in {elapsed:.1f}s"
     )
 

@@ -18,7 +18,10 @@ import numpy as np
 import SimpleITK as sitk
 from PIL import Image, ImageDraw, ImageFont
 
+from ._logging import get_logger
 from .helpers import get_2d_slice, safe_squeeze
+
+logger = get_logger(__name__)
 
 _mpl_lock = threading.Lock()
 compress_images = False
