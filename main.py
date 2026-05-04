@@ -1,29 +1,4 @@
-#!/usr/bin/env -S uv run
-# /// script
-# requires-python = ">=3.12"
-# dependencies = [
-#   "pydicom>=3.0",
-#   "SimpleITK>=2.4",
-#   "nibabel>=5.3",
-#   "polars>=1.17",
-#   "numpy>=2.1",
-#   "rich>=13.9",
-#   "typer>=0.15",
-#   "mlx-vlm>=0.4.3",
-#   "mlx-lm>=0.19",
-#   "matplotlib>=3.10",
-#   "scipy>=1.14",
-#   "pillow>=11.0",
-#   "python-dotenv>=1.0",
-#   "mlx>=0.22",
-#   "mcap>=1.1",
-#   "zstandard>=0.23",
-#   "huggingface_hub>=0.25",
-#   "modal>=0.73",
-#   "openai>=1.50",
-# ]
-# ///
-
+#!/usr/bin/env -S uv run --project .
 """
 micom — MRI processing pipeline.
 
