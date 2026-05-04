@@ -70,7 +70,7 @@ def _minimal_manifest_row() -> dict:
     }
 
 
-_MANIFEST_SCHEMA: dict[str, "PolarsDataType"] = {
+_MANIFEST_SCHEMA: dict[str, PolarsDataType] = {
     "study_id": pl.Utf8,
     "series_uid": pl.Utf8,
     "series_number": pl.Int64,

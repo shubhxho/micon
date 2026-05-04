@@ -580,7 +580,9 @@ def export_enhanced_views(
                     [base, np.clip(base.astype(np.int16) + mask_u8, 0, 255).astype(np.uint8), base],
                     axis=-1,
                 )
-                pil_img = Image.fromarray(rgb, mode="RGB").resize((cell_w, cell_h), Image.Resampling.LANCZOS)
+                pil_img = Image.fromarray(rgb, mode="RGB").resize(
+                    (cell_w, cell_h), Image.Resampling.LANCZOS
+                )
             else:
                 proj = projections[col_idx]
                 while proj.ndim > 2:

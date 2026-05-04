@@ -20,9 +20,7 @@ def safe_value(elem) -> str | int | float | list | None:
         return val.hex() if len(val) <= 64 else f"[bytes: {len(val)}]"
     if isinstance(val, multival.MultiValue):
         return [
-            float(v)
-            if isinstance(v, (valuerep.DSfloat, valuerep.DSdecimal))
-            else str(v)
+            float(v) if isinstance(v, (valuerep.DSfloat, valuerep.DSdecimal)) else str(v)
             for v in val
         ]
     if isinstance(val, (int, float)):

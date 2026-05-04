@@ -493,7 +493,10 @@ def _write_series_mcap(
         from time import time_ns
 
         import zstandard  # pyright: ignore[reportMissingImports]  # optional dep
-        from mcap.writer import CompressionType, Writer  # pyright: ignore[reportMissingImports]  # optional dep
+        from mcap.writer import (  # pyright: ignore[reportMissingImports]  # optional dep
+            CompressionType,
+            Writer,
+        )
 
         mcap_path = series_out / f"{safe_name}.mcap"
 

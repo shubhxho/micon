@@ -138,7 +138,7 @@ def _parse_detail(path: Path, root: Path) -> dict[str, Any] | None:
 # Explicit schema for stable column types across sparse datasets
 # ---------------------------------------------------------------------------
 
-_SERIES_SCHEMA: dict[str, "PolarsDataType"] = {
+_SERIES_SCHEMA: dict[str, PolarsDataType] = {
     "study_id": pl.Utf8,
     "series_uid": pl.Utf8,
     "series_number": pl.Int64,
@@ -263,7 +263,7 @@ def build_study_manifest(series_df: pl.DataFrame, root: Path) -> pl.DataFrame:
         }
         study_rows.append(row)
 
-    _STUDY_SCHEMA: dict[str, "PolarsDataType"] = {
+    _STUDY_SCHEMA: dict[str, PolarsDataType] = {
         "study_id": pl.Utf8,
         "n_series": pl.Int64,
         "sequences_present": pl.List(pl.Utf8),

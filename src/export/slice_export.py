@@ -62,7 +62,8 @@ def _save_png(arr: np.ndarray, path: Path, resize_to: int = 0) -> int:
     img = Image.fromarray(arr, mode="L")
     if resize_to and max(img.size) > resize_to:
         ratio = resize_to / max(img.size)
-        img = img.resize((int(img.width * ratio), int(img.height * ratio)), Image.Resampling.LANCZOS)
+        new_size = (int(img.width * ratio), int(img.height * ratio))
+        img = img.resize(new_size, Image.Resampling.LANCZOS)
     path.parent.mkdir(parents=True, exist_ok=True)
     img.save(str(path), "PNG", optimize=True)
     return path.stat().st_size

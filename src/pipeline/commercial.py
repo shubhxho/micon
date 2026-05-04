@@ -87,14 +87,17 @@ def run_commercial_pipeline(
     else:
         deface_dir.mkdir(parents=True, exist_ok=True)
         try:
-            from ..deid.deface import deface_study  # pyright: ignore[reportMissingImports]  # optional submodule
+            # pyright: ignore[reportMissingImports] -- deid.deface is optional
+            from ..deid import deface as _deface_mod  # type: ignore[import-not-found]
+
+            deface_study = _deface_mod.deface_study  # type: ignore[attr-defined]
 
             deface_result = deface_study(file_paths, str(deface_dir), n_workers)
             console.print(
                 f"  Defaced {deface_result.get('defaced', 0)} files, "
                 f"skipped {deface_result.get('skipped', 0)}"
             )
-        except ImportError:
+        except (ImportError, AttributeError):
             console.print("  [yellow]SKIPPED[/yellow] (pydeface not installed)")
             deface_dir = input_dir
 

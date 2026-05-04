@@ -202,7 +202,10 @@ def _write_mcap(all_records: list[dict], out_dir: Path) -> tuple[Path, int, int,
       - Metadata: patient info, study info
     """
     import zstandard  # pyright: ignore[reportMissingImports]  # optional dep
-    from mcap.writer import CompressionType, Writer  # pyright: ignore[reportMissingImports]  # optional dep
+    from mcap.writer import (  # pyright: ignore[reportMissingImports]  # optional dep
+        CompressionType,
+        Writer,
+    )
 
     mcap_path = out_dir / "dicom_study.mcap"
 

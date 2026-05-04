@@ -18,6 +18,7 @@ from unittest.mock import MagicMock, patch
 
 import openai
 import pytest
+
 from src.annotation.cost_model import (
     POLICY_HIT_RATES,
     POLICY_ORDER,

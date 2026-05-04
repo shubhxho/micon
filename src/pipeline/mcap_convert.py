@@ -146,7 +146,10 @@ def run_mcap_convert(
     Memory: only holds records (metadata-sized dicts) — no pixel arrays retained.
     """
     import zstandard  # pyright: ignore[reportMissingImports]  # optional dep
-    from mcap.writer import CompressionType, Writer  # pyright: ignore[reportMissingImports]  # optional dep
+    from mcap.writer import (  # pyright: ignore[reportMissingImports]  # optional dep
+        CompressionType,
+        Writer,
+    )
 
     t0 = time.time()
     n_workers = workers or min(multiprocessing.cpu_count(), 8)

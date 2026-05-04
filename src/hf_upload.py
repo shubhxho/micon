@@ -78,6 +78,7 @@ def _build_dataset_card(
     else:
         size_cat = "n<1K"
 
+    n_pres = (n_series if isinstance(n_series, int) else 0) - n_image
     card = f"""---
 license: mit
 task_categories:
@@ -107,7 +108,7 @@ De-identified medical imaging study processed by [micom](https://github.com/shub
 | Study | {study_name} |
 | DICOM Files | {n_rows:,} |
 | Metadata Columns | {n_cols} |
-| Series | {n_image} image + {(n_series if isinstance(n_series, int) else 0) - n_image} presentation state |
+| Series | {n_image} image + {n_pres} presentation state |
 | Quality Grade | {grade} ({score}/100) |
 | HIPAA Score | {hipaa_score}/100 ({hipaa_phi} PHI findings post-redaction) |
 | Scanner | {modality} {field}T |

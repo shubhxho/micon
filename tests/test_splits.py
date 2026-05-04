@@ -198,7 +198,7 @@ class TestRatios:
         study_df = _make_study_df(n=50)
         series_df = _make_series_df(study_df)
 
-        with pytest.raises(ValueError, match="sum to 1.0"):  # noqa: RUF043
+        with pytest.raises(ValueError, match=r"sum to 1\.0"):
             assign_splits(series_df, study_df, ratios=(0.7, 0.1, 0.1))
 
 
