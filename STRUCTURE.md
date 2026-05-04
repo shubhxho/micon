@@ -72,6 +72,13 @@ src/
   validation/             Conformance + schema validation
   deid/                   De-identification (legacy; not used in private workflow)
 
+  integrity/              FAIR-compliance artifacts (re-exports in __init__.py)
+    checksums.py          SHA-256 file-integrity manifest (build + verify)
+    datacite.py           DataCite Schema 4.5 metadata
+    datapackage.py        Frictionless Data Package envelope (datapackage.json)
+    provenance.py         W3C PROV-JSON provenance graph
+    validate_croissant.py Croissant 1.0 structural validator
+
   advanced_quality.py     Per-volume quality assessment (SNR, CNR, motion, sharpness, ...)
   quality.py              Older quality scoring (kept for reference)
   hipaa.py                HIPAA scrubbing rules (legacy)
@@ -116,6 +123,7 @@ tests/
 | Local annotation iteration | `just dev-annotate <montage.png> "<label>"` |
 | Cost + wall-time preview | `just plan output/akai_mri` |
 | Build manifest.parquet | `just manifest output/akai_mri` |
+| Emit datapackage.json envelope | `just datapackage output/akai_mri` |
 | Regenerate prospectus | `just pdf` |
 | Run tests | `pytest tests/` |
 | Lint | `ruff check .` |
