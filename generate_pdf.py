@@ -14,6 +14,12 @@ from pathlib import Path
 
 from fpdf import FPDF
 
+from src.integrity.provenance_render import (
+    build_stage_graph,
+    to_mermaid,
+    to_png,
+)
+
 ROOT = Path(__file__).parent
 PDF_PATH = ROOT / "Speall_MRI_Dataset_Prospectus.pdf"
 INFO_PATH = ROOT / "Speall_MRI_Dataset_Info.json"
@@ -424,7 +430,33 @@ def build():
     if (ROOT / "output/cross_series_comparison.png").exists():
         pdf.img(str(ROOT / "output/cross_series_comparison.png"), None, w=178)
 
-    # ── PAGE 9 -- DELIVERY ────────────────────────────────────────
+    # ── PAGE 9 -- CHAIN OF CUSTODY ────────────────────────────────
+    pdf.add_page()
+    pdf.section("Chain of custody")
+    pdf.p(
+        "Every series in the corpus moves through the same fixed pipeline. The graph "
+        "below shows the stages and their order; each stage emits a signed record so "
+        "the full lineage from raw DICOM to the file you receive is independently "
+        "auditable."
+    )
+    stage_graph = build_stage_graph()
+    prov_png = ROOT / "output" / "provenance_graph.png"
+    try:
+        to_png(stage_graph, prov_png, width_in=7.5, dpi=200)
+    except Exception as exc:  # PDF must still render even if matplotlib fails
+        pdf.p(f"(Provenance graph unavailable: {exc})")
+    else:
+        pdf.img(str(prov_png), "Pipeline stages every series passes through.", w=178)
+
+    pdf.ln(1)
+    pdf.h2("Mermaid source (for verification)")
+    pdf.set_font("Courier", "", 7.5)
+    pdf.set_text_color(*SLATE)
+    for line in to_mermaid(stage_graph).splitlines():
+        pdf.cell(0, 3.6, safe(line), new_x="LMARGIN", new_y="NEXT")
+    pdf.ln(2)
+
+    # ── PAGE 10 -- DELIVERY ───────────────────────────────────────
     pdf.add_page()
     pdf.section("What you get")
 
