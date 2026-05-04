@@ -1,3 +1,9 @@
+# ruff: noqa: E501, RUF001
+# E501 and RUF001 are silenced file-wide: the bulk of this module is a single
+# ~9 KB triple-quoted Markdown LLM prompt (CLOUD_SYNTHESIS_PROMPT_STATIC)
+# whose wording is domain-tuned. Reflowing prose at the 100-col mark, or
+# substituting the en-dashes for ASCII hyphens, would alter the literal sent
+# to the model and risk shifting report behavior.
 """Long-form §1-§11 dictation synthesis for the cloud annotation pipeline.
 
 Consumes the merged multi-model consensus produced by ``cloud.annotate_study_multi``

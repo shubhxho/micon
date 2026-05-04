@@ -355,7 +355,11 @@ def _build_study_summary(annotations: dict) -> dict:
     for a in annotations.values():
         for f in a.get("consensus", {}).get("pathology", {}).get("findings", []):
             if isinstance(f, dict):
-                key = f"{f.get('location', '?')}|{f.get('signal_on_this_sequence', '')}|{f.get('size_mm', '')}"
+                key = (
+                    f"{f.get('location', '?')}|"
+                    f"{f.get('signal_on_this_sequence', '')}|"
+                    f"{f.get('size_mm', '')}"
+                )
             else:
                 key = str(f)
             if key in seen:

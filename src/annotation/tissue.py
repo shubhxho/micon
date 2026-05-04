@@ -1,3 +1,8 @@
+# ruff: noqa: E501
+# E501 is silenced file-wide: the bulk of this module is a single large
+# triple-quoted JSON-schema LLM prompt (TISSUE_ANALYSIS_PROMPT) whose wording
+# is domain-tuned. Reflowing the schema/prose at the 100-col mark would alter
+# the literal sent to the model and risk shifting annotation behavior.
 """Deep tissue analysis -- second-pass annotation that goes deeper on tissue
 characterization, subtle findings, and clinical correlation.
 

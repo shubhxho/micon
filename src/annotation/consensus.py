@@ -97,7 +97,11 @@ def _build_consensus(results: dict[str, dict]) -> dict:
         path = a.get("pathology", {})
         for f in path.get("findings", []):
             if isinstance(f, dict):
-                key = f"{f.get('location', '?')}|{f.get('signal_on_this_sequence', '')}|{f.get('size_mm', '')}"
+                key = (
+                    f"{f.get('location', '?')}|"
+                    f"{f.get('signal_on_this_sequence', '')}|"
+                    f"{f.get('size_mm', '')}"
+                )
             else:
                 key = str(f)
             if key in seen_keys:
