@@ -18,7 +18,7 @@ from typing import Any
 
 from src.constants import JSONLD_CONTEXT, JSONLD_DEFAULT_TYPE, SCHEMA_BASE_URL
 
-__all__ = ["with_jsonld", "schema_url"]
+__all__ = ["schema_url", "with_jsonld"]
 
 
 def schema_url(schema_name: str = "SeriesDetail") -> str:

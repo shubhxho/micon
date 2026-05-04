@@ -27,8 +27,8 @@ from .exports import (
 from .extraction import classify_sequence, shm_read, volume_stats
 from .helpers import safe_getfloat, safe_squeeze, to_json
 from .io.msgspec_io import dumps_bytes, write_detail
-from .schemas.jsonld import with_jsonld
 from .quality import analyze_volume_quality
+from .schemas.jsonld import with_jsonld
 
 log = get_logger(__name__)
 
