@@ -60,6 +60,7 @@ src/
   manifest/               BUYER-FACING MANIFESTS
     __init__.py
     builder.py            NEW: manifest.parquet + study_manifest.parquet builder (was src/build_manifest.py)
+    sqlite_export.py      Export manifest parquet -> Datasette-compatible SQLite (.db + metadata.json)
     study_manifest.py     Chain-of-custody per-study manifest
 
   export/                 IMAGE / FILE EXPORT
