@@ -67,6 +67,8 @@ def _minimal_manifest_row() -> dict:
         "detail_path": "series/s001_detail.json",
         "montage_path": None,
         "has_tar_shard": False,
+        # 64-char lower-case hex digest -- valid sha256 of "test".
+        "sha256": "9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08",
     }
 
 
@@ -100,6 +102,7 @@ _MANIFEST_SCHEMA: dict[str, PolarsDataType] = {
     "detail_path": pl.Utf8,
     "montage_path": pl.Utf8,
     "has_tar_shard": pl.Boolean,
+    "sha256": pl.Utf8,
 }
 
 
@@ -208,6 +211,20 @@ def test_invalid_confidence_value_fails() -> None:
     df = pl.DataFrame([row], schema=_MANIFEST_SCHEMA)
     valid, _errors = validate_manifest(df, "manifest")
     assert not valid, "Expected validation failure for invalid sequence_confidence"
+
+
+def test_bad_sha256_fails_validation() -> None:
+    """sha256 must be a 64-char lower-case hex digest -- malformed values fail."""
+    row = _minimal_manifest_row()
+    row["sha256"] = "abc"  # too short, not 64-char hex
+
+    df = pl.DataFrame([row], schema=_MANIFEST_SCHEMA)
+    valid, errors = validate_manifest(df, "manifest")
+    assert not valid, "Expected validation failure for malformed sha256 'abc'"
+    assert len(errors) > 0
+    assert any("sha256" in e for e in errors), (
+        f"Expected an error mentioning 'sha256', got: {errors}"
+    )
 
 
 # ---------------------------------------------------------------------------
