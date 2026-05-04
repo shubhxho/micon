@@ -197,3 +197,45 @@ class TestEmptyVolume:
         vol = np.zeros((0, 32, 32), dtype="float32")
         result = slices_to_zarr(vol, tmp_path / "empty3.zarr", series_label="e")
         assert result["compression_ratio"] == 0.0
+
+
+# ---------------------------------------------------------------------------
+# 5. Sharding (Zarr v3 killer feature)
+# ---------------------------------------------------------------------------
+
+
+class TestSlicesSharding:
+    """Regression: slices_to_zarr must use Zarr v3 sharding for large stacks.
+
+    Without sharding the per-slice store explodes into thousands of tiny
+    chunk files, each one a separate S3/GCS GET on read.  This guard makes
+    sure the shard codec stays wired and that shard shape is a valid
+    integer multiple of the chunk shape.
+    """
+
+    def test_large_stack_is_sharded(self, tmp_path: Path) -> None:
+        # 200 slices at 256x256 uint8 ≈ 12 MB raw → many chunks per shard
+        vol = _smooth_volume((200, 256, 256))
+        zp = tmp_path / "sh.zarr"
+        slices_to_zarr(vol, zp, series_label="t1")
+        arr = zarr.open_array(str(zp), mode="r")
+        assert arr.shards is not None, "Expected Zarr v3 sharding"
+        assert arr.shards != arr.chunks
+        for s, c in zip(arr.shards, arr.chunks, strict=True):
+            assert s % c == 0, f"shard {arr.shards} not multiple of chunk {arr.chunks}"
+
+    def test_zarr_format_is_v3(self, tmp_path: Path) -> None:
+        vol = _smooth_volume((40, 64, 64))
+        zp = tmp_path / "fmt.zarr"
+        slices_to_zarr(vol, zp, series_label="t1")
+        arr = zarr.open_array(str(zp), mode="r")
+        assert arr.metadata.zarr_format == 3
+
+    def test_encoding_attrs_record_shard_shape(self, tmp_path: Path) -> None:
+        vol = _smooth_volume((200, 256, 256))
+        zp = tmp_path / "enc.zarr"
+        slices_to_zarr(vol, zp, series_label="t1")
+        arr = zarr.open_array(str(zp), mode="r")
+        attrs = dict(arr.attrs)
+        assert attrs["encoding"]["sharding"] is True
+        assert attrs["encoding"]["format"] == "zarr-v3"

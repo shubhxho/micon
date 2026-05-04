@@ -335,3 +335,54 @@ class TestCliInspect:
         runner = CliRunner()
         result = runner.invoke(app, ["inspect", str(tmp_path / "nonexistent.zarr")])
         assert result.exit_code != 0
+
+
+# ---------------------------------------------------------------------------
+# 7. Sharding (Zarr v3 killer feature)
+# ---------------------------------------------------------------------------
+
+
+class TestNiftiSharding:
+    """Regression: nifti_to_omezarr must produce sharded Zarr v3 arrays.
+
+    Without sharding, a 100GB volume with 1MB chunks lands as 100K small
+    files; with shard=8x chunk it collapses to ~12.5K files, ~10x cheaper to
+    LIST on S3/GCS.  This guard ensures shards stay enabled and that the
+    shard shape is always an integer multiple of the chunk shape (a Zarr v3
+    constraint that previously broke at deeper pyramid levels for some
+    volume sizes).
+    """
+
+    @pytest.fixture()
+    def sharded_nifti_zarr(self, tmp_path: Path) -> Path:
+        """Volume large enough that >1 chunk fits along Z at each level."""
+        nifti_p = _make_synthetic_nifti(tmp_path / "sh.nii.gz", shape=(64, 64, 64))
+        out = tmp_path / "sh.ome.zarr"
+        # Smaller chunks so multiple chunks fit along Z and sharding kicks in
+        nifti_to_omezarr(nifti_p, out, scales=4, chunk_size=(8, 64, 64))
+        return out
+
+    def test_level0_is_sharded(self, sharded_nifti_zarr: Path) -> None:
+        arr = zarr.open_array(str(sharded_nifti_zarr / "s0"), mode="r")
+        assert arr.shards is not None, "Expected Zarr v3 sharding on s0"
+        assert arr.shards != arr.chunks
+
+    def test_shard_is_multiple_of_chunk_all_levels(self, sharded_nifti_zarr: Path) -> None:
+        for key in ("s0", "s1", "s2", "s3"):
+            arr = zarr.open_array(str(sharded_nifti_zarr / key), mode="r")
+            if arr.shards is None:
+                continue
+            for s, c in zip(arr.shards, arr.chunks, strict=True):
+                assert s % c == 0, f"{key}: shard {arr.shards} not multiple of chunk {arr.chunks}"
+
+    def test_zarr_format_is_v3(self, sharded_nifti_zarr: Path) -> None:
+        arr = zarr.open_array(str(sharded_nifti_zarr / "s0"), mode="r")
+        assert arr.metadata.zarr_format == 3
+
+    def test_sharding_disabled_when_target_one(self, tmp_path: Path) -> None:
+        """shard_chunks_target=1 must skip sharding entirely."""
+        nifti_p = _make_synthetic_nifti(tmp_path / "ns.nii.gz", shape=(32, 32, 32))
+        out = tmp_path / "ns.ome.zarr"
+        nifti_to_omezarr(nifti_p, out, scales=2, chunk_size=(8, 32, 32), shard_chunks_target=1)
+        arr = zarr.open_array(str(out / "s0"), mode="r")
+        assert arr.shards is None or arr.shards == arr.chunks

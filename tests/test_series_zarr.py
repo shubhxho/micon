@@ -23,6 +23,7 @@ pytest.importorskip("ome_zarr", reason="ome_zarr not installed")
 from src.zarr_export.series_writer import (
     _clip_chunk,
     _compute_chunk_shape,
+    _shard_for_chunk,
     series_volume_to_omezarr,
 )
 
@@ -296,3 +297,69 @@ class TestErrorHandling:
         )
         grp = zarr.open_group(str(zp), mode="r")
         assert dict(grp.attrs).get("sequence_type") == ""
+
+
+# ---------------------------------------------------------------------------
+# 7. Sharding (Zarr v3 killer feature)
+# ---------------------------------------------------------------------------
+
+
+class TestSharding:
+    """Regression tests for Zarr v3 sharding in series_volume_to_omezarr.
+
+    Sharding bundles many small chunks into a single shard file, slashing
+    per-chunk LIST/GET overhead on cloud object stores (S3/GCS) and inode
+    pressure on POSIX filesystems.  These tests guarantee shards remain
+    enabled for realistically-sized volumes and that the shard shape is a
+    valid integer multiple of the chunk shape on every axis (a Zarr v3
+    requirement that previously broke at deeper pyramid levels).
+    """
+
+    @pytest.fixture()
+    def sharded_zarr(self, tmp_path: Path) -> Path:
+        """Volume large enough that ~8 chunks fit along Z at level 0.
+
+        ``_compute_chunk_shape`` derives ``z_chunk = floor(1MB / (Y*X*4))``;
+        with Y=X=256 that is 4, leaving plenty of room for an 8-chunk shard
+        on a 64-slice volume (4*8 = 32 <= 64).
+        """
+        vol = np.zeros((64, 256, 256), dtype=np.float32)
+        zp = tmp_path / "shard.zarr"
+        series_volume_to_omezarr(
+            vol,
+            zp,
+            voxel_spacing_mm=(2.0, 1.5, 1.5),
+            series_uid="uid-shard",
+            sequence_type="T1",
+        )
+        return zp
+
+    def test_level0_is_sharded(self, sharded_zarr: Path) -> None:
+        arr = zarr.open_array(str(sharded_zarr / "s0"), mode="r")
+        assert arr.shards is not None, "Expected Zarr v3 sharding on s0"
+        assert arr.shards != arr.chunks, "Shard shape must differ from chunk shape"
+
+    def test_shard_is_multiple_of_chunk_all_levels(self, sharded_zarr: Path) -> None:
+        """Zarr v3 requires shard shape to be an integer multiple of chunks."""
+        for key in ("s0", "s1", "s2", "s3"):
+            arr = zarr.open_array(str(sharded_zarr / key), mode="r")
+            if arr.shards is None:
+                continue
+            for s, c in zip(arr.shards, arr.chunks, strict=True):
+                assert s % c == 0, f"{key}: shard {arr.shards} not multiple of chunk {arr.chunks}"
+
+    def test_zarr_format_is_v3(self, sharded_zarr: Path) -> None:
+        """Sharding requires Zarr v3 metadata."""
+        arr = zarr.open_array(str(sharded_zarr / "s0"), mode="r")
+        assert arr.metadata.zarr_format == 3
+
+    def test_shard_for_chunk_helper_is_multiple(self) -> None:
+        """Pure-function helper must always return shard divisible by chunk."""
+        # Previously failing case: shape Z=25, chunk_z=4
+        shard = _shard_for_chunk((25, 32, 32), (4, 32, 32), 8)
+        assert shard[0] % 4 == 0, f"Shard z {shard[0]} must be a multiple of chunk z 4"
+        assert shard[0] <= 25, "Shard cannot exceed array length"
+
+    def test_shard_for_chunk_disabled_when_target_one(self) -> None:
+        chunk = (4, 32, 32)
+        assert _shard_for_chunk((100, 32, 32), chunk, chunks_per_shard=1) == chunk
