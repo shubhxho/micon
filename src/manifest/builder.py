@@ -22,11 +22,16 @@ from typing import TYPE_CHECKING, Any
 if TYPE_CHECKING:
     from polars._typing import PolarsDataType
 
+import pandera.polars as pa
 import polars as pl
 
+from src._logging import get_logger
 from src.integrity.checksums import sha256_file
 from src.io.msgspec_io import read_json
 from src.manifest.confidence_summary import study_confidence_rollup
+from src.manifest.pandera_schemas import MANIFEST_SCHEMA, STUDY_MANIFEST_SCHEMA
+
+logger = get_logger(__name__)
 
 # Parallelize SHA-256 hashing once we have at least this many rows.
 _PARALLEL_HASH_THRESHOLD = 1000
@@ -363,6 +368,21 @@ def write_manifests(
 
     series_df = build_series_manifest(root)
     study_df = build_study_manifest(series_df, root)
+
+    # Validate at the write boundary -- catches schema drift before bad
+    # parquet files leak downstream.  lazy=True surfaces every violation in
+    # one report (raises SchemaErrors) instead of stopping at the first.
+    _SchemaErr = (pa.errors.SchemaError, pa.errors.SchemaErrors)
+    try:
+        MANIFEST_SCHEMA.validate(series_df, lazy=True)
+    except _SchemaErr as exc:
+        logger.error(f"Series manifest validation failed: {exc}")
+        raise
+    try:
+        STUDY_MANIFEST_SCHEMA.validate(study_df, lazy=True)
+    except _SchemaErr as exc:
+        logger.error(f"Study manifest validation failed: {exc}")
+        raise
 
     series_df.write_parquet(out_dir / "manifest.parquet")
     study_df.write_parquet(out_dir / "study_manifest.parquet")

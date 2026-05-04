@@ -82,6 +82,15 @@ MANIFEST_SCHEMA = pa.DataFrameSchema(
         "detail_path": pa.Column(pl.Utf8, nullable=True),
         "montage_path": pa.Column(pl.Utf8, nullable=True),
         "has_tar_shard": pa.Column(pl.Boolean, nullable=True),
+        # SHA-256 hex digest of the per-series detail.json file.
+        # required=False keeps older manifests valid; the regex check still
+        # rejects malformed digests when the column is present.
+        "sha256": pa.Column(
+            pl.Utf8,
+            pa.Check.str_matches(r"^[0-9a-f]{64}$"),
+            nullable=True,
+            required=False,
+        ),
     },
     strict=False,  # Allow extra columns from future schema evolution
     coerce=False,
