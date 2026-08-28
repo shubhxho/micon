@@ -55,6 +55,7 @@ _PIP_DEPS = [
     "pillow>=11.0",
     "python-dotenv>=1.0",
     "huggingface_hub>=0.25",
+    "loguru>=0.7",
     "openai>=1.50",
 ]
 
