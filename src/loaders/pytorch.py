@@ -26,6 +26,7 @@ Usage
 
 from __future__ import annotations
 
+import importlib
 import json
 from collections.abc import Callable
 from pathlib import Path
@@ -33,6 +34,7 @@ from typing import Any
 
 # Lazy torch import so the module imports even when torch is not installed.
 try:
+    importlib.import_module("torch")
     from torch.utils.data import DataLoader
     from torch.utils.data import Dataset as _TorchBase
 

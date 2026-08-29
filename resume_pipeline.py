@@ -50,6 +50,7 @@ _PIP_DEPS = [
     "polars>=1.17",
     "numpy>=2.1",
     "rich>=13.9",
+    "stamina>=25.1",
     "matplotlib>=3.10",
     "scipy>=1.14",
     "pillow>=11.0",
